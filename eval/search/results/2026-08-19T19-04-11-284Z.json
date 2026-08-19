@@ -1,0 +1,242 @@
+{
+  "when": "2026-08-19T19:04:11.297Z",
+  "skill": "search-transcribe-v6.md",
+  "temperature": 0,
+  "overall": 0.9411764705882353,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "brand-variant-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "contradictory-title",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints and is the cheapest qualifying match ($41.99)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "long-serp-attention",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "K",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing K satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "mg-protein-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "missing-fields",
+      "score": 0,
+      "failures": [
+        "ERROR: fetch failed"
+      ],
+      "verdict": null,
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "mixed-units-size",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "multipack-total",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "multipack-verdict-flip",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "no-match-honest",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "price-tiebreak",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($32.49)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "price-unknown-later",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints and is the cheapest qualifying match ($21.99)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "review-count-tiebreak",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints and is the cheapest qualifying match ($44.99) and the highest review count (2310)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "review-evidence-over-position",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints and is the cheapest qualifying match ($34.99) and the highest review count (445)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "sponsored-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "twin-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    }
+  ]
+}
