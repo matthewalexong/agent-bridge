@@ -1,0 +1,73 @@
+{
+  "id": "rand-21-multipack",
+  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Plant Protein mocha 2721g 28g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "mocha"
+    },
+    {
+      "kind": "size_g",
+      "value": 2721
+    },
+    {
+      "kind": "protein_g",
+      "value": 28
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein mocha 2721g 28g protein IronPeak\n\n=== RESULTS ===\n[B] Title: IronPeak Plant Protein Mocha 32oz\n    Brand: IronPeak\n    Flavor: Mocha\n    Size: 32oz\n    Protein per serving: 28g\n    Price: $36.00\n    Reviews: 3,468\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: IronPeak Mass Gainer Mocha 32oz\n    Brand: IronPeak\n    Flavor: Mocha\n    Size: 32oz (Pack of 3)\n    Protein per serving: 28g\n    Price: $52.00\n    Reviews: 2,521\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Mocha",
+      "size_raw": "32oz",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 36,
+      "reviews_raw": "3,468",
+      "review_count": 3468
+    },
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Mocha",
+      "size_raw": "32oz (Pack of 3)",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "pack_count": 3,
+      "price_usd": 52,
+      "reviews_raw": "2,521",
+      "review_count": 2521
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw."
+}

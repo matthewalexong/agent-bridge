@@ -1,0 +1,72 @@
+{
+  "id": "rand-6-tiebreak-reviews",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 42): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Whey Protein strawberry 1000g 23g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 23
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 1000g 23g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Casein Protein Strawberry 1000g\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 1000g\n    Protein per serving: 23g\n    Price: $46.00\n    Reviews: 824\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Mass Gainer Strawberry 1000g\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 1000g\n    Protein per serving: 23g\n    Price: $46.00\n    Reviews: 1,605\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 46,
+      "reviews_raw": "824",
+      "review_count": 824
+    },
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 46,
+      "reviews_raw": "1,605",
+      "review_count": 1605
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($46) and the highest review count (1605)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at the SAME price — judge tie-breaks on higher review count."
+}

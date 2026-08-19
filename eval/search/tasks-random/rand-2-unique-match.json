@@ -1,0 +1,87 @@
+{
+  "id": "rand-2-unique-match",
+  "note": "RANDOMIZED (unique-match, seed 42): Exactly one listing satisfies all constraints; the others each fail one.",
+  "query": "Whey Protein unflavored 1000g 22g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "unflavored"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 22
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein unflavored 1000g 22g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Protein Blend Unflavored 1000g\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $39.00\n    Reviews: 3,706\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Protein Unflavored 1LB\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 1LB\n    Protein per serving: 22g\n    Price: $36.00\n    Reviews: 1,500\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: IronPeak Protein Blend Banana 1000g\n    Brand: IronPeak\n    Flavor: Banana\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $49.00\n    Reviews: 3,481\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Unflavored",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "3,706",
+      "review_count": 3706
+    },
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Unflavored",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 36,
+      "reviews_raw": "1,500",
+      "review_count": 1500
+    },
+    {
+      "id": "C",
+      "brand": "IronPeak",
+      "flavor": "Banana",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 49,
+      "reviews_raw": "3,481",
+      "review_count": 3481
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Exactly one listing satisfies all constraints; the others each fail one."
+}

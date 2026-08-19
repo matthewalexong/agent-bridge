@@ -1,0 +1,87 @@
+{
+  "id": "rand-10-no-match",
+  "note": "RANDOMIZED (no-match, seed 42): No listing satisfies all constraints — correct answer is reformulate, no selection.",
+  "query": "Whey Isolate strawberry 2000g 24g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 24
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate strawberry 2000g 24g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Protein Blend Banana 2KG\n    Brand: IronPeak\n    Flavor: Banana\n    Size: 2KG\n    Protein per serving: 24g\n    Price: $38.00\n    Reviews: 1,747\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Plant Protein Strawberry 2KG\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 2KG\n    Protein per serving: 24g\n    Price: $42.00\n    Reviews: 2,777\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: IronPeak Whey Isolate Strawberry 2KG\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 2KG\n    Protein per serving: 34g\n    Price: $34.00\n    Reviews: 1,694\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Banana",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 38,
+      "reviews_raw": "1,747",
+      "review_count": 1747
+    },
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 42,
+      "reviews_raw": "2,777",
+      "review_count": 2777
+    },
+    {
+      "id": "C",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 34,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 34,
+      "reviews_raw": "1,694",
+      "review_count": 1694
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "No listing satisfies all constraints — correct answer is reformulate, no selection."
+}

@@ -1,0 +1,70 @@
+{
+  "id": "rand-19-missing-reviews",
+  "note": "RANDOMIZED (missing-reviews, seed 42): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
+  "query": "Protein Blend chocolate 250g 20g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "chocolate"
+    },
+    {
+      "kind": "size_g",
+      "value": 250
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend chocolate 250g 20g protein IronPeak\n\n=== RESULTS ===\n[B] Title: IronPeak Plant Protein Chocolate 250g\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 250g\n    Protein per serving: 20g\n    Price: $35.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: IronPeak Mass Gainer Chocolate 250g\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 250g\n    Protein per serving: 20g\n    Price: $35.00\n    Reviews: 3,394\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Chocolate",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 35
+    },
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Chocolate",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 35,
+      "reviews_raw": "3,394",
+      "review_count": 3394
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (3394)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Same-price tie where one listing has no Reviews line — the listing WITH evidence must win."
+}

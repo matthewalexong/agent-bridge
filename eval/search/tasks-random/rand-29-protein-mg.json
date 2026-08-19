@@ -1,0 +1,87 @@
+{
+  "id": "rand-29-protein-mg",
+  "note": "RANDOMIZED (protein-mg, seed 42): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
+  "query": "Plant Protein salted caramel 500g 26g protein ProLean",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "salted caramel"
+    },
+    {
+      "kind": "size_g",
+      "value": 500
+    },
+    {
+      "kind": "protein_g",
+      "value": 26
+    },
+    {
+      "kind": "brand",
+      "value": "ProLean"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein salted caramel 500g 26g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Mass Gainer Salted Caramel 500g\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 500g\n    Protein per serving: 26000mg\n    Price: $44.00\n    Reviews: 1,112\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: ProLean Protein Blend Unflavored 500g\n    Brand: ProLean\n    Flavor: Unflavored\n    Size: 500g\n    Protein per serving: 26g\n    Price: $41.00\n    Reviews: 1,106\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: ProLean Plant Protein Salted Caramel 500g\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 500g\n    Protein per serving: 26g\n    Price: $35.00\n    Reviews: 761\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "ProLean",
+      "flavor": "Salted Caramel",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 26000,
+      "protein_unit": "mg",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 44,
+      "reviews_raw": "1,112",
+      "review_count": 1112
+    },
+    {
+      "id": "C",
+      "brand": "ProLean",
+      "flavor": "Unflavored",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 26,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41,
+      "reviews_raw": "1,106",
+      "review_count": 1106
+    },
+    {
+      "id": "B",
+      "brand": "ProLean",
+      "flavor": "Salted Caramel",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 26,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 35,
+      "reviews_raw": "761",
+      "review_count": 761
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (761)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies."
+}

@@ -18,6 +18,10 @@ const skillArg = args.includes("--skill") ? args[args.indexOf("--skill") + 1] : 
 const skillPath = skillArg
   ? path.resolve(skillArg)
   : path.join(__dirname, "skills", "search-transcribe-v1.md");
+// --task-dir lets us point the runner at an ALTERNATE corpus directory
+// (e.g. a procedurally-generated randomized stress corpus) without touching
+// the hand-crafted fixtures. Defaults to ./tasks.
+const taskDirArg = args.includes("--task-dir") ? args[args.indexOf("--task-dir") + 1] : null;
 const SKILL = fs.readFileSync(skillPath, "utf8");
 const TEMP = parseFloat(process.env.EVAL_LLM_TEMPERATURE ?? "0");
 // REPEATS: Gemma's outputs vary run-to-run even at temperature 0 (GPU
@@ -215,7 +219,9 @@ function scoreTask(verdict, gt, t) {
 }
 
 // ---- Main ----
-const taskDir = path.join(__dirname, "tasks");
+// Optional --task-dir: run against an alternate corpus (e.g. the randomized
+// stress corpus) instead of the hand-crafted ./tasks fixtures.
+const taskDir = taskDirArg ? path.resolve(taskDirArg) : path.join(__dirname, "tasks");
 // Optional --only id1,id2 filter for fast iteration on a subset of tasks
 // (e.g. debugging long-serp-attention without re-running the full corpus).
 const onlyArg = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;

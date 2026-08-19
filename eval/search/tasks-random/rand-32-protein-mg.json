@@ -1,0 +1,87 @@
+{
+  "id": "rand-32-protein-mg",
+  "note": "RANDOMIZED (protein-mg, seed 42): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
+  "query": "Plant Protein chocolate 4536g 24g protein MuscleMax",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "chocolate"
+    },
+    {
+      "kind": "size_g",
+      "value": 4536
+    },
+    {
+      "kind": "protein_g",
+      "value": 24
+    },
+    {
+      "kind": "brand",
+      "value": "MuscleMax"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein chocolate 4536g 24g protein MuscleMax\n\n=== RESULTS ===\n[A] Title: MuscleMax Casein Protein Chocolate 10LB\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 10LB\n    Protein per serving: 24000mg\n    Price: $40.00\n    Reviews: 1,335\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: MuscleMax Whey Protein Cookies & Cream 10LB\n    Brand: MuscleMax\n    Flavor: Cookies & Cream\n    Size: 10LB\n    Protein per serving: 24g\n    Price: $35.00\n    Reviews: 2,569\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: MuscleMax Casein Protein Chocolate 10LB\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 10LB\n    Protein per serving: 24g\n    Price: $30.00\n    Reviews: 4,323\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "MuscleMax",
+      "flavor": "Chocolate",
+      "size_raw": "10LB",
+      "size_value": 10,
+      "size_unit": "LB",
+      "protein_value": 24000,
+      "protein_unit": "mg",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 40,
+      "reviews_raw": "1,335",
+      "review_count": 1335
+    },
+    {
+      "id": "C",
+      "brand": "MuscleMax",
+      "flavor": "Cookies & Cream",
+      "size_raw": "10LB",
+      "size_value": 10,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 35,
+      "reviews_raw": "2,569",
+      "review_count": 2569
+    },
+    {
+      "id": "B",
+      "brand": "MuscleMax",
+      "flavor": "Chocolate",
+      "size_raw": "10LB",
+      "size_value": 10,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 30,
+      "reviews_raw": "4,323",
+      "review_count": 4323
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($30) and the highest review count (4323)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies."
+}

@@ -1,0 +1,72 @@
+{
+  "id": "rand-33-unit-mix",
+  "note": "RANDOMIZED (unit-mix, seed 42): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
+  "query": "Plant Protein salted caramel 454g 28g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "salted caramel"
+    },
+    {
+      "kind": "size_g",
+      "value": 454
+    },
+    {
+      "kind": "protein_g",
+      "value": 28
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein salted caramel 454g 28g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Casein Protein Salted Caramel 17oz\n    Brand: NutriGain\n    Flavor: Salted Caramel\n    Size: 17oz\n    Protein per serving: 28g\n    Price: $40.00\n    Reviews: 2,429\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Casein Protein Salted Caramel 16oz\n    Brand: NutriGain\n    Flavor: Salted Caramel\n    Size: 16oz\n    Protein per serving: 28g\n    Price: $42.00\n    Reviews: 2,790\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Salted Caramel",
+      "size_raw": "17oz",
+      "size_value": 17,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 40,
+      "reviews_raw": "2,429",
+      "review_count": 2429
+    },
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Salted Caramel",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 42,
+      "reviews_raw": "2,790",
+      "review_count": 2790
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "The match is expressed in a different unit than a near-miss — judge must normalize units before comparing."
+}

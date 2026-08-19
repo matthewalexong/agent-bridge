@@ -1,0 +1,72 @@
+{
+  "id": "rand-27-tiebreak-reviews",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 42): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Plant Protein vanilla 750g 22g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "vanilla"
+    },
+    {
+      "kind": "size_g",
+      "value": 750
+    },
+    {
+      "kind": "protein_g",
+      "value": 22
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein vanilla 750g 22g protein NutriGain\n\n=== RESULTS ===\n[A] Title: NutriGain Protein Blend Vanilla 750g\n    Brand: NutriGain\n    Flavor: Vanilla\n    Size: 750g\n    Protein per serving: 22g\n    Price: $34.00\n    Reviews: 893\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: NutriGain Casein Protein Vanilla 750g\n    Brand: NutriGain\n    Flavor: Vanilla\n    Size: 750g\n    Protein per serving: 22g\n    Price: $34.00\n    Reviews: 3,137\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Vanilla",
+      "size_raw": "750g",
+      "size_value": 750,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 34,
+      "reviews_raw": "893",
+      "review_count": 893
+    },
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Vanilla",
+      "size_raw": "750g",
+      "size_value": 750,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 34,
+      "reviews_raw": "3,137",
+      "review_count": 3137
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($34) and the highest review count (3137)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at the SAME price — judge tie-breaks on higher review count."
+}

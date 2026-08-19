@@ -1,0 +1,72 @@
+{
+  "id": "rand-12-oos-full-match",
+  "note": "RANDOMIZED (oos-full-match, seed 42): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
+  "query": "Plant Protein cookies & cream 2000g 25g protein PeakWhey",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "cookies & cream"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 25
+    },
+    {
+      "kind": "brand",
+      "value": "PeakWhey"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein cookies & cream 2000g 25g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Casein Protein Cookies & Cream 2000g\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 2000g\n    Protein per serving: 25g\n    Price: $47.00\n    Reviews: 4,483\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: PeakWhey Casein Protein Cookies & Cream 1000g\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 1000g\n    Protein per serving: 25g\n    Price: $46.00\n    Reviews: 1,121\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "PeakWhey",
+      "flavor": "Cookies & Cream",
+      "size_raw": "2000g",
+      "size_value": 2000,
+      "size_unit": "g",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "price_usd": 47,
+      "reviews_raw": "4,483",
+      "review_count": 4483
+    },
+    {
+      "id": "B",
+      "brand": "PeakWhey",
+      "flavor": "Cookies & Cream",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 46,
+      "reviews_raw": "1,121",
+      "review_count": 1121
+    }
+  ],
+  "ground_truth": {
+    "action": "reformulate",
+    "selected_listing": null,
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "A full match exists but is out of stock; the search needs reformulation."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "A full match exists but is out of stock — action reformulate, matched_constraints reports the full count."
+}

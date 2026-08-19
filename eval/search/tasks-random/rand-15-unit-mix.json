@@ -1,0 +1,72 @@
+{
+  "id": "rand-15-unit-mix",
+  "note": "RANDOMIZED (unit-mix, seed 42): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
+  "query": "Whey Protein strawberry 2000g 20g protein CoreFuel",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "CoreFuel"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 2000g 20g protein CoreFuel\n\n=== RESULTS ===\n[B] Title: CoreFuel Whey Isolate Strawberry 5.4LB\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 5.4LB\n    Protein per serving: 20g\n    Price: $44.00\n    Reviews: 811\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: CoreFuel Casein Protein Strawberry 4.4LB\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 4.4LB\n    Protein per serving: 20g\n    Price: $50.00\n    Reviews: 4,410\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "CoreFuel",
+      "flavor": "Strawberry",
+      "size_raw": "5.4LB",
+      "size_value": 5.4,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 44,
+      "reviews_raw": "811",
+      "review_count": 811
+    },
+    {
+      "id": "A",
+      "brand": "CoreFuel",
+      "flavor": "Strawberry",
+      "size_raw": "4.4LB",
+      "size_value": 4.4,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 50,
+      "reviews_raw": "4,410",
+      "review_count": 4410
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "The match is expressed in a different unit than a near-miss — judge must normalize units before comparing."
+}

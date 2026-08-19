@@ -1,0 +1,72 @@
+{
+  "id": "rand-3-tiebreak-price",
+  "note": "RANDOMIZED (tiebreak-price, seed 42): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
+  "query": "Mass Gainer cookies & cream 227g 21g protein TrueGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "cookies & cream"
+    },
+    {
+      "kind": "size_g",
+      "value": 227
+    },
+    {
+      "kind": "protein_g",
+      "value": 21
+    },
+    {
+      "kind": "brand",
+      "value": "TrueGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer cookies & cream 227g 21g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Plant Protein Cookies & Cream 8oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 8oz\n    Protein per serving: 21g\n    Price: $31.00\n    Reviews: 2,460\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: TrueGain Whey Protein Cookies & Cream 8oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 8oz\n    Protein per serving: 21g\n    Price: $25.00\n    Reviews: 4,508\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "TrueGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 21,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 31,
+      "reviews_raw": "2,460",
+      "review_count": 2460
+    },
+    {
+      "id": "B",
+      "brand": "TrueGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 21,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 25,
+      "reviews_raw": "4,508",
+      "review_count": 4508
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($25) and the highest review count (4508)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at different prices — judge must pick the cheaper (position-bias trap)."
+}

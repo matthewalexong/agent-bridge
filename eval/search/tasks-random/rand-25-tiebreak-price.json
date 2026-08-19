@@ -1,0 +1,72 @@
+{
+  "id": "rand-25-tiebreak-price",
+  "note": "RANDOMIZED (tiebreak-price, seed 42): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
+  "query": "Casein Protein banana 250g 22g protein PeakWhey",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "banana"
+    },
+    {
+      "kind": "size_g",
+      "value": 250
+    },
+    {
+      "kind": "protein_g",
+      "value": 22
+    },
+    {
+      "kind": "brand",
+      "value": "PeakWhey"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein banana 250g 22g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Plant Protein Banana 250g\n    Brand: PeakWhey\n    Flavor: Banana\n    Size: 250g\n    Protein per serving: 22g\n    Price: $41.00\n    Reviews: 4,295\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PeakWhey Protein Blend Banana 250g\n    Brand: PeakWhey\n    Flavor: Banana\n    Size: 250g\n    Protein per serving: 22g\n    Price: $36.00\n    Reviews: 4,554\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "PeakWhey",
+      "flavor": "Banana",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41,
+      "reviews_raw": "4,295",
+      "review_count": 4295
+    },
+    {
+      "id": "B",
+      "brand": "PeakWhey",
+      "flavor": "Banana",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 36,
+      "reviews_raw": "4,554",
+      "review_count": 4554
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($36) and the highest review count (4554)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at different prices — judge must pick the cheaper (position-bias trap)."
+}

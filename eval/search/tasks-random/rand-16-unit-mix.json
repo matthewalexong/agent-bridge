@@ -1,0 +1,72 @@
+{
+  "id": "rand-16-unit-mix",
+  "note": "RANDOMIZED (unit-mix, seed 42): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
+  "query": "Casein Protein strawberry 2000g 24g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 24
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein strawberry 2000g 24g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Casein Protein Strawberry 71.5oz\n    Brand: NutriGain\n    Flavor: Strawberry\n    Size: 71.5oz\n    Protein per serving: 24g\n    Price: $40.00\n    Reviews: 2,273\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Plant Protein Strawberry 70.5oz\n    Brand: NutriGain\n    Flavor: Strawberry\n    Size: 70.5oz\n    Protein per serving: 24g\n    Price: $46.00\n    Reviews: 1,060\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Strawberry",
+      "size_raw": "71.5oz",
+      "size_value": 71.5,
+      "size_unit": "oz",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 40,
+      "reviews_raw": "2,273",
+      "review_count": 2273
+    },
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Strawberry",
+      "size_raw": "70.5oz",
+      "size_value": 70.5,
+      "size_unit": "oz",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 46,
+      "reviews_raw": "1,060",
+      "review_count": 1060
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "The match is expressed in a different unit than a near-miss — judge must normalize units before comparing."
+}

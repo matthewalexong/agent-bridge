@@ -1,0 +1,70 @@
+{
+  "id": "rand-20-missing-reviews",
+  "note": "RANDOMIZED (missing-reviews, seed 42): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
+  "query": "Whey Isolate cookies & cream 1000g 29g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "cookies & cream"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 29
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate cookies & cream 1000g 29g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Protein Blend Cookies & Cream 1KG\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 1KG\n    Protein per serving: 29g\n    Price: $41.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Protein Blend Cookies & Cream 1KG\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 1KG\n    Protein per serving: 29g\n    Price: $41.00\n    Reviews: 1,104\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "1KG",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 29,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41
+    },
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "1KG",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 29,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41,
+      "reviews_raw": "1,104",
+      "review_count": 1104
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($41) and the highest review count (1104)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Same-price tie where one listing has no Reviews line — the listing WITH evidence must win."
+}

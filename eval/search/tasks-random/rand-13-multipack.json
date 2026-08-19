@@ -1,0 +1,73 @@
+{
+  "id": "rand-13-multipack",
+  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Mass Gainer cookies & cream 7256g 20g protein TrueGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "cookies & cream"
+    },
+    {
+      "kind": "size_g",
+      "value": 7256
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "TrueGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer cookies & cream 7256g 20g protein TrueGain\n\n=== RESULTS ===\n[B] Title: TrueGain Protein Blend Cookies & Cream 64oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 64oz\n    Protein per serving: 20g\n    Price: $39.00\n    Reviews: 3,828\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: TrueGain Plant Protein Cookies & Cream 64oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 64oz (Pack of 4)\n    Protein per serving: 20g\n    Price: $42.00\n    Reviews: 929\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "TrueGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "64oz",
+      "size_value": 64,
+      "size_unit": "oz",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "3,828",
+      "review_count": 3828
+    },
+    {
+      "id": "A",
+      "brand": "TrueGain",
+      "flavor": "Cookies & Cream",
+      "size_raw": "64oz (Pack of 4)",
+      "size_value": 64,
+      "size_unit": "oz",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "pack_count": 4,
+      "price_usd": 42,
+      "reviews_raw": "929",
+      "review_count": 929
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw."
+}

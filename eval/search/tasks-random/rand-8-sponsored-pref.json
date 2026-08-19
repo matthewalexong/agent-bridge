@@ -1,0 +1,72 @@
+{
+  "id": "rand-8-sponsored-pref",
+  "note": "RANDOMIZED (sponsored-pref, seed 42): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
+  "query": "Protein Blend strawberry 454g 21g protein TrueGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 454
+    },
+    {
+      "kind": "protein_g",
+      "value": 21
+    },
+    {
+      "kind": "brand",
+      "value": "TrueGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend strawberry 454g 21g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Whey Protein Strawberry 16oz\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 16oz\n    Protein per serving: 21g\n    Price: $46.00\n    Reviews: 3,958\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: TrueGain Plant Protein Strawberry 16oz\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 16oz\n    Protein per serving: 21g\n    Price: $48.00\n    Reviews: 690\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "TrueGain",
+      "flavor": "Strawberry",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 21,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "price_usd": 46,
+      "reviews_raw": "3,958",
+      "review_count": 3958
+    },
+    {
+      "id": "B",
+      "brand": "TrueGain",
+      "flavor": "Strawberry",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 21,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 48,
+      "reviews_raw": "690",
+      "review_count": 690
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic."
+}

@@ -1,0 +1,72 @@
+{
+  "id": "rand-11-oos-full-match",
+  "note": "RANDOMIZED (oos-full-match, seed 42): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
+  "query": "Protein Blend chocolate 1000g 23g protein VitaForge",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "chocolate"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 23
+    },
+    {
+      "kind": "brand",
+      "value": "VitaForge"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend chocolate 1000g 23g protein VitaForge\n\n=== RESULTS ===\n[A] Title: VitaForge Whey Protein Chocolate 1000g\n    Brand: VitaForge\n    Flavor: Chocolate\n    Size: 1000g\n    Protein per serving: 23g\n    Price: $32.00\n    Reviews: 1,637\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: VitaForge Mass Gainer Chocolate 1LB\n    Brand: VitaForge\n    Flavor: Chocolate\n    Size: 1LB\n    Protein per serving: 23g\n    Price: $40.00\n    Reviews: 1,962\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "VitaForge",
+      "flavor": "Chocolate",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "price_usd": 32,
+      "reviews_raw": "1,637",
+      "review_count": 1637
+    },
+    {
+      "id": "B",
+      "brand": "VitaForge",
+      "flavor": "Chocolate",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 40,
+      "reviews_raw": "1,962",
+      "review_count": 1962
+    }
+  ],
+  "ground_truth": {
+    "action": "reformulate",
+    "selected_listing": null,
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "A full match exists but is out of stock; the search needs reformulation."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "A full match exists but is out of stock — action reformulate, matched_constraints reports the full count."
+}

@@ -1,0 +1,87 @@
+{
+  "id": "rand-18-protein-mg",
+  "note": "RANDOMIZED (protein-mg, seed 42): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
+  "query": "Mass Gainer unflavored 1500g 20g protein ProLean",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "unflavored"
+    },
+    {
+      "kind": "size_g",
+      "value": 1500
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "ProLean"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer unflavored 1500g 20g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Mass Gainer Unflavored 1500g\n    Brand: ProLean\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 20000mg\n    Price: $37.00\n    Reviews: 1,225\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: ProLean Plant Protein Mocha 1500g\n    Brand: ProLean\n    Flavor: Mocha\n    Size: 1500g\n    Protein per serving: 20g\n    Price: $43.00\n    Reviews: 4,003\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: ProLean Protein Blend Unflavored 1500g\n    Brand: ProLean\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 20g\n    Price: $41.00\n    Reviews: 563\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "ProLean",
+      "flavor": "Unflavored",
+      "size_raw": "1500g",
+      "size_value": 1500,
+      "size_unit": "g",
+      "protein_value": 20000,
+      "protein_unit": "mg",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 37,
+      "reviews_raw": "1,225",
+      "review_count": 1225
+    },
+    {
+      "id": "C",
+      "brand": "ProLean",
+      "flavor": "Mocha",
+      "size_raw": "1500g",
+      "size_value": 1500,
+      "size_unit": "g",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 43,
+      "reviews_raw": "4,003",
+      "review_count": 4003
+    },
+    {
+      "id": "B",
+      "brand": "ProLean",
+      "flavor": "Unflavored",
+      "size_raw": "1500g",
+      "size_value": 1500,
+      "size_unit": "g",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41,
+      "reviews_raw": "563",
+      "review_count": 563
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($37) and the highest review count (1225)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies."
+}

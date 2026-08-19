@@ -1,0 +1,73 @@
+{
+  "id": "rand-14-multipack",
+  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Protein Blend mocha 2721g 24g protein VitaForge",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "mocha"
+    },
+    {
+      "kind": "size_g",
+      "value": 2721
+    },
+    {
+      "kind": "protein_g",
+      "value": 24
+    },
+    {
+      "kind": "brand",
+      "value": "VitaForge"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend mocha 2721g 24g protein VitaForge\n\n=== RESULTS ===\n[B] Title: VitaForge Whey Isolate Mocha 32oz\n    Brand: VitaForge\n    Flavor: Mocha\n    Size: 32oz\n    Protein per serving: 24g\n    Price: $44.00\n    Reviews: 3,167\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: VitaForge Casein Protein Mocha 32oz\n    Brand: VitaForge\n    Flavor: Mocha\n    Size: 32oz (Pack of 3)\n    Protein per serving: 24g\n    Price: $76.00\n    Reviews: 3,437\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "VitaForge",
+      "flavor": "Mocha",
+      "size_raw": "32oz",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 44,
+      "reviews_raw": "3,167",
+      "review_count": 3167
+    },
+    {
+      "id": "A",
+      "brand": "VitaForge",
+      "flavor": "Mocha",
+      "size_raw": "32oz (Pack of 3)",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "pack_count": 3,
+      "price_usd": 76,
+      "reviews_raw": "3,437",
+      "review_count": 3437
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw."
+}

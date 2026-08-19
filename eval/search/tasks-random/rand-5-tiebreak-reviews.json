@@ -1,0 +1,72 @@
+{
+  "id": "rand-5-tiebreak-reviews",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 42): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Casein Protein unflavored 3000g 23g protein MuscleMax",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "unflavored"
+    },
+    {
+      "kind": "size_g",
+      "value": 3000
+    },
+    {
+      "kind": "protein_g",
+      "value": 23
+    },
+    {
+      "kind": "brand",
+      "value": "MuscleMax"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein unflavored 3000g 23g protein MuscleMax\n\n=== RESULTS ===\n[A] Title: MuscleMax Protein Blend Unflavored 3KG\n    Brand: MuscleMax\n    Flavor: Unflavored\n    Size: 3KG\n    Protein per serving: 23g\n    Price: $39.00\n    Reviews: 775\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: MuscleMax Protein Blend Unflavored 3KG\n    Brand: MuscleMax\n    Flavor: Unflavored\n    Size: 3KG\n    Protein per serving: 23g\n    Price: $39.00\n    Reviews: 3,360\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "MuscleMax",
+      "flavor": "Unflavored",
+      "size_raw": "3KG",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "775",
+      "review_count": 775
+    },
+    {
+      "id": "B",
+      "brand": "MuscleMax",
+      "flavor": "Unflavored",
+      "size_raw": "3KG",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 23,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "3,360",
+      "review_count": 3360
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($39) and the highest review count (3360)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at the SAME price — judge tie-breaks on higher review count."
+}

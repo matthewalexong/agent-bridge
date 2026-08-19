@@ -1,0 +1,73 @@
+{
+  "id": "rand-28-multipack",
+  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Mass Gainer banana 908g 28g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "banana"
+    },
+    {
+      "kind": "size_g",
+      "value": 908
+    },
+    {
+      "kind": "protein_g",
+      "value": 28
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer banana 908g 28g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Protein Blend Banana 16oz\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 16oz\n    Protein per serving: 28g\n    Price: $41.00\n    Reviews: 2,215\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Whey Protein Banana 16oz\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 16oz (Pack of 2)\n    Protein per serving: 28g\n    Price: $60.00\n    Reviews: 776\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Banana",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 41,
+      "reviews_raw": "2,215",
+      "review_count": 2215
+    },
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Banana",
+      "size_raw": "16oz (Pack of 2)",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "pack_count": 2,
+      "price_usd": 60,
+      "reviews_raw": "776",
+      "review_count": 776
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw."
+}

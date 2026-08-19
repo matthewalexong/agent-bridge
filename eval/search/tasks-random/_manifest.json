@@ -1,0 +1,247 @@
+{
+  "seed": 42,
+  "count": 40,
+  "generated": "2026-08-19T20:49:15.095Z",
+  "tasks": [
+    {
+      "id": "rand-1-unique-match",
+      "scenario": "unique-match",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-2-unique-match",
+      "scenario": "unique-match",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-3-tiebreak-price",
+      "scenario": "tiebreak-price",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-4-tiebreak-price",
+      "scenario": "tiebreak-price",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-5-tiebreak-reviews",
+      "scenario": "tiebreak-reviews",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-6-tiebreak-reviews",
+      "scenario": "tiebreak-reviews",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-7-sponsored-pref",
+      "scenario": "sponsored-pref",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-8-sponsored-pref",
+      "scenario": "sponsored-pref",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-9-no-match",
+      "scenario": "no-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-10-no-match",
+      "scenario": "no-match",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-11-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-12-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-13-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-14-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-15-unit-mix",
+      "scenario": "unit-mix",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-16-unit-mix",
+      "scenario": "unit-mix",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-17-protein-mg",
+      "scenario": "protein-mg",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-18-protein-mg",
+      "scenario": "protein-mg",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-19-missing-reviews",
+      "scenario": "missing-reviews",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-20-missing-reviews",
+      "scenario": "missing-reviews",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-21-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-22-no-match",
+      "scenario": "no-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-23-protein-mg",
+      "scenario": "protein-mg",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-24-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-25-tiebreak-price",
+      "scenario": "tiebreak-price",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-26-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-27-tiebreak-reviews",
+      "scenario": "tiebreak-reviews",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-28-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-29-protein-mg",
+      "scenario": "protein-mg",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-30-no-match",
+      "scenario": "no-match",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-31-tiebreak-reviews",
+      "scenario": "tiebreak-reviews",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-32-protein-mg",
+      "scenario": "protein-mg",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-33-unit-mix",
+      "scenario": "unit-mix",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-34-sponsored-pref",
+      "scenario": "sponsored-pref",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-35-tiebreak-price",
+      "scenario": "tiebreak-price",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-36-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-37-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-38-multipack",
+      "scenario": "multipack",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-39-unique-match",
+      "scenario": "unique-match",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-40-no-match",
+      "scenario": "no-match",
+      "action": "reformulate",
+      "selected": null
+    }
+  ]
+}
