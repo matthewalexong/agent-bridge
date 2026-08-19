@@ -28,12 +28,15 @@ const repoRoot = path.join(root, "..");
 // TRUST RULE: the parsed OVERALL score is the ONLY gate signal. A task that crashes
 // during scoring prints "ERROR:" with NO ✗ lines, so gating on "no ✗ lines" would
 // treat a crash as a perfect score. ERROR lines are included so the model sees crashes.
+// ROBUSTNESS: EVAL_RUNS=3 so a runner that supports repeated-measurement median
+// scoring (search eval) is not fooled by a temp-0 fluke. Runners that ignore
+// EVAL_RUNS (protein eval) are unaffected by the extra env var.
 function baselineSkillResult(skillPath, evalRunner) {
   let out;
   try {
     out = execSync(
-      `EVAL_LLM_TEMPERATURE=0 node ${JSON.stringify(evalRunner)} --skill ${JSON.stringify(skillPath)}`,
-      { encoding: "utf8", timeout: 300000, maxBuffer: 8 * 1024 * 1024 }
+      `EVAL_LLM_TEMPERATURE=0 EVAL_RUNS=3 node ${JSON.stringify(evalRunner)} --skill ${JSON.stringify(skillPath)}`,
+      { encoding: "utf8", timeout: 600000, maxBuffer: 8 * 1024 * 1024 }
     );
   } catch (e) {
     return { score: 0, failures: `baseline eval errored: ${((e.stderr || e.stdout || e.message) + "").slice(0, 600)}` };
@@ -60,7 +63,7 @@ function makeSkillVerifier(verifierScript, candidatePath, threshold = 0.98) {
       fs.writeFileSync(candidatePath, markdown);
       const out = execSync(
         `node ${JSON.stringify(verifierScript)} ${JSON.stringify(candidatePath)} ${threshold}`,
-        { encoding: "utf8", timeout: 300000, maxBuffer: 4 * 1024 * 1024 }
+        { encoding: "utf8", timeout: 700000, maxBuffer: 8 * 1024 * 1024 }
       );
       return { pass: true, report: out.trim() };
     } catch (e) {

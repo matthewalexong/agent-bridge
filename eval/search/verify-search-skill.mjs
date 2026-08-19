@@ -39,9 +39,12 @@ for (const f of forbidden) {
 }
 
 try {
+  // EVAL_RUNS=3: each task measured 3x, median-scored (guards against a
+  // fluke 100% from Gemma's temp-0 nondeterminism). Long-SERP tasks take
+  // ~30s each, so the budget is generous.
   const out = execSync(
-    `EVAL_LLM_TEMPERATURE=0 node ${JSON.stringify(path.join(__dirname, "run-search-eval.mjs"))} --skill ${JSON.stringify(skillFile)}`,
-    { encoding: "utf8", timeout: 240000, maxBuffer: 4 * 1024 * 1024, cwd: path.join(__dirname, "..", "..") }
+    `EVAL_LLM_TEMPERATURE=0 EVAL_RUNS=3 node ${JSON.stringify(path.join(__dirname, "run-search-eval.mjs"))} --skill ${JSON.stringify(skillFile)}`,
+    { encoding: "utf8", timeout: 600000, maxBuffer: 8 * 1024 * 1024, cwd: path.join(__dirname, "..", "..") }
   );
   const m = out.match(/OVERALL:\s*([\d.]+)%/);
   if (!m) { console.error("could not parse OVERALL from eval output:\n" + out.slice(-800)); process.exit(1); }

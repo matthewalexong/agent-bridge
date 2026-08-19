@@ -20,6 +20,12 @@ const skillPath = skillArg
   : path.join(__dirname, "skills", "search-transcribe-v1.md");
 const SKILL = fs.readFileSync(skillPath, "utf8");
 const TEMP = parseFloat(process.env.EVAL_LLM_TEMPERATURE ?? "0");
+// REPEATS: Gemma's outputs vary run-to-run even at temperature 0 (GPU
+// nondeterminism / sampling). A single pass can fluke — the verifier once
+// recorded 100% on a run whose three successors scored 93.7%. With RUNS > 1
+// each task is measured N times and scored by the MEDIAN task score, so the
+// reported OVERALL reflects the skill's typical behavior, not a lucky draw.
+const RUNS = Math.max(1, parseInt(process.env.EVAL_RUNS ?? "1", 10));
 
 // ---- Local model client (llama.cpp OpenAI-compatible endpoint) ----
 const URL_ = process.env.LOCAL_LLM_URL || "http://127.0.0.1:8080/v1/chat/completions";
@@ -138,6 +144,7 @@ function scoreTask(verdict, gt, t) {
 const taskDir = path.join(__dirname, "tasks");
 const taskFiles = fs.readdirSync(taskDir).filter((f) => f.endsWith(".json")).sort();
 const results = [];
+const medianOf = (xs) => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 
 for (const f of taskFiles) {
   const task = JSON.parse(fs.readFileSync(path.join(taskDir, f), "utf8"));
@@ -145,22 +152,31 @@ for (const f of taskFiles) {
   console.log(`━━━ ${task.id} ━━━`);
   try {
     const prompt = `Query: ${task.query}\n\n${task.snapshot}`;
-    const raw = await localAsk(prompt);
-    const parsed = extractJson(raw);
-    const listings = parsed?.listings ?? parsed;
-    const tResult = Array.isArray(listings)
-      ? scoreTranscription(listings, task.ground_truth_listings)
-      : { fraction: 0, fieldFailures: ["no listings array parsed from model output"] };
-    // The judge receives the MODEL'S transcription — a bad transcription
-    // propagates into a wrong verdict, exactly as it would in production.
-    const verdict = judgeSearch(task.constraints, Array.isArray(listings) ? listings : []);
-    const score = scoreTask(verdict, task.ground_truth, tResult);
+    // N measured runs; the task's score is the MEDIAN (robust to flukes).
+    // Failures shown come from the WORST run (most informative for the loop).
+    const runs = [];
+    for (let r = 0; r < RUNS; r++) {
+      const raw = await localAsk(prompt);
+      const parsed = extractJson(raw);
+      const listings = parsed?.listings ?? parsed;
+      const tResult = Array.isArray(listings)
+        ? scoreTranscription(listings, task.ground_truth_listings)
+        : { fraction: 0, fieldFailures: ["no listings array parsed from model output"] };
+      // The judge receives the MODEL'S transcription — a bad transcription
+      // propagates into a wrong verdict, exactly as it would in production.
+      const verdict = judgeSearch(task.constraints, Array.isArray(listings) ? listings : []);
+      const score = scoreTask(verdict, task.ground_truth, tResult);
+      runs.push({ score: score.total, failures: score.failures, verdict, transcription: tResult.fraction });
+    }
+    const taskScore = medianOf(runs.map((r) => r.score));
+    const worst = runs.reduce((a, b) => (b.score < a.score ? b : a));
+    results.push({ task: task.id, score: taskScore, failures: worst.failures, verdict: worst.verdict, transcription: worst.transcription, runs: RUNS });
     const ms = Date.now() - t0;
-    results.push({ task: task.id, score: score.total, failures: score.failures, verdict, transcription: tResult.fraction });
-    console.log(`  TOTAL SCORE: ${(score.total * 100).toFixed(1)}%  (${ms}ms)`);
-    for (const fl of score.failures) console.log(`  ✗ ${fl}`);
+    const spread = runs.length > 1 ? ` [runs: ${runs.map((r) => (r.score * 100).toFixed(0)).join("/")}]` : "";
+    console.log(`  TOTAL SCORE: ${(taskScore * 100).toFixed(1)}%${spread}  (${ms}ms)`);
+    for (const fl of worst.failures) console.log(`  ✗ ${fl}`);
   } catch (e) {
-    results.push({ task: task.id, score: 0, failures: [`ERROR: ${e.message}`], verdict: null, transcription: 0 });
+    results.push({ task: task.id, score: 0, failures: [`ERROR: ${e.message}`], verdict: null, transcription: 0, runs: RUNS });
     console.log(`  ERROR: ${e.message}`);
   }
 }
