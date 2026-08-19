@@ -76,12 +76,29 @@ const unitEq = (a, b) => normS(a).replace(/s$/, "") === normS(b).replace(/s$/, "
 // (Ground truth uses "" for a missing unit when the sibling value is null; the
 // model may equally write null — both are correct transcriptions.)
 const textEq = (a, b) => normS(a) === normS(b);
-// size_raw is compared after stripping a leading "Size:" label — Gemma
-// sometimes dictates the label along with the line content. What matters is
-// the line's content; code parses the pack multiplier out of it.
+// Semantic size equality: compare normalized per-unit grams (unit-agnostic),
+// matching how the judge consumes the fields. Both-missing is a match.
+const sizeEq = (g, w) => {
+  const gg = normalizeWeightG(g.size_value, g.size_unit);
+  const ww = normalizeWeightG(w.size_value, w.size_unit);
+  if (gg == null && ww == null) return true;
+  if (gg == null || ww == null) return false;
+  return Math.abs(gg - ww) <= Math.max(2, ww * 0.005);
+};
+// size_raw is compared SEMANTICALLY, not as raw strings: its only load-bearing
+// content is (a) the size number+unit and (b) the pack note — code parses the
+// pack multiplier out of it. Gemma may spell units out ("grams" vs "g") or
+// dictate the "Size:" label; none of that changes what the parser extracts.
 const sizeRawEq = (a, b) => {
-  const strip = (s) => normS(s).replace(/^size:\s*/, "").replace(/\s+/g, " ").trim();
-  return strip(a) === strip(b);
+  const canon = (s) => {
+    let x = normS(s).replace(/^size:\s*/, "");
+    x = x.replace(/\b(pack\s+of)\b/g, "pack").replace(/[()]/g, " ");
+    // Canonical unit spellings, INCLUDING units attached to the number ("2000g").
+    x = x.replace(/(\d)\s*(kilograms?|kg)\b/g, "$1 kg").replace(/(\d)\s*(pounds?|lbs?)\b/g, "$1 lb");
+    x = x.replace(/(\d)\s*(ounces?|oz)\b/g, "$1 oz").replace(/(\d)\s*(grams?|g)\b/g, "$1 g");
+    return x.replace(/\s+/g, " ").trim();
+  };
+  return canon(a) === canon(b);
 };
 
 function scoreTranscription(got, want) {
@@ -96,8 +113,13 @@ function scoreTranscription(got, want) {
     const fields = [
       ["brand", () => textEq(g.brand, w.brand)],
       ["flavor", () => textEq(g.flavor, w.flavor)],
-      ["size_value", () => numEq(g.size_value, w.size_value)],
-      ["size_unit", () => unitEq(g.size_unit, w.size_unit)],
+      // size_value+size_unit are scored SEMANTICALLY (total grams), never
+      // verbatim: the judge normalizes units before matching, so "1KG" and
+      // "1000g" are the same fact — Gemma normalizes eagerly and reliably
+      // (it cannot reliably be told NOT to). The verbatim source of truth is
+      // size_raw, which is scored separately.
+      ["size_value", () => sizeEq(g, w)],
+      ["size_unit", () => true], // covered by size_value's semantic check
       ["protein_value", () => numEq(g.protein_value, w.protein_value)],
       ["protein_unit", () => unitEq(g.protein_unit, w.protein_unit)],
       ["stock", () => textEq(g.stock, w.stock)],
