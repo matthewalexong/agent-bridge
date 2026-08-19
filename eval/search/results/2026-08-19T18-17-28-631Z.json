@@ -1,0 +1,25 @@
+{
+  "when": "2026-08-19T18:17:28.633Z",
+  "skill": "search-transcribe-v5.md",
+  "temperature": 0,
+  "overall": 0.9986111111111112,
+  "results": [
+    {
+      "task": "long-serp-attention",
+      "score": 0.9986111111111112,
+      "failures": [
+        "transcription 99% of listing fields correct",
+        "listing D field size_raw: got null, expected \"2KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "K",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing K satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 0.9907407407407407,
+      "runs": 3
+    }
+  ]
+}

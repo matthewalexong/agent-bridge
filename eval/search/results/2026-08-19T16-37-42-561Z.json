@@ -1,0 +1,353 @@
+{
+  "when": "2026-08-19T16:37:42.563Z",
+  "skill": "search-transcribe-v1.md",
+  "temperature": 0,
+  "overall": 0.84998654039222,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2KG\"",
+        "listing B field size_raw: got null, expected \"2KG\"",
+        "listing C field size_raw: got null, expected \"1KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "brand-variant-twin",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2LB (907g)\"",
+        "listing B field size_raw: got null, expected \"2LB (907g)\"",
+        "listing C field size_raw: got null, expected \"2LB (907g)\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "contradictory-title",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"5LB (2268g)\"",
+        "listing B field size_raw: got null, expected \"1LB (454g)\"",
+        "listing C field size_raw: got null, expected \"5LB (2268g)\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints and is the first qualifying match."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "long-serp-attention",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"1KG\"",
+        "listing B field size_raw: got null, expected \"2KG\"",
+        "listing C field size_raw: got null, expected \"5LB\"",
+        "listing D field size_raw: got null, expected \"2KG\"",
+        "listing E field size_raw: got null, expected \"2KG\"",
+        "listing F field size_raw: got null, expected \"2KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "K",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing K satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "mg-protein-distractor",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2LB (907g)\"",
+        "listing B field size_raw: got null, expected \"2LB (907g)\"",
+        "listing C field size_raw: got null, expected \"2LB (907g)\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "missing-fields",
+      "score": 0.9884615384615385,
+      "failures": [
+        "transcription 92% of listing fields correct",
+        "listing A field size_raw: got null, expected \"1KG\"",
+        "listing C field size_raw: got null, expected \"1KG\""
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0.9230769230769231,
+      "runs": 1
+    },
+    {
+      "task": "mixed-units-size",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2KG\"",
+        "listing B field size_raw: got null, expected \"2.2LB\"",
+        "listing C field size_raw: got null, expected \"2000g\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "multipack-total",
+      "score": 0.9777777777777779,
+      "failures": [
+        "transcription 85% of listing fields correct",
+        "listing A field size_value: got 2, expected 1",
+        "listing A field size_raw: got null, expected \"1KG (Pack of 2)\"",
+        "listing B field size_raw: got null, expected \"2KG\"",
+        "listing C field size_raw: got null, expected \"1KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.8518518518518519,
+      "runs": 1
+    },
+    {
+      "task": "multipack-verdict-flip",
+      "score": 0.18333333333333335,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"300g (Pack of 4)\"",
+        "listing B field size_raw: got null, expected \"1.2KG\"",
+        "listing C field size_raw: got null, expected \"600g (Pack of 2)\"",
+        "listing D field size_raw: got null, expected \"1KG\""
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "no-match-honest",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"3LB (1361g)\"",
+        "listing B field size_raw: got null, expected \"2LB (907g)\"",
+        "listing C field size_raw: got null, expected \"3LB (1361g)\""
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "oos-full-match",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2LB (907g)\"",
+        "listing B field size_raw: got null, expected \"2LB (907g)\"",
+        "listing C field size_raw: got null, expected \"1LB (454g)\""
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "price-tiebreak",
+      "score": 0.62,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 80% of listing fields correct",
+        "listing A field size_raw: got null, expected \"1KG\"",
+        "listing A field price_usd: got null, expected 36.99",
+        "listing B field size_raw: got null, expected \"1000g\"",
+        "listing B field price_usd: got null, expected 32.49",
+        "listing C field size_raw: got null, expected \"2KG\"",
+        "listing C field price_usd: got null, expected 58.99"
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the first qualifying match."
+      },
+      "transcription": 0.8,
+      "runs": 1
+    },
+    {
+      "task": "price-unknown-later",
+      "score": 0.6241379310344828,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 83% of listing fields correct",
+        "listing A field size_raw: got null, expected \"500g\"",
+        "listing B field size_raw: got null, expected \"500g\"",
+        "listing B field price_usd: got null, expected 21.99",
+        "listing C field size_raw: got null, expected \"1KG\"",
+        "listing C field price_usd: got null, expected 34.99"
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints and is the first qualifying match."
+      },
+      "transcription": 0.8275862068965517,
+      "runs": 1
+    },
+    {
+      "task": "review-count-tiebreak",
+      "score": 0.6090909090909091,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 73% of listing fields correct",
+        "listing A field size_raw: got null, expected \"5LB\"",
+        "listing A field price_usd: got null, expected 44.99",
+        "listing A field review_count: got null, expected 890",
+        "listing B field size_raw: got null, expected \"2268g\"",
+        "listing B field price_usd: got null, expected 44.99",
+        "listing B field review_count: got null, expected 2310"
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints and is the first qualifying match."
+      },
+      "transcription": 0.7272727272727273,
+      "runs": 1
+    },
+    {
+      "task": "review-evidence-over-position",
+      "score": 0.6136363636363636,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 76% of listing fields correct",
+        "listing A field size_raw: got null, expected \"2LB\"",
+        "listing A field price_usd: got null, expected 34.99",
+        "listing B field size_raw: got null, expected \"908g\"",
+        "listing B field price_usd: got null, expected 34.99",
+        "listing B field review_count: got null, expected 445",
+        "listing C field size_raw: got null, expected \"908g\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints and is the first qualifying match."
+      },
+      "transcription": 0.7575757575757576,
+      "runs": 1
+    },
+    {
+      "task": "sponsored-twin",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"1KG (1000g)\"",
+        "listing B field size_raw: got null, expected \"1KG\"",
+        "listing C field size_raw: got null, expected \"1KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    },
+    {
+      "task": "twin-distractor",
+      "score": 0.9833333333333334,
+      "failures": [
+        "transcription 89% of listing fields correct",
+        "listing A field size_raw: got null, expected \"5LB (2268g)\"",
+        "listing B field size_raw: got null, expected \"2LB (907g)\"",
+        "listing C field size_raw: got null, expected \"5LB (2268g)\"",
+        "listing D field size_raw: got null, expected \"1LB (454g)\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 0.8888888888888888,
+      "runs": 1
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "when": "2026-08-19T03:56:31.114Z",
+  "skill": ".candidate-task5.md",
+  "temperature": 0,
+  "overall": 0.9511807151979565,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 0.9944444444444445,
+      "failures": [
+        "transcription 96% of listing fields correct",
+        "listing B field size_raw: got \"Size: 2000g\", expected \"2KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.9629629629629629,
+      "runs": 3
+    },
+    {
+      "task": "brand-variant-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "contradictory-title",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "long-serp-attention",
+      "score": 0.9986111111111112,
+      "failures": [
+        "transcription 99% of listing fields correct",
+        "listing D field size_raw: got null, expected \"2KG\""
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "K",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing K satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 0.9907407407407407,
+      "runs": 3
+    },
+    {
+      "task": "mg-protein-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "missing-fields",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "mixed-units-size",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "multipack-total",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "multipack-verdict-flip",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "no-match-honest",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "price-tiebreak",
+      "score": 0.635,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 90% of listing fields correct",
+        "listing A field price_usd: got null, expected 36.99",
+        "listing B field price_usd: got null, expected 32.49",
+        "listing C field price_usd: got null, expected 58.99"
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 0.9,
+      "runs": 3
+    },
+    {
+      "task": "price-unknown-later",
+      "score": 0.6396551724137931,
+      "failures": [
+        "selected_listing expected B got A",
+        "transcription 93% of listing fields correct",
+        "listing B field price_usd: got null, expected 21.99",
+        "listing C field price_usd: got null, expected 34.99"
+      ],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 0.9310344827586207,
+      "runs": 3
+    },
+    {
+      "task": "sponsored-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "twin-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    }
+  ]
+}

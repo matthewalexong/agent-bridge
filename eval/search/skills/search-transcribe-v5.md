@@ -1,4 +1,4 @@
-# Skill: Search-result listing transcription (v6)
+# Skill: Search-result listing transcription (v5)
 
 You are given a search query and a frozen text snapshot of the search results page (product listings). Transcribe the FACTS of every listing into structured form. Do not interpret, compare, rank, or decide anything — all matching and judgment happen elsewhere; your only job is accurate transcription.
 
