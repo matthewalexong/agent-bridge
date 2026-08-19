@@ -229,3 +229,53 @@ Two apparent failures during corpus construction were bugs in the *scorer*
 `""` vs `null` unit encodings) — fixed, and the model was right all along.
 That is the discipline this architecture enforces: the first explanation for
 a failure is always checked against the judge itself.
+
+### TASK 5 results (2026-08-19 — rounds 3–4: reviews, long SERPs, contamination)
+
+Corpus extended 15 → 17 tasks: `review-count-tiebreak` (pick by review count
+when protein/size tie) and `review-evidence-over-position` (missing Reviews
+line = missing evidence, not zero reviews; position must not win), plus a
+`long-serp-attention` stress task (12 listings, 2320-char snapshot).
+
+| Phase | Corpus | Best skill | Median-of-3 score |
+|---|---|---|---|
+| Round 3 (loop fired) | 17 tasks | v4 | **unresolved** — 5 local attempts + frontier consult |
+| Wiring fixes | 17 tasks | v5 (hand-seeded) | **99.9%** — long-serp 0%→99.9%, reviews 100% |
+| Anti-contamination rule | 17 tasks | v6 | **99.9%** every task, zero field ✗'s in best runs |
+
+Round 3 looked like a model capability wall. It wasn't — every failure was
+harness or scaffolding:
+
+1. **Frontier consult returned empty text.** The frontier is a *reasoning*
+   model (qwen3.8-max via Anthropic-style gateway). The consult's 3000-token
+   cap was fully burned on internal thinking — zero text blocks emitted.
+   The escalation tier silently did nothing. Fix: extract `thinking` blocks
+   when `text` is empty, budget 3000→8000 (`frontier.mjs`, `cascade.mjs`).
+2. **Long SERP "no listings array parsed" (0%).** The eval's `max_tokens: 1600`
+   truncated 12-listing JSON mid-object. One-line fix to 4096 → 99.9%.
+   Same bug class as round 2's price failure: the harness starved the model.
+3. **Reviews `null` despite the skill defining `review_count`.** Round 3's
+   candidates added the field correctly (feedback-format fix worked) but
+   Gemma never emitted it — the snapshot's line is spelled `Reviews:`, and
+   nothing anchored field name to source line. Fix: verbatim-dictation tier
+   `reviews_raw` + explicit source-line anchoring + code-parsed
+   `extractReviewCount` (mirror of `size_raw`/`extractPackCount`).
+4. **Title→Size contamination (v5 residuals).** Gemma copied size text from
+   the `Title:` line ("2000g", "10LB Bulk") into `size_raw` instead of the
+   `Size:` field line ("2KG", "10LB"). Fixed with a targeted anti-
+   contamination rule + worked negative examples (v6): 100% on both affected
+   tasks, 3/3 runs.
+
+The universal pattern, now proven three times (units, pack counts, review
+counts): **whatever the model transcribes unreliably, have it dictate the
+source line verbatim into a `*_raw` field and parse the number in code.**
+Reliable verbatim copying ≈ 100%; reliable numerical/semantic extraction
+from free text < 100%. The loop's job is to detect which step a model is
+failing at, and the fix is usually to change the split between model and
+code — not to ask the model to try harder.
+
+Loop properties unchanged. One genuinely new property: the *frontier tier
+itself* needed the same discipline (its failure mode — empty output — was a
+wiring bug, caught only because the ledger recorded 3002 tokens against
+zero stored text). When the escalation path misbehaves, audit the wiring
+before concluding the frontier is unhelpful.
