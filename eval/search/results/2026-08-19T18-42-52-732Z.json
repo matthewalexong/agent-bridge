@@ -1,0 +1,36 @@
+{
+  "when": "2026-08-19T18:42:52.743Z",
+  "skill": "search-transcribe-v6.md",
+  "temperature": 0,
+  "overall": 1,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "review-count-tiebreak",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 constraints and is the cheapest qualifying match ($44.99) and the highest review count (2310)."
+      },
+      "transcription": 1,
+      "runs": 3
+    }
+  ]
+}
