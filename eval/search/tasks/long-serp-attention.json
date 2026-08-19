@@ -3,25 +3,169 @@
   "note": "HARD SYNTHETIC: 12-listing SERP; the ONLY full match is buried near the end (listing K) among 11 near-misses (wrong flavor, wrong size, wrong brand decoys, out-of-stock twins). Tests attention over long inputs — Gemma's known weak point.",
   "query": "vanilla whey isolate 2kg 25g protein CoreFuel",
   "constraints": [
-    { "kind": "flavor", "value": "vanilla" },
-    { "kind": "size_g", "value": 2000 },
-    { "kind": "protein_g", "value": 25 },
-    { "kind": "brand", "value": "CoreFuel" }
+    {
+      "kind": "flavor",
+      "value": "vanilla"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 25
+    },
+    {
+      "kind": "brand",
+      "value": "CoreFuel"
+    }
   ],
   "snapshot": "=== SEARCH QUERY ===\nvanilla whey isolate 2kg 25g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Whey Isolate Vanilla 1KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 1KG\n    Protein per serving: 25g\n    Price: $32.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Whey Isolate Chocolate 2KG\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 2KG\n    Protein per serving: 25g\n    Price: $58.99\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: CoreFuel Whey Isolate Vanilla 5LB\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 5LB\n    Protein per serving: 25g\n    Price: $89.99\n    Stock: out of stock\n    Sponsored: no\n\n[D] Title: CoreFuel Whey Concentrate Vanilla 2KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 22g\n    Price: $49.99\n    Stock: in stock\n    Sponsored: yes\n\n[E] Title: CoreFuel Mass Gainer Vanilla 2KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 25g\n    Stock: out of stock\n    Sponsored: no\n\n[F] Title: TrueFuel Whey Isolate Vanilla 2KG\n    Brand: TrueFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 25g\n    Price: $54.99\n    Stock: in stock\n    Sponsored: no\n\n[G] Title: CoreFuel Whey Isolate Vanilla 900g\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 900g\n    Protein per serving: 25g\n    Price: $29.99\n    Stock: in stock\n    Sponsored: no\n\n[H] Title: CoreFuel Whey Isolate Strawberry 2KG\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 2KG\n    Protein per serving: 25g\n    Price: $58.99\n    Stock: in stock\n    Sponsored: no\n\n[I] Title: CoreFuel Whey Isolate Vanilla 2KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 24g\n    Price: $55.99\n    Stock: in stock\n    Sponsored: no\n\n[J] Title: CoreFuel Whey Isolate Vanilla 2.2LB\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2.2LB\n    Protein per serving: 25g\n    Price: $39.99\n    Stock: in stock\n    Sponsored: yes\n\n[K] Title: CoreFuel Whey Isolate - Vanilla, 2000g\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2000g\n    Protein per serving: 25g\n    Price: $57.99\n    Stock: in stock\n    Sponsored: no\n\n[L] Title: CoreFuel Whey Isolate Vanilla 3KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 3KG\n    Protein per serving: 25g\n    Price: $79.99\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
-    { "id": "A", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 1, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "B", "brand": "CoreFuel", "flavor": "Chocolate", "size_value": 2, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "C", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 5, "size_unit": "LB", "protein_value": 25, "protein_unit": "g", "stock": "out of stock", "sponsored": false },
-    { "id": "D", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2, "size_unit": "KG", "protein_value": 22, "protein_unit": "g", "stock": "in stock", "sponsored": true },
-    { "id": "E", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "out of stock", "sponsored": false },
-    { "id": "F", "brand": "TrueFuel", "flavor": "Vanilla", "size_value": 2, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "G", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 900, "size_unit": "g", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "H", "brand": "CoreFuel", "flavor": "Strawberry", "size_value": 2, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "I", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2, "size_unit": "KG", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "J", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2.2, "size_unit": "LB", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": true },
-    { "id": "K", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2000, "size_unit": "g", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "L", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 3, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false }
+    {
+      "id": "A",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "1KG"
+    },
+    {
+      "id": "B",
+      "brand": "CoreFuel",
+      "flavor": "Chocolate",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "C",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 5,
+      "size_unit": "LB",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "size_raw": "5LB"
+    },
+    {
+      "id": "D",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 22,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "E",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "F",
+      "brand": "TrueFuel",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "G",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 900,
+      "size_unit": "g",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "900g"
+    },
+    {
+      "id": "H",
+      "brand": "CoreFuel",
+      "flavor": "Strawberry",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "I",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "J",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2.2,
+      "size_unit": "LB",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "size_raw": "2.2LB"
+    },
+    {
+      "id": "K",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2000,
+      "size_unit": "g",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2000g"
+    },
+    {
+      "id": "L",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "3KG"
+    }
   ],
   "ground_truth": {
     "action": "stop",
@@ -30,7 +174,12 @@
     "total_constraints": 4
   },
   "scoring": {
-    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
   },
   "explanation": "Eleven near-misses surround the only full match: A wrong size, B wrong flavor, C out-of-stock 5LB, D wrong protein (22g) and sponsored, E out of stock, F wrong brand, G wrong size, H wrong flavor, I 24g protein (below the 25g constraint, outside the 0.5g tolerance), J only 998g, L wrong size (3KG). K — the 11th listing — is the only in-stock listing meeting all four constraints."
 }

@@ -27,7 +27,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "GreenGain"
+      "brand": "GreenGain",
+      "size_raw": "3LB (1361g)"
     },
     {
       "id": "B",
@@ -38,7 +39,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "GreenGain"
+      "brand": "GreenGain",
+      "size_raw": "2LB (907g)"
     },
     {
       "id": "C",
@@ -49,7 +51,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "brand": "MuscleMax"
+      "brand": "MuscleMax",
+      "size_raw": "3LB (1361g)"
     }
   ],
   "ground_truth": {

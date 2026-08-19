@@ -23,7 +23,8 @@
       "protein_unit": "mg",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "NitroFuel"
+      "brand": "NitroFuel",
+      "size_raw": "2LB (907g)"
     },
     {
       "id": "B",
@@ -34,7 +35,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "brand": "PureFuel"
+      "brand": "PureFuel",
+      "size_raw": "2LB (907g)"
     },
     {
       "id": "C",
@@ -45,7 +47,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "NitroFuel"
+      "brand": "NitroFuel",
+      "size_raw": "2LB (907g)"
     }
   ],
   "ground_truth": {

@@ -3,15 +3,56 @@
   "note": "SYNTHETIC SERP trap: some listings omit size or protein entirely. The skill must instruct NULL for missing values, not guessing from titles or other listings. The judge treats null as non-matching, forcing reformulate when no complete match exists.",
   "query": "unflavored whey isolate 1kg protein 25g",
   "constraints": [
-    { "kind": "flavor", "value": "unflavored" },
-    { "kind": "size_g", "value": 1000 },
-    { "kind": "protein_g", "value": 25 }
+    {
+      "kind": "flavor",
+      "value": "unflavored"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 25
+    }
   ],
   "snapshot": "=== SEARCH QUERY ===\nunflavored whey isolate 1kg protein 25g\n\n=== RESULTS ===\n[A] Title: OptiPure Whey Isolate Unflavored Bulk\n    Brand: OptiPure\n    Flavor: Unflavored\n    Size: 1KG\n    Price: $47.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PureFuel Whey Isolate Unflavored\n    Brand: PureFuel\n    Flavor: Unflavored\n    Protein per serving: 25g\n    Price: $39.99\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: OptiPure Whey Isolate Unflavored 1KG Complete\n    Brand: OptiPure\n    Flavor: Unflavored\n    Size: 1KG\n    Protein per serving: 27g\n    Price: $52.99\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
-    { "id": "A", "brand": "OptiPure", "flavor": "Unflavored", "size_value": 1, "size_unit": "KG", "protein_value": null, "protein_unit": "", "stock": "in stock", "sponsored": false },
-    { "id": "B", "brand": "PureFuel", "flavor": "Unflavored", "size_value": null, "size_unit": "", "protein_value": 25, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "C", "brand": "OptiPure", "flavor": "Unflavored", "size_value": 1, "size_unit": "KG", "protein_value": 27, "protein_unit": "g", "stock": "in stock", "sponsored": false }
+    {
+      "id": "A",
+      "brand": "OptiPure",
+      "flavor": "Unflavored",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": null,
+      "protein_unit": "",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "1KG"
+    },
+    {
+      "id": "B",
+      "brand": "PureFuel",
+      "flavor": "Unflavored",
+      "size_value": null,
+      "size_unit": "",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false
+    },
+    {
+      "id": "C",
+      "brand": "OptiPure",
+      "flavor": "Unflavored",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 27,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "1KG"
+    }
   ],
   "ground_truth": {
     "action": "reformulate",
@@ -20,7 +61,12 @@
     "total_constraints": 3
   },
   "scoring": {
-    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
   },
   "explanation": "A lacks protein info, B lacks size info, C has everything but 27g ≠ the required 25g. Every listing misses at least one constraint, so no full match exists — reformulate. A model that guesses missing values (e.g. inferring A's protein from C, or B's size from the query) manufactures a false full match and wrongly stops. Missing = null, never inferred."
 }

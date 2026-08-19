@@ -76,6 +76,13 @@ const unitEq = (a, b) => normS(a).replace(/s$/, "") === normS(b).replace(/s$/, "
 // (Ground truth uses "" for a missing unit when the sibling value is null; the
 // model may equally write null — both are correct transcriptions.)
 const textEq = (a, b) => normS(a) === normS(b);
+// size_raw is compared after stripping a leading "Size:" label — Gemma
+// sometimes dictates the label along with the line content. What matters is
+// the line's content; code parses the pack multiplier out of it.
+const sizeRawEq = (a, b) => {
+  const strip = (s) => normS(s).replace(/^size:\s*/, "").replace(/\s+/g, " ").trim();
+  return strip(a) === strip(b);
+};
 
 function scoreTranscription(got, want) {
   // want = ground_truth_listings (authoritative). Compare listing-by-listing by id.
@@ -95,9 +102,13 @@ function scoreTranscription(got, want) {
       ["protein_unit", () => unitEq(g.protein_unit, w.protein_unit)],
       ["stock", () => textEq(g.stock, w.stock)],
       ["sponsored", () => Boolean(g.sponsored) === Boolean(w.sponsored)],
-      // pack_count is optional on old-corpus listings; absent ≡ 1. Only scored
-      // when the ground truth states it, and null/missing ≡ 1 as well.
-      ...("pack_count" in w ? [["pack_count", () => numEq(g.pack_count ?? 1, w.pack_count)]] : []),
+      // size_raw is the LOAD-BEARING field: the judge parses pack multipliers
+      // out of it in code (Gemma transcribes pack_count unreliably ~50% of the
+      // time). Verbatim dictation is what the architecture depends on.
+      ...("size_raw" in w ? [["size_raw", () => sizeRawEq(g.size_raw, w.size_raw)]] : []),
+      // pack_count is NOT scored: it is a best-effort fallback for the judge.
+      // The code-parsed pack from size_raw wins, so demanding pack_count from
+      // the model would penalize the correct architecture.
     ];
     for (const [name, check] of fields) {
       total++;

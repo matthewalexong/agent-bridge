@@ -3,15 +3,57 @@
   "note": "SYNTHETIC SERP trap: two near-identical brands (MuscleMax vs MuscleMax Pro) — a suffix-blind match picks the wrong brand. Brand constraint is exact-match; the Pro variant must not satisfy a plain-brand query.",
   "query": "MuscleMax whey vanilla 2lb",
   "constraints": [
-    { "kind": "brand", "value": "MuscleMax" },
-    { "kind": "flavor", "value": "vanilla" },
-    { "kind": "size_g", "value": 907 }
+    {
+      "kind": "brand",
+      "value": "MuscleMax"
+    },
+    {
+      "kind": "flavor",
+      "value": "vanilla"
+    },
+    {
+      "kind": "size_g",
+      "value": 907
+    }
   ],
   "snapshot": "=== SEARCH QUERY ===\nMuscleMax whey vanilla 2lb\n\n=== RESULTS ===\n[A] Title: MuscleMax Pro Whey Vanilla 2LB\n    Brand: MuscleMax Pro\n    Flavor: Vanilla\n    Size: 2LB (907g)\n    Protein per serving: 26g\n    Price: $36.99\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: MuscleMax Whey Vanilla 2LB\n    Brand: MuscleMax\n    Flavor: Vanilla\n    Size: 2LB (907g)\n    Protein per serving: 24g\n    Price: $34.99\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: MuscleMax Whey Vanilla 2LB\n    Brand: MuscleMax\n    Flavor: Vanilla\n    Size: 2LB (907g)\n    Protein per serving: 24g\n    Price: $35.99\n    Stock: out of stock\n    Sponsored: no",
   "ground_truth_listings": [
-    { "id": "A", "brand": "MuscleMax Pro", "flavor": "Vanilla", "size_value": 2, "size_unit": "LB", "protein_value": 26, "protein_unit": "g", "stock": "in stock", "sponsored": true },
-    { "id": "B", "brand": "MuscleMax", "flavor": "Vanilla", "size_value": 2, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "C", "brand": "MuscleMax", "flavor": "Vanilla", "size_value": 2, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "stock": "out of stock", "sponsored": false }
+    {
+      "id": "A",
+      "brand": "MuscleMax Pro",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 26,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "size_raw": "2LB (907g)"
+    },
+    {
+      "id": "B",
+      "brand": "MuscleMax",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "2LB (907g)"
+    },
+    {
+      "id": "C",
+      "brand": "MuscleMax",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "size_raw": "2LB (907g)"
+    }
   ],
   "ground_truth": {
     "action": "stop",
@@ -20,7 +62,12 @@
     "total_constraints": 3
   },
   "scoring": {
-    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
   },
   "explanation": "A is sponsored and fully matches on flavor+size but its brand is 'MuscleMax Pro', not the queried 'MuscleMax' — the brand transcription must preserve the exact string so the judge's exact-match rule rejects it. C is the correct brand but out of stock. B is the only in-stock exact-brand match. Selecting A would be a brand-sloppiness error."
 }

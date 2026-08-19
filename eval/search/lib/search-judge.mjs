@@ -42,12 +42,32 @@ export function canonicalBrand(s) {
   return norm(s).replace(/[^a-z0-9]/g, "");
 }
 
+// ---- Pack/multipack parsing ------------------------------------------------
+// The pack multiplier ("(Pack of N)", "N-pack", "bundle of N") sits in the
+// listing's Size line — deterministic text, trivial to parse in code. Gemma
+// empirically transcribes it unreliably (~50% at temp 0: folds it into
+// size_value or drops it), so like every arithmetic/normalization step, it
+// lives HERE. totalSizeG prefers the code-parsed pack from size_raw over any
+// model-emitted pack_count.
+export function extractPackCount(sizeRaw) {
+  const s = norm(sizeRaw);
+  let m = s.match(/\(\s*pack\s*of\s*(\d+)\s*\)/);
+  if (m) return parseInt(m[1], 10);
+  m = s.match(/(\d+)\s*-?\s*pack\b/);
+  if (m) return parseInt(m[1], 10);
+  m = s.match(/bundle\s*of\s*(\d+)/);
+  if (m) return parseInt(m[1], 10);
+  return null;
+}
+
 // Total package size in grams, accounting for multipacks: a "1KG (Pack of 2)"
-// listing delivers 2000g total. Missing/absent pack_count means single unit.
+// listing delivers 2000g total. Code-parsed pack (from size_raw) wins over any
+// model-emitted pack_count; missing/absent pack means single unit.
 export function totalSizeG(listing) {
   const perUnit = normalizeWeightG(listing.size_value, listing.size_unit);
   if (perUnit == null) return null;
-  const pack = num(listing.pack_count);
+  const fromRaw = extractPackCount(listing.size_raw);
+  const pack = fromRaw ?? num(listing.pack_count);
   return perUnit * (pack != null && pack >= 1 ? pack : 1);
 }
 

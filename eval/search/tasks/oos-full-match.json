@@ -27,7 +27,8 @@
       "protein_unit": "g",
       "stock": "out of stock",
       "sponsored": false,
-      "brand": "CaseinPro"
+      "brand": "CaseinPro",
+      "size_raw": "2LB (907g)"
     },
     {
       "id": "B",
@@ -38,7 +39,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "CaseinPro"
+      "brand": "CaseinPro",
+      "size_raw": "2LB (907g)"
     },
     {
       "id": "C",
@@ -49,7 +51,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "CaseinPro"
+      "brand": "CaseinPro",
+      "size_raw": "1LB (454g)"
     }
   ],
   "ground_truth": {

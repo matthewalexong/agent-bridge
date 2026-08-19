@@ -3,15 +3,58 @@
   "note": "HARD SYNTHETIC: '1KG (Pack of 2)' delivers 2000g TOTAL. Only the multipack listing satisfies the 2000g constraint; a single 2KG listing is out of stock. Agent must transcribe pack_count correctly or the verdict flips.",
   "query": "vanilla whey concentrate 2kg CoreFuel",
   "constraints": [
-    { "kind": "flavor", "value": "vanilla" },
-    { "kind": "size_g", "value": 2000 },
-    { "kind": "brand", "value": "CoreFuel" }
+    {
+      "kind": "flavor",
+      "value": "vanilla"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "brand",
+      "value": "CoreFuel"
+    }
   ],
   "snapshot": "=== SEARCH QUERY ===\nvanilla whey concentrate 2kg CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Whey Concentrate Vanilla 1KG (Pack of 2)\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 1KG (Pack of 2)\n    Protein per serving: 24g\n    Price: $44.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Whey Concentrate - Vanilla, 2KG Tub\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 24g\n    Price: $46.99\n    Stock: out of stock\n    Sponsored: no\n\n[C] Title: CoreFuel Whey Concentrate Vanilla 1KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 1KG\n    Protein per serving: 24g\n    Price: $24.99\n    Stock: in stock\n    Sponsored: yes",
   "ground_truth_listings": [
-    { "id": "A", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 1, "size_unit": "KG", "pack_count": 2, "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": false },
-    { "id": "B", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 2, "size_unit": "KG", "protein_value": 24, "protein_unit": "g", "stock": "out of stock", "sponsored": false },
-    { "id": "C", "brand": "CoreFuel", "flavor": "Vanilla", "size_value": 1, "size_unit": "KG", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": true }
+    {
+      "id": "A",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 1,
+      "size_unit": "KG",
+      "pack_count": 2,
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "size_raw": "1KG (Pack of 2)"
+    },
+    {
+      "id": "B",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "size_raw": "2KG"
+    },
+    {
+      "id": "C",
+      "brand": "CoreFuel",
+      "flavor": "Vanilla",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "size_raw": "1KG"
+    }
   ],
   "ground_truth": {
     "action": "stop",
@@ -20,7 +63,12 @@
     "total_constraints": 3
   },
   "scoring": {
-    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
   },
   "explanation": "The 2KG tub (B) is the obvious match but is out of stock. The '1KG (Pack of 2)' multipack (A) delivers 2000g total and is in stock — the search is enough. C is a sponsored 1KG single unit: wrong total size."
 }

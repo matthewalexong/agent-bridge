@@ -27,7 +27,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "brand": "OptiPure"
+      "brand": "OptiPure",
+      "size_raw": "1KG (1000g)"
     },
     {
       "id": "B",
@@ -38,7 +39,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "OptiPure"
+      "brand": "OptiPure",
+      "size_raw": "1KG"
     },
     {
       "id": "C",
@@ -49,7 +51,8 @@
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "brand": "OptiPure"
+      "brand": "OptiPure",
+      "size_raw": "1KG"
     }
   ],
   "ground_truth": {
