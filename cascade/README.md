@@ -200,7 +200,7 @@ recursively-improved skill is a ~10-line registration.
 | Loop fired | 13 tasks | v2 (loop-generated) | claimed 100% — **fluke**, 3 successors scored 93.7% |
 | Median-of-3 measurement | 13 tasks | v3 (hand-authored) | **100%** every task, every run |
 | + price tie-break | 15 tasks | v3 | 95.2% — headroom rebuilt |
-| Loop fired (price) | 15 tasks | v4 (loop-generated) | **100%** — 2 local attempts, 46s, $0 frontier |
+| Loop fired (price) | 15 tasks | v4 (loop-generated) | **100%** — 2 local attempts, 46s, $0 frontier; independently re-verified (15/15 tasks, median-of-3) |
 
 What the loop proved about itself:
 
