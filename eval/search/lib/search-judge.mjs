@@ -112,13 +112,14 @@ export function judgeSearch(constraints, listings) {
       inStock: norm(l.stock) !== "out of stock",
       sponsored: Boolean(l.sponsored),
       price: num(l.price_usd),
+      reviews: num(l.review_count),
     };
   });
 
   // Decision rules, in priority order:
   // 1. In-stock FULL match exists → STOP. Prefer organic over sponsored twins;
-  //    among equally-qualified matches prefer the CHEAPEST (unknown prices
-  //    sort after known ones; price ties keep SERP order — stable sort).
+  //    among equally-qualified matches prefer the CHEAPEST; price ties break on
+  //    HIGHER review count. Unknown values sort after known ones (stable sort).
   // 2. Full matches exist but ALL out of stock → REFORMULATE (the search as it
   //    stands cannot deliver the product; a different query or size/flavor is
   //    needed — the agent must not just declare failure).
@@ -127,20 +128,33 @@ export function judgeSearch(constraints, listings) {
   if (fullInStock.length) {
     const organic = fullInStock.filter((s) => !s.sponsored);
     const pool = organic.length ? organic : fullInStock;
-    const pick = [...pool].sort((a, b) => {
+    // Tiered tie-break: known price ascending, then known review count descending.
+    // Unknowns sort after knowns at each tier so a listing WITH evidence always
+    // beats one without.
+    const cmpPrice = (a, b) => {
       if (a.price == null && b.price == null) return 0;
       if (a.price == null) return 1;
       if (b.price == null) return -1;
       return a.price - b.price;
-    })[0];
-    const tiebroken = pool.length > 1 && pick.price != null;
+    };
+    const cmpReviews = (a, b) => {
+      if (a.reviews == null && b.reviews == null) return 0;
+      if (a.reviews == null) return 1;
+      if (b.reviews == null) return -1;
+      return b.reviews - a.reviews;
+    };
+    const pick = [...pool].sort((a, b) => cmpPrice(a, b) || cmpReviews(a, b))[0];
+    const tiebroken = pool.length > 1;
+    const whyPrice = pick.price != null ? `the cheapest qualifying match ($${pick.price})` : null;
+    const whyReviews = pick.reviews != null ? `the highest review count (${pick.reviews})` : null;
+    const tie = [whyPrice, whyReviews].filter(Boolean).join(" and ");
     return {
       action: "stop",
       selected_listing: pick.id,
       matched_constraints: pick.metCount,
       total_constraints: total,
       explanation: tiebroken
-        ? `Listing ${pick.id} satisfies all ${total} constraints and is the cheapest qualifying match ($${pick.price}).`
+        ? `Listing ${pick.id} satisfies all ${total} constraints and is ${tie || "the first qualifying match"}.`
         : `Listing ${pick.id} satisfies all ${total} constraints${organic.length ? "" : " (sponsored, but the only in-stock full match)"} — search is enough.`,
     };
   }

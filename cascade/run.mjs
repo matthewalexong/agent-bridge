@@ -114,7 +114,13 @@ MEASURED FAILURES from a live run of the deterministic eval against this exact s
 ${baseline.failures}
 
 TASK: Revise the skill to fix those specific failures. Rules:
-- Preserve the existing output format and keys. You may ADD a new field ONLY when a measured failure names a field that the current skill never asks the model to emit (e.g. a missing "pack_count"). Do not rename or drop existing keys.
+- Preserve the existing output format and keys. Do not rename or drop existing keys.
+- You may ADD a new field ONLY when a measured failure names a field that the current skill never asks the model to emit (e.g. a missing "pack_count" or "price_usd"). When adding a field:
+  1. Add it to the per-listing field list with an exact transcription instruction (copy verbatim, never infer).
+  2. Add it to the Rules section (e.g. "Price information must be extracted verbatim if present. If no price is visible, use null.").
+  3. Add it to the Output format JSON schema.
+  All three locations must be updated for the field to actually appear in the model's output.
+- If a failure says a field is WRONG (value differs from expected), fix the transcription instruction for that specific field.
 - If a listing prints a multiplier/bundle note (e.g. "(Pack of N)", "N-pack", "bundle of N"), the skill must instruct the model to transcribe the PER-UNIT size exactly as printed AND report the multiplier as a separate integer field — never multiply, fold, or total the sizes yourself; downstream code does all arithmetic.
 - Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
 - The skill must stay generic: no task-specific numbers, product names, brand names, or listing IDs.
