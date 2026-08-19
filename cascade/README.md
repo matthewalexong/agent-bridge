@@ -191,11 +191,38 @@ baseline, score-gated skip (never "no failure lines"), anti-cheat guard.
 Both tasks share one factory (`makeSkillTask`) in `run.mjs` — adding a third
 recursively-improved skill is a ~10-line registration.
 
-### TASK 5 results (2026-08-19)
+### TASK 5 results (2026-08-19 — battle-tested RSI arc)
 
-| Corpus | Best skill | Score |
-|---|---|---|
-| 9 search tasks | v1 | 100%, holds at temp 0.3 |
+| Phase | Corpus | Best skill | Median-of-3 score |
+|---|---|---|---|
+| Initial corpus | 9 tasks | v1 | 100% (no headroom — loop self-gated, 0 tokens) |
+| + hard traps | 13 tasks | v1 | 93.7% — real headroom |
+| Loop fired | 13 tasks | v2 (loop-generated) | claimed 100% — **fluke**, 3 successors scored 93.7% |
+| Median-of-3 measurement | 13 tasks | v3 (hand-authored) | **100%** every task, every run |
+| + price tie-break | 15 tasks | v3 | 95.2% — headroom rebuilt |
+| Loop fired (price) | 15 tasks | v4 (loop-generated) | **100%** — 2 local attempts, 46s, $0 frontier |
+
+What the loop proved about itself:
+
+1. **Scaffolding bugs block the model**: attempt 1 said "keep the same keys",
+   which *forbade* the pack_count fix the failures demanded — 7 attempts all
+   failed at the same wall. Fixed the prompt, Gemma solved it in one 16.7s
+   attempt.
+2. **Single-pass verification flukes**: Gemma's temp-0 output is
+   nondeterministic; the verifier once recorded 100% that 3 successors scored
+   93.7%. The eval now measures **median-of-N** (EVAL_RUNS, verifier uses 3).
+3. **Capability walls resolve architecturally**: Gemma transcribes pack
+   counts ~50% of the time no matter how instructed. Answer: Gemma dictates
+   `size_raw` verbatim (12/12 reliable), code parses the pack multiplier
+   (`extractPackCount`). Same principle as mg→g normalization.
+4. **The loop's real product**: discovering which steps belong in code and
+   moving them there. Total frontier spend for the entire arc: one consult
+   (~4K tokens, ~$0.03).
+
+Loop properties are identical to TASK 4: compounding versions, live-grounded
+baseline, score-gated skip (never "no failure lines"), anti-cheat guard.
+Both tasks share one factory (`makeSkillTask`) in `run.mjs` — adding a third
+recursively-improved skill is a ~10-line registration.
 
 Two apparent failures during corpus construction were bugs in the *scorer*
 (`numEq(null, null) === false` penalized correct missing-field transcription;
