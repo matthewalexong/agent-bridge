@@ -42,7 +42,11 @@ async function localAsk(prompt) {
         { role: "user", content: prompt },
       ],
       temperature: TEMP,
-      max_tokens: 1600,
+      // Output cap: 12 listings x 13 fields runs ~1900+ tokens of JSON. The
+      // old 1600 cap truncated long SERPs mid-object (Round 3: long-serp-
+      // attention 0%, "no listings array parsed") — a harness bug, not model
+      // failure. Gemma serves 4K comfortably; keep headroom for growth.
+      max_tokens: 4096,
     }),
   });
   if (!res.ok) throw new Error(`local model HTTP ${res.status}`);
@@ -198,12 +202,17 @@ function scoreTask(verdict, gt, t) {
 
 // ---- Main ----
 const taskDir = path.join(__dirname, "tasks");
+// Optional --only id1,id2 filter for fast iteration on a subset of tasks
+// (e.g. debugging long-serp-attention without re-running the full corpus).
+const onlyArg = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
+const onlyIds = onlyArg ? onlyArg.split(",").map((s) => s.trim()).filter(Boolean) : null;
 const taskFiles = fs.readdirSync(taskDir).filter((f) => f.endsWith(".json")).sort();
 const results = [];
 const medianOf = (xs) => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 
 for (const f of taskFiles) {
   const task = JSON.parse(fs.readFileSync(path.join(taskDir, f), "utf8"));
+  if (onlyIds && !onlyIds.includes(task.id)) continue;
   const t0 = Date.now();
   console.log(`━━━ ${task.id} ━━━`);
   try {
