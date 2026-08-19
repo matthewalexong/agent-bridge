@@ -1,56 +1,56 @@
 {
-  "id": "rand-11-oos-full-match",
+  "id": "rand-27-oos-full-match",
   "note": "RANDOMIZED (oos-full-match, seed 1337): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
-  "query": "Whey Isolate vanilla 2268g 25g protein IronPeak",
+  "query": "Whey Isolate chocolate 454g 24g protein IronPeak",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "vanilla"
+      "value": "chocolate"
     },
     {
       "kind": "size_g",
-      "value": 2268
+      "value": 454
     },
     {
       "kind": "protein_g",
-      "value": 25
+      "value": 24
     },
     {
       "kind": "brand",
       "value": "IronPeak"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate vanilla 2268g 25g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Whey Isolate Vanilla 5LB\n    Brand: IronPeak\n    Flavor: Vanilla\n    Size: 5LB\n    Protein per serving: 25g\n    Price: $31.00\n    Reviews: 2,975\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Isolate Vanilla 1KG\n    Brand: IronPeak\n    Flavor: Vanilla\n    Size: 1KG\n    Protein per serving: 25g\n    Price: $46.00\n    Reviews: 481\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate chocolate 454g 24g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Whey Isolate Chocolate 16oz\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 16oz\n    Protein per serving: 24g\n    Price: $47.00\n    Reviews: 1,565\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Isolate Chocolate 1KG\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 1KG\n    Protein per serving: 24g\n    Price: $36.00\n    Reviews: 207\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
       "brand": "IronPeak",
-      "flavor": "Vanilla",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 25,
+      "flavor": "Chocolate",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 24,
       "protein_unit": "g",
       "stock": "out of stock",
       "sponsored": false,
-      "price_usd": 31,
-      "reviews_raw": "2,975",
-      "review_count": 2975
+      "price_usd": 47,
+      "reviews_raw": "1,565",
+      "review_count": 1565
     },
     {
       "id": "B",
       "brand": "IronPeak",
-      "flavor": "Vanilla",
+      "flavor": "Chocolate",
       "size_raw": "1KG",
       "size_value": 1,
       "size_unit": "KG",
-      "protein_value": 25,
+      "protein_value": 24,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 46,
-      "reviews_raw": "481",
-      "review_count": 481
+      "price_usd": 36,
+      "reviews_raw": "207",
+      "review_count": 207
     }
   ],
   "ground_truth": {

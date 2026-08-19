@@ -1,71 +1,71 @@
 {
   "id": "rand-23-protein-mg",
-  "note": "RANDOMIZED (protein-mg, seed 42): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
-  "query": "Casein Protein strawberry 454g 23g protein CoreFuel",
+  "note": "RANDOMIZED (protein-mg, seed 1337): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
+  "query": "Whey Protein unflavored 2000g 29g protein VitaForge",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "strawberry"
+      "value": "unflavored"
     },
     {
       "kind": "size_g",
-      "value": 454
+      "value": 2000
     },
     {
       "kind": "protein_g",
-      "value": 23
+      "value": 29
     },
     {
       "kind": "brand",
-      "value": "CoreFuel"
+      "value": "VitaForge"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nCasein Protein strawberry 454g 23g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Mass Gainer Strawberry 16oz\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 16oz\n    Protein per serving: 23000mg\n    Price: $43.00\n    Reviews: 3,879\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: CoreFuel Whey Protein Salted Caramel 16oz\n    Brand: CoreFuel\n    Flavor: Salted Caramel\n    Size: 16oz\n    Protein per serving: 23g\n    Price: $41.00\n    Reviews: 2,409\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Protein Blend Strawberry 16oz\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 16oz\n    Protein per serving: 23g\n    Price: $45.00\n    Reviews: 1,011\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein unflavored 2000g 29g protein VitaForge\n\n=== RESULTS ===\n[A] Title: VitaForge Whey Protein Unflavored 2KG\n    Brand: VitaForge\n    Flavor: Unflavored\n    Size: 2KG\n    Protein per serving: 29000mg\n    Price: $36.00\n    Reviews: 4,983\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: VitaForge Whey Protein Chocolate 2KG\n    Brand: VitaForge\n    Flavor: Chocolate\n    Size: 2KG\n    Protein per serving: 29g\n    Price: $40.00\n    Reviews: 4,288\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: VitaForge Whey Protein Unflavored 2KG\n    Brand: VitaForge\n    Flavor: Unflavored\n    Size: 2KG\n    Protein per serving: 29g\n    Price: $39.00\n    Reviews: 2,461\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "CoreFuel",
-      "flavor": "Strawberry",
-      "size_raw": "16oz",
-      "size_value": 16,
-      "size_unit": "oz",
-      "protein_value": 23000,
+      "brand": "VitaForge",
+      "flavor": "Unflavored",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 29000,
       "protein_unit": "mg",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 43,
-      "reviews_raw": "3,879",
-      "review_count": 3879
+      "price_usd": 36,
+      "reviews_raw": "4,983",
+      "review_count": 4983
     },
     {
       "id": "C",
-      "brand": "CoreFuel",
-      "flavor": "Salted Caramel",
-      "size_raw": "16oz",
-      "size_value": 16,
-      "size_unit": "oz",
-      "protein_value": 23,
+      "brand": "VitaForge",
+      "flavor": "Chocolate",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 29,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 41,
-      "reviews_raw": "2,409",
-      "review_count": 2409
+      "price_usd": 40,
+      "reviews_raw": "4,288",
+      "review_count": 4288
     },
     {
       "id": "B",
-      "brand": "CoreFuel",
-      "flavor": "Strawberry",
-      "size_raw": "16oz",
-      "size_value": 16,
-      "size_unit": "oz",
-      "protein_value": 23,
+      "brand": "VitaForge",
+      "flavor": "Unflavored",
+      "size_raw": "2KG",
+      "size_value": 2,
+      "size_unit": "KG",
+      "protein_value": 29,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 45,
-      "reviews_raw": "1,011",
-      "review_count": 1011
+      "price_usd": 39,
+      "reviews_raw": "2,461",
+      "review_count": 2461
     }
   ],
   "ground_truth": {
@@ -73,7 +73,7 @@
     "selected_listing": "A",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($43) and the highest review count (3879)."
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($36) and the highest review count (4983)."
   },
   "scoring": {
     "weights": {

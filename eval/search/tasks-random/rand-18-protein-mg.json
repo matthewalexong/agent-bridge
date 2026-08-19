@@ -1,79 +1,79 @@
 {
   "id": "rand-18-protein-mg",
-  "note": "RANDOMIZED (protein-mg, seed 42): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
-  "query": "Mass Gainer unflavored 1500g 20g protein ProLean",
+  "note": "RANDOMIZED (protein-mg, seed 1337): Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies.",
+  "query": "Plant Protein salted caramel 454g 26g protein MuscleMax",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "unflavored"
+      "value": "salted caramel"
     },
     {
       "kind": "size_g",
-      "value": 1500
+      "value": 454
     },
     {
       "kind": "protein_g",
-      "value": 20
+      "value": 26
     },
     {
       "kind": "brand",
-      "value": "ProLean"
+      "value": "MuscleMax"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nMass Gainer unflavored 1500g 20g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Mass Gainer Unflavored 1500g\n    Brand: ProLean\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 20000mg\n    Price: $37.00\n    Reviews: 1,225\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: ProLean Plant Protein Mocha 1500g\n    Brand: ProLean\n    Flavor: Mocha\n    Size: 1500g\n    Protein per serving: 20g\n    Price: $43.00\n    Reviews: 4,003\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: ProLean Protein Blend Unflavored 1500g\n    Brand: ProLean\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 20g\n    Price: $41.00\n    Reviews: 563\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein salted caramel 454g 26g protein MuscleMax\n\n=== RESULTS ===\n[A] Title: MuscleMax Plant Protein Salted Caramel 1LB\n    Brand: MuscleMax\n    Flavor: Salted Caramel\n    Size: 1LB\n    Protein per serving: 26000mg\n    Price: $43.00\n    Reviews: 4,465\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: MuscleMax Plant Protein Salted Caramel 1LB\n    Brand: MuscleMax\n    Flavor: Salted Caramel\n    Size: 1LB\n    Protein per serving: 26g\n    Price: $34.00\n    Reviews: 3,747\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: MuscleMax Plant Protein Salted Caramel 1LB\n    Brand: MuscleMax\n    Flavor: Salted Caramel\n    Size: 1LB\n    Protein per serving: 26g\n    Price: $38.00\n    Reviews: 1,888\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "ProLean",
-      "flavor": "Unflavored",
-      "size_raw": "1500g",
-      "size_value": 1500,
-      "size_unit": "g",
-      "protein_value": 20000,
+      "brand": "MuscleMax",
+      "flavor": "Salted Caramel",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 26000,
       "protein_unit": "mg",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 37,
-      "reviews_raw": "1,225",
-      "review_count": 1225
+      "price_usd": 43,
+      "reviews_raw": "4,465",
+      "review_count": 4465
     },
     {
       "id": "C",
-      "brand": "ProLean",
-      "flavor": "Mocha",
-      "size_raw": "1500g",
-      "size_value": 1500,
-      "size_unit": "g",
-      "protein_value": 20,
+      "brand": "MuscleMax",
+      "flavor": "Salted Caramel",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 26,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 43,
-      "reviews_raw": "4,003",
-      "review_count": 4003
+      "price_usd": 34,
+      "reviews_raw": "3,747",
+      "review_count": 3747
     },
     {
       "id": "B",
-      "brand": "ProLean",
-      "flavor": "Unflavored",
-      "size_raw": "1500g",
-      "size_value": 1500,
-      "size_unit": "g",
-      "protein_value": 20,
+      "brand": "MuscleMax",
+      "flavor": "Salted Caramel",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 26,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 41,
-      "reviews_raw": "563",
-      "review_count": 563
+      "price_usd": 38,
+      "reviews_raw": "1,888",
+      "review_count": 1888
     }
   ],
   "ground_truth": {
     "action": "stop",
-    "selected_listing": "A",
+    "selected_listing": "C",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($37) and the highest review count (1225)."
+    "explanation": "Listing C satisfies all 4 constraints and is the cheapest qualifying match ($34) and the highest review count (3747)."
   },
   "scoring": {
     "weights": {

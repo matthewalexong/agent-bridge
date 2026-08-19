@@ -1,56 +1,56 @@
 {
   "id": "rand-4-tiebreak-price",
-  "note": "RANDOMIZED (tiebreak-price, seed 42): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
-  "query": "Plant Protein strawberry 454g 25g protein TrueGain",
+  "note": "RANDOMIZED (tiebreak-price, seed 1337): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
+  "query": "Whey Protein unflavored 500g 29g protein IronPeak",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "strawberry"
+      "value": "unflavored"
     },
     {
       "kind": "size_g",
-      "value": 454
+      "value": 500
     },
     {
       "kind": "protein_g",
-      "value": 25
+      "value": 29
     },
     {
       "kind": "brand",
-      "value": "TrueGain"
+      "value": "IronPeak"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nPlant Protein strawberry 454g 25g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Plant Protein Strawberry 1LB\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 1LB\n    Protein per serving: 25g\n    Price: $42.00\n    Reviews: 4,979\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: TrueGain Casein Protein Strawberry 1LB\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 1LB\n    Protein per serving: 25g\n    Price: $38.00\n    Reviews: 4,589\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein unflavored 500g 29g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Whey Protein Unflavored 500g\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 500g\n    Protein per serving: 29g\n    Price: $34.00\n    Reviews: 2,676\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Protein Unflavored 500g\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 500g\n    Protein per serving: 29g\n    Price: $28.00\n    Reviews: 3,063\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "TrueGain",
-      "flavor": "Strawberry",
-      "size_raw": "1LB",
-      "size_value": 1,
-      "size_unit": "LB",
-      "protein_value": 25,
+      "brand": "IronPeak",
+      "flavor": "Unflavored",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 29,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 42,
-      "reviews_raw": "4,979",
-      "review_count": 4979
+      "price_usd": 34,
+      "reviews_raw": "2,676",
+      "review_count": 2676
     },
     {
       "id": "B",
-      "brand": "TrueGain",
-      "flavor": "Strawberry",
-      "size_raw": "1LB",
-      "size_value": 1,
-      "size_unit": "LB",
-      "protein_value": 25,
+      "brand": "IronPeak",
+      "flavor": "Unflavored",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 29,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 38,
-      "reviews_raw": "4,589",
-      "review_count": 4589
+      "price_usd": 28,
+      "reviews_raw": "3,063",
+      "review_count": 3063
     }
   ],
   "ground_truth": {
@@ -58,7 +58,7 @@
     "selected_listing": "B",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($38) and the highest review count (4589)."
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($28) and the highest review count (3063)."
   },
   "scoring": {
     "weights": {

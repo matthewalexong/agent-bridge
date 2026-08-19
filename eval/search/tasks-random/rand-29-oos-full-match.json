@@ -1,7 +1,7 @@
 {
-  "id": "rand-11-oos-full-match",
+  "id": "rand-29-oos-full-match",
   "note": "RANDOMIZED (oos-full-match, seed 1337): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
-  "query": "Whey Isolate vanilla 2268g 25g protein IronPeak",
+  "query": "Mass Gainer vanilla 907g 22g protein CoreFuel",
   "constraints": [
     {
       "kind": "flavor",
@@ -9,48 +9,48 @@
     },
     {
       "kind": "size_g",
-      "value": 2268
+      "value": 907
     },
     {
       "kind": "protein_g",
-      "value": 25
+      "value": 22
     },
     {
       "kind": "brand",
-      "value": "IronPeak"
+      "value": "CoreFuel"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate vanilla 2268g 25g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Whey Isolate Vanilla 5LB\n    Brand: IronPeak\n    Flavor: Vanilla\n    Size: 5LB\n    Protein per serving: 25g\n    Price: $31.00\n    Reviews: 2,975\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Isolate Vanilla 1KG\n    Brand: IronPeak\n    Flavor: Vanilla\n    Size: 1KG\n    Protein per serving: 25g\n    Price: $46.00\n    Reviews: 481\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer vanilla 907g 22g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Mass Gainer Vanilla 32oz\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 32oz\n    Protein per serving: 22g\n    Price: $45.00\n    Reviews: 2,438\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: CoreFuel Mass Gainer Vanilla 2KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 22g\n    Price: $37.00\n    Reviews: 932\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "IronPeak",
+      "brand": "CoreFuel",
       "flavor": "Vanilla",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 25,
+      "size_raw": "32oz",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 22,
       "protein_unit": "g",
       "stock": "out of stock",
       "sponsored": false,
-      "price_usd": 31,
-      "reviews_raw": "2,975",
-      "review_count": 2975
+      "price_usd": 45,
+      "reviews_raw": "2,438",
+      "review_count": 2438
     },
     {
       "id": "B",
-      "brand": "IronPeak",
+      "brand": "CoreFuel",
       "flavor": "Vanilla",
-      "size_raw": "1KG",
-      "size_value": 1,
+      "size_raw": "2KG",
+      "size_value": 2,
       "size_unit": "KG",
-      "protein_value": 25,
+      "protein_value": 22,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 46,
-      "reviews_raw": "481",
-      "review_count": 481
+      "price_usd": 37,
+      "reviews_raw": "932",
+      "review_count": 932
     }
   ],
   "ground_truth": {

@@ -1,56 +1,56 @@
 {
   "id": "rand-7-sponsored-pref",
-  "note": "RANDOMIZED (sponsored-pref, seed 42): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
-  "query": "Plant Protein chocolate 2268g 22g protein TrueGain",
+  "note": "RANDOMIZED (sponsored-pref, seed 1337): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
+  "query": "Plant Protein strawberry 500g 25g protein TrueGain",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "strawberry"
     },
     {
       "kind": "size_g",
-      "value": 2268
+      "value": 500
     },
     {
       "kind": "protein_g",
-      "value": 22
+      "value": 25
     },
     {
       "kind": "brand",
       "value": "TrueGain"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nPlant Protein chocolate 2268g 22g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Plant Protein Chocolate 5LB\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 5LB\n    Protein per serving: 22g\n    Price: $36.00\n    Reviews: 2,307\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: TrueGain Whey Isolate Chocolate 5LB\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 5LB\n    Protein per serving: 22g\n    Price: $38.00\n    Reviews: 369\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein strawberry 500g 25g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Plant Protein Strawberry 500g\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 500g\n    Protein per serving: 25g\n    Price: $45.00\n    Reviews: 8,354\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: TrueGain Plant Protein Strawberry 500g\n    Brand: TrueGain\n    Flavor: Strawberry\n    Size: 500g\n    Protein per serving: 25g\n    Price: $47.00\n    Reviews: 147\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
       "brand": "TrueGain",
-      "flavor": "Chocolate",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 22,
+      "flavor": "Strawberry",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 25,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "price_usd": 36,
-      "reviews_raw": "2,307",
-      "review_count": 2307
+      "price_usd": 45,
+      "reviews_raw": "8,354",
+      "review_count": 8354
     },
     {
       "id": "B",
       "brand": "TrueGain",
-      "flavor": "Chocolate",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 22,
+      "flavor": "Strawberry",
+      "size_raw": "500g",
+      "size_value": 500,
+      "size_unit": "g",
+      "protein_value": 25,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 38,
-      "reviews_raw": "369",
-      "review_count": 369
+      "price_usd": 47,
+      "reviews_raw": "147",
+      "review_count": 147
     }
   ],
   "ground_truth": {

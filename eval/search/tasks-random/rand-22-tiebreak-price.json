@@ -1,11 +1,11 @@
 {
-  "id": "rand-3-tiebreak-price",
+  "id": "rand-22-tiebreak-price",
   "note": "RANDOMIZED (tiebreak-price, seed 1337): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
-  "query": "Whey Isolate chocolate 1000g 21g protein CoreFuel",
+  "query": "Plant Protein unflavored 1000g 23g protein NutriGain",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "unflavored"
     },
     {
       "kind": "size_g",
@@ -13,44 +13,44 @@
     },
     {
       "kind": "protein_g",
-      "value": 21
+      "value": 23
     },
     {
       "kind": "brand",
-      "value": "CoreFuel"
+      "value": "NutriGain"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate chocolate 1000g 21g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Whey Isolate Chocolate 1KG\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 1KG\n    Protein per serving: 21g\n    Price: $38.00\n    Reviews: 2,739\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Whey Isolate Chocolate 1KG\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 1KG\n    Protein per serving: 21g\n    Price: $27.00\n    Reviews: 2,669\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein unflavored 1000g 23g protein NutriGain\n\n=== RESULTS ===\n[A] Title: NutriGain Plant Protein Unflavored 1KG\n    Brand: NutriGain\n    Flavor: Unflavored\n    Size: 1KG\n    Protein per serving: 23g\n    Price: $38.00\n    Reviews: 862\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: NutriGain Plant Protein Unflavored 1KG\n    Brand: NutriGain\n    Flavor: Unflavored\n    Size: 1KG\n    Protein per serving: 23g\n    Price: $29.00\n    Reviews: 4,100\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "CoreFuel",
-      "flavor": "Chocolate",
+      "brand": "NutriGain",
+      "flavor": "Unflavored",
       "size_raw": "1KG",
       "size_value": 1,
       "size_unit": "KG",
-      "protein_value": 21,
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
       "price_usd": 38,
-      "reviews_raw": "2,739",
-      "review_count": 2739
+      "reviews_raw": "862",
+      "review_count": 862
     },
     {
       "id": "B",
-      "brand": "CoreFuel",
-      "flavor": "Chocolate",
+      "brand": "NutriGain",
+      "flavor": "Unflavored",
       "size_raw": "1KG",
       "size_value": 1,
       "size_unit": "KG",
-      "protein_value": 21,
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 27,
-      "reviews_raw": "2,669",
-      "review_count": 2669
+      "price_usd": 29,
+      "reviews_raw": "4,100",
+      "review_count": 4100
     }
   ],
   "ground_truth": {
@@ -58,7 +58,7 @@
     "selected_listing": "B",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($27) and the highest review count (2669)."
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($29) and the highest review count (4100)."
   },
   "scoring": {
     "weights": {

@@ -1,7 +1,7 @@
 {
-  "id": "rand-1-unique-match",
+  "id": "rand-40-unique-match",
   "note": "RANDOMIZED (unique-match, seed 1337): Exactly one listing satisfies all constraints; the others each fail one.",
-  "query": "Casein Protein chocolate 2000g 28g protein CoreFuel",
+  "query": "Protein Blend chocolate 2000g 21g protein IronPeak",
   "constraints": [
     {
       "kind": "flavor",
@@ -13,59 +13,59 @@
     },
     {
       "kind": "protein_g",
-      "value": 28
+      "value": 21
     },
     {
       "kind": "brand",
-      "value": "CoreFuel"
+      "value": "IronPeak"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nCasein Protein chocolate 2000g 28g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Casein Protein Chocolate 2KG\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 2KG\n    Protein per serving: 28g\n    Price: $52.00\n    Reviews: 995\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Whey Isolate Chocolate 1000g\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 1000g\n    Protein per serving: 28g\n    Price: $33.00\n    Reviews: 3,736\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: CoreFuel Casein Protein Mocha 2KG\n    Brand: CoreFuel\n    Flavor: Mocha\n    Size: 2KG\n    Protein per serving: 28g\n    Price: $29.00\n    Reviews: 2,843\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend chocolate 2000g 21g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Protein Blend Chocolate 2KG\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 2KG\n    Protein per serving: 21g\n    Price: $51.00\n    Reviews: 1,975\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Protein Blend Chocolate 250g\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 250g\n    Protein per serving: 21g\n    Price: $45.00\n    Reviews: 1,013\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: IronPeak Mass Gainer Strawberry 2KG\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 2KG\n    Protein per serving: 21g\n    Price: $38.00\n    Reviews: 4,165\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "CoreFuel",
+      "brand": "IronPeak",
       "flavor": "Chocolate",
       "size_raw": "2KG",
       "size_value": 2,
       "size_unit": "KG",
-      "protein_value": 28,
+      "protein_value": 21,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 52,
-      "reviews_raw": "995",
-      "review_count": 995
+      "price_usd": 51,
+      "reviews_raw": "1,975",
+      "review_count": 1975
     },
     {
       "id": "B",
-      "brand": "CoreFuel",
+      "brand": "IronPeak",
       "flavor": "Chocolate",
-      "size_raw": "1000g",
-      "size_value": 1000,
+      "size_raw": "250g",
+      "size_value": 250,
       "size_unit": "g",
-      "protein_value": 28,
+      "protein_value": 21,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 33,
-      "reviews_raw": "3,736",
-      "review_count": 3736
+      "price_usd": 45,
+      "reviews_raw": "1,013",
+      "review_count": 1013
     },
     {
       "id": "C",
-      "brand": "CoreFuel",
-      "flavor": "Mocha",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
       "size_raw": "2KG",
       "size_value": 2,
       "size_unit": "KG",
-      "protein_value": 28,
+      "protein_value": 21,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 29,
-      "reviews_raw": "2,843",
-      "review_count": 2843
+      "price_usd": 38,
+      "reviews_raw": "4,165",
+      "review_count": 4165
     }
   ],
   "ground_truth": {

@@ -1,0 +1,568 @@
+{
+  "when": "2026-08-19T21:38:12.192Z",
+  "skill": "search-transcribe-v6.md",
+  "temperature": 0,
+  "overall": 1,
+  "results": [
+    {
+      "task": "rand-1-unique-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($31) and the highest review count (969)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-10-no-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-11-oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-12-oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-13-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-14-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-15-unit-mix",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-16-unit-mix",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-17-protein-mg",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (2700)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-18-protein-mg",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($37) and the highest review count (1225)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-19-missing-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (3394)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-2-unique-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-20-missing-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($41) and the highest review count (1104)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-21-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-22-no-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 4,
+        "explanation": "No listing satisfies all 4 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-23-protein-mg",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($43) and the highest review count (3879)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-24-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-25-tiebreak-price",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($36) and the highest review count (4554)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-26-oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-27-tiebreak-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($34) and the highest review count (3137)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-28-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-29-protein-mg",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (761)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-3-tiebreak-price",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($25) and the highest review count (4508)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-30-no-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-31-tiebreak-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($43) and the highest review count (3011)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-32-protein-mg",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($30) and the highest review count (4323)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-33-unit-mix",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-34-sponsored-pref",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-35-tiebreak-price",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($32) and the highest review count (3016)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-36-oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-37-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-38-multipack",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-39-unique-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing A satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-4-tiebreak-price",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($38) and the highest review count (4589)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-40-no-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 4,
+        "explanation": "No listing satisfies all 4 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-5-tiebreak-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($39) and the highest review count (3360)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-6-tiebreak-reviews",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($46) and the highest review count (1605)."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-7-sponsored-pref",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-8-sponsored-pref",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing B satisfies all 4 constraints — search is enough."
+      },
+      "transcription": 1,
+      "runs": 3
+    },
+    {
+      "task": "rand-9-no-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 4,
+        "explanation": "No listing satisfies all 4 query constraints; reformulate the search."
+      },
+      "transcription": 1,
+      "runs": 3
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "rand-33-no-match",
+  "note": "RANDOMIZED (no-match, seed 1337): No listing satisfies all constraints — correct answer is reformulate, no selection.",
+  "query": "Plant Protein strawberry 907g 29g protein IronPeak",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "strawberry"
+    },
+    {
+      "kind": "size_g",
+      "value": 907
+    },
+    {
+      "kind": "protein_g",
+      "value": 29
+    },
+    {
+      "kind": "brand",
+      "value": "IronPeak"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein strawberry 907g 29g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Plant Protein Strawberry 32oz\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 32oz\n    Protein per serving: 29g\n    Price: $36.00\n    Reviews: 2,236\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Plant Protein Strawberry 1000g\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 1000g\n    Protein per serving: 29g\n    Price: $47.00\n    Reviews: 4,218\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: IronPeak Plant Protein Strawberry 32oz\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 32oz\n    Protein per serving: 39g\n    Price: $32.00\n    Reviews: 3,282\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "32oz",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 29,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 36,
+      "reviews_raw": "2,236",
+      "review_count": 2236
+    },
+    {
+      "id": "B",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 29,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 47,
+      "reviews_raw": "4,218",
+      "review_count": 4218
+    },
+    {
+      "id": "C",
+      "brand": "IronPeak",
+      "flavor": "Strawberry",
+      "size_raw": "32oz",
+      "size_value": 32,
+      "size_unit": "oz",
+      "protein_value": 39,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 32,
+      "reviews_raw": "3,282",
+      "review_count": 3282
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "No listing satisfies all constraints — correct answer is reformulate, no selection."
+}

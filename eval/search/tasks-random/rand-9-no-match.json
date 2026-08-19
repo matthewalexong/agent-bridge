@@ -1,71 +1,71 @@
 {
   "id": "rand-9-no-match",
-  "note": "RANDOMIZED (no-match, seed 42): No listing satisfies all constraints — correct answer is reformulate, no selection.",
-  "query": "Whey Isolate chocolate 907g 22g protein TrueGain",
+  "note": "RANDOMIZED (no-match, seed 1337): No listing satisfies all constraints — correct answer is reformulate, no selection.",
+  "query": "Mass Gainer vanilla 250g 24g protein VitaForge",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "vanilla"
     },
     {
       "kind": "size_g",
-      "value": 907
+      "value": 250
     },
     {
       "kind": "protein_g",
-      "value": 22
+      "value": 24
     },
     {
       "kind": "brand",
-      "value": "TrueGain"
+      "value": "VitaForge"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate chocolate 907g 22g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Whey Isolate Vanilla 2LB\n    Brand: TrueGain\n    Flavor: Vanilla\n    Size: 2LB\n    Protein per serving: 22g\n    Price: $44.00\n    Reviews: 3,571\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: TrueGain Protein Blend Chocolate 2KG\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 2KG\n    Protein per serving: 22g\n    Price: $30.00\n    Reviews: 1,182\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: TrueGain Whey Protein Chocolate 2LB\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 2LB\n    Protein per serving: 32g\n    Price: $42.00\n    Reviews: 4,944\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer vanilla 250g 24g protein VitaForge\n\n=== RESULTS ===\n[A] Title: VitaForge Mass Gainer Banana 250g\n    Brand: VitaForge\n    Flavor: Banana\n    Size: 250g\n    Protein per serving: 24g\n    Price: $42.00\n    Reviews: 2,958\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: VitaForge Mass Gainer Vanilla 1000g\n    Brand: VitaForge\n    Flavor: Vanilla\n    Size: 1000g\n    Protein per serving: 24g\n    Price: $39.00\n    Reviews: 3,887\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: VitaForge Mass Gainer Vanilla 250g\n    Brand: VitaForge\n    Flavor: Vanilla\n    Size: 250g\n    Protein per serving: 34g\n    Price: $35.00\n    Reviews: 2,095\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "TrueGain",
-      "flavor": "Vanilla",
-      "size_raw": "2LB",
-      "size_value": 2,
-      "size_unit": "LB",
-      "protein_value": 22,
-      "protein_unit": "g",
-      "stock": "in stock",
-      "sponsored": false,
-      "price_usd": 44,
-      "reviews_raw": "3,571",
-      "review_count": 3571
-    },
-    {
-      "id": "B",
-      "brand": "TrueGain",
-      "flavor": "Chocolate",
-      "size_raw": "2KG",
-      "size_value": 2,
-      "size_unit": "KG",
-      "protein_value": 22,
-      "protein_unit": "g",
-      "stock": "in stock",
-      "sponsored": false,
-      "price_usd": 30,
-      "reviews_raw": "1,182",
-      "review_count": 1182
-    },
-    {
-      "id": "C",
-      "brand": "TrueGain",
-      "flavor": "Chocolate",
-      "size_raw": "2LB",
-      "size_value": 2,
-      "size_unit": "LB",
-      "protein_value": 32,
+      "brand": "VitaForge",
+      "flavor": "Banana",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 24,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
       "price_usd": 42,
-      "reviews_raw": "4,944",
-      "review_count": 4944
+      "reviews_raw": "2,958",
+      "review_count": 2958
+    },
+    {
+      "id": "B",
+      "brand": "VitaForge",
+      "flavor": "Vanilla",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "3,887",
+      "review_count": 3887
+    },
+    {
+      "id": "C",
+      "brand": "VitaForge",
+      "flavor": "Vanilla",
+      "size_raw": "250g",
+      "size_value": 250,
+      "size_unit": "g",
+      "protein_value": 34,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 35,
+      "reviews_raw": "2,095",
+      "review_count": 2095
     }
   ],
   "ground_truth": {

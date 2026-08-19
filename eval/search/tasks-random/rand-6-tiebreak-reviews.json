@@ -1,15 +1,15 @@
 {
   "id": "rand-6-tiebreak-reviews",
-  "note": "RANDOMIZED (tiebreak-reviews, seed 42): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
-  "query": "Whey Protein strawberry 1000g 23g protein IronPeak",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 1337): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Plant Protein salted caramel 907g 23g protein PeakWhey",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "strawberry"
+      "value": "salted caramel"
     },
     {
       "kind": "size_g",
-      "value": 1000
+      "value": 907
     },
     {
       "kind": "protein_g",
@@ -17,40 +17,40 @@
     },
     {
       "kind": "brand",
-      "value": "IronPeak"
+      "value": "PeakWhey"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 1000g 23g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Casein Protein Strawberry 1000g\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 1000g\n    Protein per serving: 23g\n    Price: $46.00\n    Reviews: 824\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Mass Gainer Strawberry 1000g\n    Brand: IronPeak\n    Flavor: Strawberry\n    Size: 1000g\n    Protein per serving: 23g\n    Price: $46.00\n    Reviews: 1,605\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein salted caramel 907g 23g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Plant Protein Salted Caramel 2LB\n    Brand: PeakWhey\n    Flavor: Salted Caramel\n    Size: 2LB\n    Protein per serving: 23g\n    Price: $30.00\n    Reviews: 401\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PeakWhey Plant Protein Salted Caramel 2LB\n    Brand: PeakWhey\n    Flavor: Salted Caramel\n    Size: 2LB\n    Protein per serving: 23g\n    Price: $30.00\n    Reviews: 2,804\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "IronPeak",
-      "flavor": "Strawberry",
-      "size_raw": "1000g",
-      "size_value": 1000,
-      "size_unit": "g",
+      "brand": "PeakWhey",
+      "flavor": "Salted Caramel",
+      "size_raw": "2LB",
+      "size_value": 2,
+      "size_unit": "LB",
       "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 46,
-      "reviews_raw": "824",
-      "review_count": 824
+      "price_usd": 30,
+      "reviews_raw": "401",
+      "review_count": 401
     },
     {
       "id": "B",
-      "brand": "IronPeak",
-      "flavor": "Strawberry",
-      "size_raw": "1000g",
-      "size_value": 1000,
-      "size_unit": "g",
+      "brand": "PeakWhey",
+      "flavor": "Salted Caramel",
+      "size_raw": "2LB",
+      "size_value": 2,
+      "size_unit": "LB",
       "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 46,
-      "reviews_raw": "1,605",
-      "review_count": 1605
+      "price_usd": 30,
+      "reviews_raw": "2,804",
+      "review_count": 2804
     }
   ],
   "ground_truth": {
@@ -58,7 +58,7 @@
     "selected_listing": "B",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($46) and the highest review count (1605)."
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($30) and the highest review count (2804)."
   },
   "scoring": {
     "weights": {

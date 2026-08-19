@@ -226,7 +226,11 @@ const taskDir = taskDirArg ? path.resolve(taskDirArg) : path.join(__dirname, "ta
 // (e.g. debugging long-serp-attention without re-running the full corpus).
 const onlyArg = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
 const onlyIds = onlyArg ? onlyArg.split(",").map((s) => s.trim()).filter(Boolean) : null;
-const taskFiles = fs.readdirSync(taskDir).filter((f) => f.endsWith(".json")).sort();
+// `_manifest.json` and any underscore-prefixed files are metadata, not tasks.
+const taskFiles = fs
+  .readdirSync(taskDir)
+  .filter((f) => f.endsWith(".json") && !f.startsWith("_"))
+  .sort();
 const results = [];
 const medianOf = (xs) => { const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
 

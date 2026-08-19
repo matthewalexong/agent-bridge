@@ -80,7 +80,13 @@ function makeListing(o) {
 
   // Snapshot field lines (mirrors fixture format exactly: 4-space indent).
   const lines = [];
-  const titleParts = [brand, pick(PRODUCTS), flavor, sizeRaw.replace(/\s*\(.*\)/, "")];
+  // Product type: callers pin the TARGET listing's type (must equal the query's
+  // product-type prefix — a query for Whey Protein must not match a Mass Gainer
+  // title; the frontier adjudicator caught exactly that bug). Distractors omit
+  // it and stay random — they fail >=1 constraint so the judge never selects
+  // them, and mixed-type SERPs are realistic for failed searches.
+  const productType = o.productType ?? pick(PRODUCTS);
+  const titleParts = [brand, productType, flavor, sizeRaw.replace(/\s*\(.*\)/, "")];
   lines.push(`[${id}] Title: ${titleParts.join(" ")}`);
   if (o.omit?.includes("brand")) { /* omit Brand line */ } else lines.push(`    Brand: ${brand}`);
   lines.push(`    Flavor: ${flavor}`);
@@ -113,11 +119,12 @@ function randWeight() {
 
 function scUniqueMatch() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight();
   const protein = ri(20, 30);
   const full = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: 30 + ri(0, 30), reviewCount: ri(50, 5000), stock: "in stock", sponsored: false });
+    priceUsd: 30 + ri(0, 30), reviewCount: ri(50, 5000), stock: "in stock", sponsored: false, productType: ptype });
   // Distractors: same brand+flavor but wrong size and wrong protein.
   const d1w = randWeight();
   const d1 = makeListing({ brand, flavor, sizeRaw: renderSize(d1w.value, d1w.unit),
@@ -132,135 +139,142 @@ function scUniqueMatch() {
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [full, d1, d2],
+  return { constraints, listings: [full, d1, d2], productType: ptype,
     note: "Exactly one listing satisfies all constraints; the others each fail one." };
 }
 
 function scTiebreakPrice() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   const cheap = 25 + ri(0, 15); const dear = cheap + 3 + ri(0, 10);
   const a = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: dear, reviewCount: ri(100, 5000), sponsored: false });
+    priceUsd: dear, reviewCount: ri(100, 5000), sponsored: false, productType: ptype });
   const b = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: cheap, reviewCount: ri(100, 5000), sponsored: false });
+    priceUsd: cheap, reviewCount: ri(100, 5000), sponsored: false, productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [a, b],
+  return { constraints, listings: [a, b], productType: ptype,
     note: "Two organic full matches at different prices — judge must pick the cheaper (position-bias trap)." };
 }
 
 function scTiebreakReviews() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   const price = 30 + ri(0, 20);
   const lo = ri(100, 900); const hi = lo + 500 + ri(0, 3000);
   const a = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price, reviewCount: lo, sponsored: false });
+    priceUsd: price, reviewCount: lo, sponsored: false, productType: ptype });
   const b = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price, reviewCount: hi, sponsored: false });
+    priceUsd: price, reviewCount: hi, sponsored: false, productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [a, b],
+  return { constraints, listings: [a, b], productType: ptype,
     note: "Two organic full matches at the SAME price — judge tie-breaks on higher review count." };
 }
 
 function scSponsoredPref() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   const price = 30 + ri(0, 20);
   const sponsored = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price - 2, reviewCount: ri(1000, 9000), sponsored: true, stock: "in stock" });
+    priceUsd: price - 2, reviewCount: ri(1000, 9000), sponsored: true, stock: "in stock", productType: ptype });
   const organic = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price, reviewCount: ri(100, 900), sponsored: false, stock: "in stock" });
+    priceUsd: price, reviewCount: ri(100, 900), sponsored: false, stock: "in stock", productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [sponsored, organic],
+  return { constraints, listings: [sponsored, organic], productType: ptype,
     note: "Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic." };
 }
 
 function scNoMatch() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   // All listings miss at least one constraint (wrong flavor, wrong size, wrong protein).
   const d1 = makeListing({ brand, flavor: pick(FLAVORS), sizeRaw: renderSize(target.value, target.unit),
-    sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const d2w = randWeight();
   const d2 = makeListing({ brand, flavor, sizeRaw: renderSize(d2w.value, d2w.unit),
-    sizeValue: d2w.value, sizeUnit: d2w.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    sizeValue: d2w.value, sizeUnit: d2w.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const d3 = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
-    sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein + 10, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein + 10, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [d1, d2, d3],
+  return { constraints, listings: [d1, d2, d3], productType: ptype,
     note: "No listing satisfies all constraints — correct answer is reformulate, no selection." };
 }
 
 function scOosFullMatch() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   const a = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), stock: "out of stock", sponsored: false });
+    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), stock: "out of stock", sponsored: false, productType: ptype });
   const d1w = randWeight();
   const d1 = makeListing({ brand, flavor, sizeRaw: renderSize(d1w.value, d1w.unit),
-    sizeValue: d1w.value, sizeUnit: d1w.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    sizeValue: d1w.value, sizeUnit: d1w.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [a, d1],
+  return { constraints, listings: [a, d1], productType: ptype,
     note: "A full match exists but is out of stock — action reformulate, matched_constraints reports the full count." };
 }
 
 function scMultipack() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const per = randWeight(); const pack = pick([2, 3, 4]); const protein = ri(20, 30);
   const totalG = per.grams * pack;
   // The multipack listing is the ONLY one whose TOTAL size hits the target.
   const multi = makeListing({ brand, flavor, sizeRaw: `${renderSize(per.value, per.unit)} (Pack of ${pack})`,
     sizeValue: per.value, sizeUnit: per.unit, proteinValue: protein, packCount: pack,
-    priceUsd: 40 + ri(0, 40), reviewCount: ri(100, 5000) });
+    priceUsd: 40 + ri(0, 40), reviewCount: ri(100, 5000), productType: ptype });
   // Single-unit listing at the per-unit size (total too small).
   const single = makeListing({ brand, flavor, sizeRaw: renderSize(per.value, per.unit),
     sizeValue: per.value, sizeUnit: per.unit, proteinValue: protein,
-    priceUsd: 25 + ri(0, 20), reviewCount: ri(100, 5000) });
+    priceUsd: 25 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: totalG },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [single, multi],
+  return { constraints, listings: [single, multi], productType: ptype,
     note: "Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw." };
 }
 
 function scUnitMix() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const protein = ri(20, 30);
   // Target expressed via one unit, the matching listing rendered in ANOTHER unit.
   const targetU = pick(WEIGHT_UNITS); const matchU = pick(WEIGHT_UNITS.filter(u => u.unit !== targetU.unit));
@@ -270,29 +284,30 @@ function scUnitMix() {
   const mVal = Math.round((grams / matchU.mult) * 10) / 10;
   const match = makeListing({ brand, flavor, sizeRaw: renderSize(mVal, matchU.unit),
     sizeValue: mVal, sizeUnit: matchU.unit, proteinValue: protein,
-    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const d1 = makeListing({ brand, flavor, sizeRaw: renderSize(mVal + 1, matchU.unit),
-    sizeValue: mVal + 1, sizeUnit: matchU.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    sizeValue: mVal + 1, sizeUnit: matchU.unit, proteinValue: protein, priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [d1, match],
+  return { constraints, listings: [d1, match], productType: ptype,
     note: "The match is expressed in a different unit than a near-miss — judge must normalize units before comparing." };
 }
 
 function scProteinMg() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const proteinG = ri(20, 30);
   // Match renders protein in MILLIGRAMS (e.g. 24000mg = 24g); distractor in g.
   const match = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: proteinG * 1000, proteinUnit: "mg",
-    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const d1 = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: proteinG, proteinUnit: "g",
-    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
@@ -302,29 +317,31 @@ function scProteinMg() {
   // BOTH normalize to proteinG — to keep a unique winner make the distractor wrong elsewhere.
   const d2 = makeListing({ brand, flavor: pick(FLAVORS), sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: proteinG, proteinUnit: "g",
-    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000) });
+    priceUsd: 30 + ri(0, 20), reviewCount: ri(100, 5000), productType: ptype });
   return { constraints, listings: [match, d2, d1],
+    productType: ptype,
     note: "Match lists protein in mg; judge normalizes mg->g. Note both match and d1 normalize equal, so price/reviews tie-break applies." };
 }
 
 function scMissingReviews() {
   const brand = pick(BRANDS), flavor = pick(FLAVORS);
+  const ptype = pick(PRODUCTS);
   const target = randWeight(); const protein = ri(20, 30);
   const price = 30 + ri(0, 20);
   // One full match HAS reviews, the other has none. Known beats unknown.
   const withReviews = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price, reviewCount: ri(100, 5000), sponsored: false });
+    priceUsd: price, reviewCount: ri(100, 5000), sponsored: false, productType: ptype });
   const noReviews = makeListing({ brand, flavor, sizeRaw: renderSize(target.value, target.unit),
     sizeValue: target.value, sizeUnit: target.unit, proteinValue: protein,
-    priceUsd: price, reviewCount: null, sponsored: false });
+    priceUsd: price, reviewCount: null, sponsored: false, productType: ptype });
   const constraints = [
     { kind: "flavor", value: flavor.toLowerCase() },
     { kind: "size_g", value: target.grams },
     { kind: "protein_g", value: protein },
     { kind: "brand", value: brand },
   ];
-  return { constraints, listings: [noReviews, withReviews],
+  return { constraints, listings: [noReviews, withReviews], productType: ptype,
     note: "Same-price tie where one listing has no Reviews line — the listing WITH evidence must win." };
 }
 
@@ -343,6 +360,10 @@ const BUILDERS = [
 
 // ---- Generate, derive ground truth from the judge, and SELF-VERIFY ---------
 fs.mkdirSync(OUT, { recursive: true });
+// Clean stale rand-* tasks so an old corpus never mingles with a new one.
+for (const f of fs.readdirSync(OUT)) {
+  if (f.startsWith("rand-") && f.endsWith(".json")) fs.unlinkSync(path.join(OUT, f));
+}
 const manifest = [];
 let made = 0, guard = 0;
 // Guarantee coverage: at least 2 of each scenario, then fill the rest randomly.
@@ -353,13 +374,13 @@ while (queue.length < COUNT) queue.push(pick(BUILDERS));
 for (const b of queue.slice(0, COUNT)) {
   guard++;
   listingSeq = 0; // reset ids per task
-  const { constraints, listings, note } = b.fn();
+  const { constraints, listings, note, productType } = b.fn();
   const gts = listings.map((l) => l.gt);
   // Oracle-consistent verdict: what the judge says on a PERFECT transcription.
   const verdict = judgeSearch(constraints, gts);
   // Build the query string ONCE. buildQuery() calls pick() internally, so calling
   // it twice yields two different random products (snapshot vs top-level query).
-  const queryStr = buildQuery(constraints);
+  const queryStr = buildQuery(constraints, productType);
   const snapshot = "=== SEARCH QUERY ===\n" + queryStr +
     "\n\n=== RESULTS ===\n" + listings.map((l) => l.block).join("\n\n");
   const id = `rand-${made + 1}-${b.key}`;
@@ -385,7 +406,7 @@ for (const b of queue.slice(0, COUNT)) {
   made++;
 }
 
-function buildQuery(constraints) {
+function buildQuery(constraints, productType) {
   const bits = [];
   for (const c of constraints) {
     if (c.kind === "flavor") bits.push(c.value);
@@ -393,7 +414,7 @@ function buildQuery(constraints) {
     if (c.kind === "size_g") bits.push(`${c.value}g`);
     if (c.kind === "protein_g") bits.push(`${c.value}g protein`);
   }
-  return `${pick(PRODUCTS)} ${bits.join(" ")}`;
+  return `${productType} ${bits.join(" ")}`;
 }
 
 fs.writeFileSync(path.join(OUT, "_manifest.json"), JSON.stringify({ seed: SEED, count: made, generated: new Date().toISOString(), tasks: manifest }, null, 2));

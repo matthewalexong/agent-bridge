@@ -1,56 +1,56 @@
 {
-  "id": "rand-16-unit-mix",
+  "id": "rand-36-unit-mix",
   "note": "RANDOMIZED (unit-mix, seed 1337): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
-  "query": "Casein Protein chocolate 907g 29g protein ProLean",
+  "query": "Protein Blend salted caramel 454g 30g protein ProLean",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "salted caramel"
     },
     {
       "kind": "size_g",
-      "value": 907
+      "value": 454
     },
     {
       "kind": "protein_g",
-      "value": 29
+      "value": 30
     },
     {
       "kind": "brand",
       "value": "ProLean"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nCasein Protein chocolate 907g 29g protein ProLean\n\n=== RESULTS ===\n[B] Title: ProLean Casein Protein Chocolate 33oz\n    Brand: ProLean\n    Flavor: Chocolate\n    Size: 33oz\n    Protein per serving: 29g\n    Price: $35.00\n    Reviews: 2,665\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: ProLean Casein Protein Chocolate 32oz\n    Brand: ProLean\n    Flavor: Chocolate\n    Size: 32oz\n    Protein per serving: 29g\n    Price: $38.00\n    Reviews: 3,583\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend salted caramel 454g 30g protein ProLean\n\n=== RESULTS ===\n[B] Title: ProLean Protein Blend Salted Caramel 2LB\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 2LB\n    Protein per serving: 30g\n    Price: $32.00\n    Reviews: 1,094\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: ProLean Protein Blend Salted Caramel 1LB\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 1LB\n    Protein per serving: 30g\n    Price: $49.00\n    Reviews: 3,322\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
       "brand": "ProLean",
-      "flavor": "Chocolate",
-      "size_raw": "33oz",
-      "size_value": 33,
-      "size_unit": "oz",
-      "protein_value": 29,
+      "flavor": "Salted Caramel",
+      "size_raw": "2LB",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 30,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 35,
-      "reviews_raw": "2,665",
-      "review_count": 2665
+      "price_usd": 32,
+      "reviews_raw": "1,094",
+      "review_count": 1094
     },
     {
       "id": "A",
       "brand": "ProLean",
-      "flavor": "Chocolate",
-      "size_raw": "32oz",
-      "size_value": 32,
-      "size_unit": "oz",
-      "protein_value": 29,
+      "flavor": "Salted Caramel",
+      "size_raw": "1LB",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 30,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 38,
-      "reviews_raw": "3,583",
-      "review_count": 3583
+      "price_usd": 49,
+      "reviews_raw": "3,322",
+      "review_count": 3322
     }
   ],
   "ground_truth": {

@@ -1,0 +1,72 @@
+{
+  "id": "rand-28-oos-full-match",
+  "note": "RANDOMIZED (oos-full-match, seed 1337): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
+  "query": "Casein Protein salted caramel 2000g 27g protein ProLean",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "salted caramel"
+    },
+    {
+      "kind": "size_g",
+      "value": 2000
+    },
+    {
+      "kind": "protein_g",
+      "value": 27
+    },
+    {
+      "kind": "brand",
+      "value": "ProLean"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein salted caramel 2000g 27g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Casein Protein Salted Caramel 2000g\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 2000g\n    Protein per serving: 27g\n    Price: $44.00\n    Reviews: 2,124\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: ProLean Casein Protein Salted Caramel 3KG\n    Brand: ProLean\n    Flavor: Salted Caramel\n    Size: 3KG\n    Protein per serving: 27g\n    Price: $43.00\n    Reviews: 390\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "ProLean",
+      "flavor": "Salted Caramel",
+      "size_raw": "2000g",
+      "size_value": 2000,
+      "size_unit": "g",
+      "protein_value": 27,
+      "protein_unit": "g",
+      "stock": "out of stock",
+      "sponsored": false,
+      "price_usd": 44,
+      "reviews_raw": "2,124",
+      "review_count": 2124
+    },
+    {
+      "id": "B",
+      "brand": "ProLean",
+      "flavor": "Salted Caramel",
+      "size_raw": "3KG",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 27,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 43,
+      "reviews_raw": "390",
+      "review_count": 390
+    }
+  ],
+  "ground_truth": {
+    "action": "reformulate",
+    "selected_listing": null,
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "A full match exists but is out of stock; the search needs reformulation."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "A full match exists but is out of stock — action reformulate, matched_constraints reports the full count."
+}

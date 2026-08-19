@@ -1,0 +1,72 @@
+{
+  "id": "rand-32-tiebreak-price",
+  "note": "RANDOMIZED (tiebreak-price, seed 1337): Two organic full matches at different prices — judge must pick the cheaper (position-bias trap).",
+  "query": "Whey Protein mocha 2268g 20g protein ProLean",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "mocha"
+    },
+    {
+      "kind": "size_g",
+      "value": 2268
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "ProLean"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein mocha 2268g 20g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Whey Protein Mocha 5LB\n    Brand: ProLean\n    Flavor: Mocha\n    Size: 5LB\n    Protein per serving: 20g\n    Price: $52.00\n    Reviews: 1,871\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: ProLean Whey Protein Mocha 5LB\n    Brand: ProLean\n    Flavor: Mocha\n    Size: 5LB\n    Protein per serving: 20g\n    Price: $39.00\n    Reviews: 546\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "ProLean",
+      "flavor": "Mocha",
+      "size_raw": "5LB",
+      "size_value": 5,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 52,
+      "reviews_raw": "1,871",
+      "review_count": 1871
+    },
+    {
+      "id": "B",
+      "brand": "ProLean",
+      "flavor": "Mocha",
+      "size_raw": "5LB",
+      "size_value": 5,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "546",
+      "review_count": 546
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($39) and the highest review count (546)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at different prices — judge must pick the cheaper (position-bias trap)."
+}

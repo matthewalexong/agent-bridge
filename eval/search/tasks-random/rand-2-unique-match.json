@@ -1,71 +1,71 @@
 {
   "id": "rand-2-unique-match",
-  "note": "RANDOMIZED (unique-match, seed 42): Exactly one listing satisfies all constraints; the others each fail one.",
-  "query": "Whey Protein unflavored 1000g 22g protein IronPeak",
+  "note": "RANDOMIZED (unique-match, seed 1337): Exactly one listing satisfies all constraints; the others each fail one.",
+  "query": "Whey Protein strawberry 500g 23g protein ProLean",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "unflavored"
+      "value": "strawberry"
     },
     {
       "kind": "size_g",
-      "value": 1000
+      "value": 500
     },
     {
       "kind": "protein_g",
-      "value": 22
+      "value": 23
     },
     {
       "kind": "brand",
-      "value": "IronPeak"
+      "value": "ProLean"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Protein unflavored 1000g 22g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Protein Blend Unflavored 1000g\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $39.00\n    Reviews: 3,706\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Whey Protein Unflavored 1LB\n    Brand: IronPeak\n    Flavor: Unflavored\n    Size: 1LB\n    Protein per serving: 22g\n    Price: $36.00\n    Reviews: 1,500\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: IronPeak Protein Blend Banana 1000g\n    Brand: IronPeak\n    Flavor: Banana\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $49.00\n    Reviews: 3,481\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 500g 23g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Whey Protein Strawberry 500g\n    Brand: ProLean\n    Flavor: Strawberry\n    Size: 500g\n    Protein per serving: 23g\n    Price: $47.00\n    Reviews: 1,499\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: ProLean Protein Blend Strawberry 2LB\n    Brand: ProLean\n    Flavor: Strawberry\n    Size: 2LB\n    Protein per serving: 23g\n    Price: $42.00\n    Reviews: 4,304\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: ProLean Whey Isolate Banana 500g\n    Brand: ProLean\n    Flavor: Banana\n    Size: 500g\n    Protein per serving: 23g\n    Price: $29.00\n    Reviews: 840\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "IronPeak",
-      "flavor": "Unflavored",
-      "size_raw": "1000g",
-      "size_value": 1000,
+      "brand": "ProLean",
+      "flavor": "Strawberry",
+      "size_raw": "500g",
+      "size_value": 500,
       "size_unit": "g",
-      "protein_value": 22,
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 39,
-      "reviews_raw": "3,706",
-      "review_count": 3706
+      "price_usd": 47,
+      "reviews_raw": "1,499",
+      "review_count": 1499
     },
     {
       "id": "B",
-      "brand": "IronPeak",
-      "flavor": "Unflavored",
-      "size_raw": "1LB",
-      "size_value": 1,
+      "brand": "ProLean",
+      "flavor": "Strawberry",
+      "size_raw": "2LB",
+      "size_value": 2,
       "size_unit": "LB",
-      "protein_value": 22,
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 36,
-      "reviews_raw": "1,500",
-      "review_count": 1500
+      "price_usd": 42,
+      "reviews_raw": "4,304",
+      "review_count": 4304
     },
     {
       "id": "C",
-      "brand": "IronPeak",
+      "brand": "ProLean",
       "flavor": "Banana",
-      "size_raw": "1000g",
-      "size_value": 1000,
+      "size_raw": "500g",
+      "size_value": 500,
       "size_unit": "g",
-      "protein_value": 22,
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 49,
-      "reviews_raw": "3,481",
-      "review_count": 3481
+      "price_usd": 29,
+      "reviews_raw": "840",
+      "review_count": 840
     }
   ],
   "ground_truth": {

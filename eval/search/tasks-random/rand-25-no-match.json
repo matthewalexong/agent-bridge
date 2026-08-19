@@ -1,0 +1,87 @@
+{
+  "id": "rand-25-no-match",
+  "note": "RANDOMIZED (no-match, seed 1337): No listing satisfies all constraints — correct answer is reformulate, no selection.",
+  "query": "Mass Gainer salted caramel 1000g 28g protein CoreFuel",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "salted caramel"
+    },
+    {
+      "kind": "size_g",
+      "value": 1000
+    },
+    {
+      "kind": "protein_g",
+      "value": 28
+    },
+    {
+      "kind": "brand",
+      "value": "CoreFuel"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer salted caramel 1000g 28g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Mass Gainer Cookies & Cream 1000g\n    Brand: CoreFuel\n    Flavor: Cookies & Cream\n    Size: 1000g\n    Protein per serving: 28g\n    Price: $32.00\n    Reviews: 386\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Mass Gainer Salted Caramel 1KG\n    Brand: CoreFuel\n    Flavor: Salted Caramel\n    Size: 1KG\n    Protein per serving: 28g\n    Price: $46.00\n    Reviews: 296\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: CoreFuel Mass Gainer Salted Caramel 1000g\n    Brand: CoreFuel\n    Flavor: Salted Caramel\n    Size: 1000g\n    Protein per serving: 38g\n    Price: $39.00\n    Reviews: 333\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "CoreFuel",
+      "flavor": "Cookies & Cream",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 32,
+      "reviews_raw": "386",
+      "review_count": 386
+    },
+    {
+      "id": "B",
+      "brand": "CoreFuel",
+      "flavor": "Salted Caramel",
+      "size_raw": "1KG",
+      "size_value": 1,
+      "size_unit": "KG",
+      "protein_value": 28,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 46,
+      "reviews_raw": "296",
+      "review_count": 296
+    },
+    {
+      "id": "C",
+      "brand": "CoreFuel",
+      "flavor": "Salted Caramel",
+      "size_raw": "1000g",
+      "size_value": 1000,
+      "size_unit": "g",
+      "protein_value": 38,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 39,
+      "reviews_raw": "333",
+      "review_count": 333
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints — search is enough."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "No listing satisfies all constraints — correct answer is reformulate, no selection."
+}

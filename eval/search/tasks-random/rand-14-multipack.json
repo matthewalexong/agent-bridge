@@ -1,15 +1,15 @@
 {
   "id": "rand-14-multipack",
-  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
-  "query": "Protein Blend mocha 2721g 24g protein VitaForge",
+  "note": "RANDOMIZED (multipack, seed 1337): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Whey Protein strawberry 3000g 24g protein CoreFuel",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "mocha"
+      "value": "strawberry"
     },
     {
       "kind": "size_g",
-      "value": 2721
+      "value": 3000
     },
     {
       "kind": "protein_g",
@@ -17,41 +17,41 @@
     },
     {
       "kind": "brand",
-      "value": "VitaForge"
+      "value": "CoreFuel"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nProtein Blend mocha 2721g 24g protein VitaForge\n\n=== RESULTS ===\n[B] Title: VitaForge Whey Isolate Mocha 32oz\n    Brand: VitaForge\n    Flavor: Mocha\n    Size: 32oz\n    Protein per serving: 24g\n    Price: $44.00\n    Reviews: 3,167\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: VitaForge Casein Protein Mocha 32oz\n    Brand: VitaForge\n    Flavor: Mocha\n    Size: 32oz (Pack of 3)\n    Protein per serving: 24g\n    Price: $76.00\n    Reviews: 3,437\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 3000g 24g protein CoreFuel\n\n=== RESULTS ===\n[B] Title: CoreFuel Whey Protein Strawberry 1KG\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 1KG\n    Protein per serving: 24g\n    Price: $36.00\n    Reviews: 212\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: CoreFuel Whey Protein Strawberry 1KG\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 1KG (Pack of 3)\n    Protein per serving: 24g\n    Price: $80.00\n    Reviews: 1,905\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "VitaForge",
-      "flavor": "Mocha",
-      "size_raw": "32oz",
-      "size_value": 32,
-      "size_unit": "oz",
+      "brand": "CoreFuel",
+      "flavor": "Strawberry",
+      "size_raw": "1KG",
+      "size_value": 1,
+      "size_unit": "KG",
       "protein_value": 24,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 44,
-      "reviews_raw": "3,167",
-      "review_count": 3167
+      "price_usd": 36,
+      "reviews_raw": "212",
+      "review_count": 212
     },
     {
       "id": "A",
-      "brand": "VitaForge",
-      "flavor": "Mocha",
-      "size_raw": "32oz (Pack of 3)",
-      "size_value": 32,
-      "size_unit": "oz",
+      "brand": "CoreFuel",
+      "flavor": "Strawberry",
+      "size_raw": "1KG (Pack of 3)",
+      "size_value": 1,
+      "size_unit": "KG",
       "protein_value": 24,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
       "pack_count": 3,
-      "price_usd": 76,
-      "reviews_raw": "3,437",
-      "review_count": 3437
+      "price_usd": 80,
+      "reviews_raw": "1,905",
+      "review_count": 1905
     }
   ],
   "ground_truth": {

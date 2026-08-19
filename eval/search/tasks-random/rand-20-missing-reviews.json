@@ -1,54 +1,54 @@
 {
   "id": "rand-20-missing-reviews",
-  "note": "RANDOMIZED (missing-reviews, seed 42): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
-  "query": "Whey Isolate cookies & cream 1000g 29g protein NutriGain",
+  "note": "RANDOMIZED (missing-reviews, seed 1337): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
+  "query": "Casein Protein salted caramel 227g 23g protein IronPeak",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "cookies & cream"
+      "value": "salted caramel"
     },
     {
       "kind": "size_g",
-      "value": 1000
+      "value": 227
     },
     {
       "kind": "protein_g",
-      "value": 29
+      "value": 23
     },
     {
       "kind": "brand",
-      "value": "NutriGain"
+      "value": "IronPeak"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate cookies & cream 1000g 29g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Protein Blend Cookies & Cream 1KG\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 1KG\n    Protein per serving: 29g\n    Price: $41.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Protein Blend Cookies & Cream 1KG\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 1KG\n    Protein per serving: 29g\n    Price: $41.00\n    Reviews: 1,104\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein salted caramel 227g 23g protein IronPeak\n\n=== RESULTS ===\n[B] Title: IronPeak Casein Protein Salted Caramel 8oz\n    Brand: IronPeak\n    Flavor: Salted Caramel\n    Size: 8oz\n    Protein per serving: 23g\n    Price: $32.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: IronPeak Casein Protein Salted Caramel 8oz\n    Brand: IronPeak\n    Flavor: Salted Caramel\n    Size: 8oz\n    Protein per serving: 23g\n    Price: $32.00\n    Reviews: 2,440\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "NutriGain",
-      "flavor": "Cookies & Cream",
-      "size_raw": "1KG",
-      "size_value": 1,
-      "size_unit": "KG",
-      "protein_value": 29,
+      "brand": "IronPeak",
+      "flavor": "Salted Caramel",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 41
+      "price_usd": 32
     },
     {
       "id": "A",
-      "brand": "NutriGain",
-      "flavor": "Cookies & Cream",
-      "size_raw": "1KG",
-      "size_value": 1,
-      "size_unit": "KG",
-      "protein_value": 29,
+      "brand": "IronPeak",
+      "flavor": "Salted Caramel",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 41,
-      "reviews_raw": "1,104",
-      "review_count": 1104
+      "price_usd": 32,
+      "reviews_raw": "2,440",
+      "review_count": 2440
     }
   ],
   "ground_truth": {
@@ -56,7 +56,7 @@
     "selected_listing": "A",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($41) and the highest review count (1104)."
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($32) and the highest review count (2440)."
   },
   "scoring": {
     "weights": {

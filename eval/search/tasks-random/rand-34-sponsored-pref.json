@@ -1,56 +1,56 @@
 {
   "id": "rand-34-sponsored-pref",
-  "note": "RANDOMIZED (sponsored-pref, seed 42): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
-  "query": "Protein Blend banana 1000g 22g protein NutriGain",
+  "note": "RANDOMIZED (sponsored-pref, seed 1337): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
+  "query": "Plant Protein vanilla 3000g 28g protein TrueGain",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "banana"
+      "value": "vanilla"
     },
     {
       "kind": "size_g",
-      "value": 1000
+      "value": 3000
     },
     {
       "kind": "protein_g",
-      "value": 22
+      "value": 28
     },
     {
       "kind": "brand",
-      "value": "NutriGain"
+      "value": "TrueGain"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nProtein Blend banana 1000g 22g protein NutriGain\n\n=== RESULTS ===\n[A] Title: NutriGain Protein Blend Banana 1000g\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $35.00\n    Reviews: 6,806\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: NutriGain Plant Protein Banana 1000g\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 1000g\n    Protein per serving: 22g\n    Price: $37.00\n    Reviews: 323\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nPlant Protein vanilla 3000g 28g protein TrueGain\n\n=== RESULTS ===\n[A] Title: TrueGain Plant Protein Vanilla 3KG\n    Brand: TrueGain\n    Flavor: Vanilla\n    Size: 3KG\n    Protein per serving: 28g\n    Price: $34.00\n    Reviews: 3,164\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: TrueGain Plant Protein Vanilla 3KG\n    Brand: TrueGain\n    Flavor: Vanilla\n    Size: 3KG\n    Protein per serving: 28g\n    Price: $36.00\n    Reviews: 711\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "NutriGain",
-      "flavor": "Banana",
-      "size_raw": "1000g",
-      "size_value": 1000,
-      "size_unit": "g",
-      "protein_value": 22,
+      "brand": "TrueGain",
+      "flavor": "Vanilla",
+      "size_raw": "3KG",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 28,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "price_usd": 35,
-      "reviews_raw": "6,806",
-      "review_count": 6806
+      "price_usd": 34,
+      "reviews_raw": "3,164",
+      "review_count": 3164
     },
     {
       "id": "B",
-      "brand": "NutriGain",
-      "flavor": "Banana",
-      "size_raw": "1000g",
-      "size_value": 1000,
-      "size_unit": "g",
-      "protein_value": 22,
+      "brand": "TrueGain",
+      "flavor": "Vanilla",
+      "size_raw": "3KG",
+      "size_value": 3,
+      "size_unit": "KG",
+      "protein_value": 28,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 37,
-      "reviews_raw": "323",
-      "review_count": 323
+      "price_usd": 36,
+      "reviews_raw": "711",
+      "review_count": 711
     }
   ],
   "ground_truth": {

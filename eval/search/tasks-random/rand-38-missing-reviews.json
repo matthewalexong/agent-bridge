@@ -1,0 +1,70 @@
+{
+  "id": "rand-38-missing-reviews",
+  "note": "RANDOMIZED (missing-reviews, seed 1337): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
+  "query": "Whey Isolate unflavored 1500g 26g protein NutriGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "unflavored"
+    },
+    {
+      "kind": "size_g",
+      "value": 1500
+    },
+    {
+      "kind": "protein_g",
+      "value": 26
+    },
+    {
+      "kind": "brand",
+      "value": "NutriGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nWhey Isolate unflavored 1500g 26g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Whey Isolate Unflavored 1500g\n    Brand: NutriGain\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 26g\n    Price: $33.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Whey Isolate Unflavored 1500g\n    Brand: NutriGain\n    Flavor: Unflavored\n    Size: 1500g\n    Protein per serving: 26g\n    Price: $33.00\n    Reviews: 4,223\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "B",
+      "brand": "NutriGain",
+      "flavor": "Unflavored",
+      "size_raw": "1500g",
+      "size_value": 1500,
+      "size_unit": "g",
+      "protein_value": 26,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 33
+    },
+    {
+      "id": "A",
+      "brand": "NutriGain",
+      "flavor": "Unflavored",
+      "size_raw": "1500g",
+      "size_value": 1500,
+      "size_unit": "g",
+      "protein_value": 26,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 33,
+      "reviews_raw": "4,223",
+      "review_count": 4223
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($33) and the highest review count (4223)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Same-price tie where one listing has no Reviews line — the listing WITH evidence must win."
+}

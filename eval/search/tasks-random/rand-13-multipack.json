@@ -1,57 +1,57 @@
 {
   "id": "rand-13-multipack",
-  "note": "RANDOMIZED (multipack, seed 42): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
-  "query": "Mass Gainer cookies & cream 7256g 20g protein TrueGain",
+  "note": "RANDOMIZED (multipack, seed 1337): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
+  "query": "Mass Gainer chocolate 2721g 25g protein CoreFuel",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "cookies & cream"
+      "value": "chocolate"
     },
     {
       "kind": "size_g",
-      "value": 7256
+      "value": 2721
     },
     {
       "kind": "protein_g",
-      "value": 20
+      "value": 25
     },
     {
       "kind": "brand",
-      "value": "TrueGain"
+      "value": "CoreFuel"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nMass Gainer cookies & cream 7256g 20g protein TrueGain\n\n=== RESULTS ===\n[B] Title: TrueGain Protein Blend Cookies & Cream 64oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 64oz\n    Protein per serving: 20g\n    Price: $39.00\n    Reviews: 3,828\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: TrueGain Plant Protein Cookies & Cream 64oz\n    Brand: TrueGain\n    Flavor: Cookies & Cream\n    Size: 64oz (Pack of 4)\n    Protein per serving: 20g\n    Price: $42.00\n    Reviews: 929\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nMass Gainer chocolate 2721g 25g protein CoreFuel\n\n=== RESULTS ===\n[B] Title: CoreFuel Mass Gainer Chocolate 32oz\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 32oz\n    Protein per serving: 25g\n    Price: $43.00\n    Reviews: 4,608\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: CoreFuel Mass Gainer Chocolate 32oz\n    Brand: CoreFuel\n    Flavor: Chocolate\n    Size: 32oz (Pack of 3)\n    Protein per serving: 25g\n    Price: $67.00\n    Reviews: 433\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "TrueGain",
-      "flavor": "Cookies & Cream",
-      "size_raw": "64oz",
-      "size_value": 64,
+      "brand": "CoreFuel",
+      "flavor": "Chocolate",
+      "size_raw": "32oz",
+      "size_value": 32,
       "size_unit": "oz",
-      "protein_value": 20,
+      "protein_value": 25,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 39,
-      "reviews_raw": "3,828",
-      "review_count": 3828
+      "price_usd": 43,
+      "reviews_raw": "4,608",
+      "review_count": 4608
     },
     {
       "id": "A",
-      "brand": "TrueGain",
-      "flavor": "Cookies & Cream",
-      "size_raw": "64oz (Pack of 4)",
-      "size_value": 64,
+      "brand": "CoreFuel",
+      "flavor": "Chocolate",
+      "size_raw": "32oz (Pack of 3)",
+      "size_value": 32,
       "size_unit": "oz",
-      "protein_value": 20,
+      "protein_value": 25,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "pack_count": 4,
-      "price_usd": 42,
-      "reviews_raw": "929",
-      "review_count": 929
+      "pack_count": 3,
+      "price_usd": 67,
+      "reviews_raw": "433",
+      "review_count": 433
     }
   ],
   "ground_truth": {

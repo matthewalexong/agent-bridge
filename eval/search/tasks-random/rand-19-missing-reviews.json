@@ -1,54 +1,54 @@
 {
   "id": "rand-19-missing-reviews",
-  "note": "RANDOMIZED (missing-reviews, seed 42): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
-  "query": "Protein Blend chocolate 250g 20g protein IronPeak",
+  "note": "RANDOMIZED (missing-reviews, seed 1337): Same-price tie where one listing has no Reviews line — the listing WITH evidence must win.",
+  "query": "Casein Protein cookies & cream 227g 21g protein VitaForge",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "cookies & cream"
     },
     {
       "kind": "size_g",
-      "value": 250
+      "value": 227
     },
     {
       "kind": "protein_g",
-      "value": 20
+      "value": 21
     },
     {
       "kind": "brand",
-      "value": "IronPeak"
+      "value": "VitaForge"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nProtein Blend chocolate 250g 20g protein IronPeak\n\n=== RESULTS ===\n[B] Title: IronPeak Plant Protein Chocolate 250g\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 250g\n    Protein per serving: 20g\n    Price: $35.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: IronPeak Mass Gainer Chocolate 250g\n    Brand: IronPeak\n    Flavor: Chocolate\n    Size: 250g\n    Protein per serving: 20g\n    Price: $35.00\n    Reviews: 3,394\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein cookies & cream 227g 21g protein VitaForge\n\n=== RESULTS ===\n[B] Title: VitaForge Casein Protein Cookies & Cream 8oz\n    Brand: VitaForge\n    Flavor: Cookies & Cream\n    Size: 8oz\n    Protein per serving: 21g\n    Price: $48.00\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: VitaForge Casein Protein Cookies & Cream 8oz\n    Brand: VitaForge\n    Flavor: Cookies & Cream\n    Size: 8oz\n    Protein per serving: 21g\n    Price: $48.00\n    Reviews: 4,960\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "IronPeak",
-      "flavor": "Chocolate",
-      "size_raw": "250g",
-      "size_value": 250,
-      "size_unit": "g",
-      "protein_value": 20,
+      "brand": "VitaForge",
+      "flavor": "Cookies & Cream",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 21,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 35
+      "price_usd": 48
     },
     {
       "id": "A",
-      "brand": "IronPeak",
-      "flavor": "Chocolate",
-      "size_raw": "250g",
-      "size_value": 250,
-      "size_unit": "g",
-      "protein_value": 20,
+      "brand": "VitaForge",
+      "flavor": "Cookies & Cream",
+      "size_raw": "8oz",
+      "size_value": 8,
+      "size_unit": "oz",
+      "protein_value": 21,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 35,
-      "reviews_raw": "3,394",
-      "review_count": 3394
+      "price_usd": 48,
+      "reviews_raw": "4,960",
+      "review_count": 4960
     }
   ],
   "ground_truth": {
@@ -56,7 +56,7 @@
     "selected_listing": "A",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($35) and the highest review count (3394)."
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($48) and the highest review count (4960)."
   },
   "scoring": {
     "weights": {

@@ -1,56 +1,56 @@
 {
   "id": "rand-12-oos-full-match",
-  "note": "RANDOMIZED (oos-full-match, seed 42): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
-  "query": "Plant Protein cookies & cream 2000g 25g protein PeakWhey",
+  "note": "RANDOMIZED (oos-full-match, seed 1337): A full match exists but is out of stock — action reformulate, matched_constraints reports the full count.",
+  "query": "Protein Blend strawberry 500g 22g protein PeakWhey",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "cookies & cream"
+      "value": "strawberry"
     },
     {
       "kind": "size_g",
-      "value": 2000
+      "value": 500
     },
     {
       "kind": "protein_g",
-      "value": 25
+      "value": 22
     },
     {
       "kind": "brand",
       "value": "PeakWhey"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nPlant Protein cookies & cream 2000g 25g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Casein Protein Cookies & Cream 2000g\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 2000g\n    Protein per serving: 25g\n    Price: $47.00\n    Reviews: 4,483\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: PeakWhey Casein Protein Cookies & Cream 1000g\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 1000g\n    Protein per serving: 25g\n    Price: $46.00\n    Reviews: 1,121\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend strawberry 500g 22g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Protein Blend Strawberry 500g\n    Brand: PeakWhey\n    Flavor: Strawberry\n    Size: 500g\n    Protein per serving: 22g\n    Price: $43.00\n    Reviews: 1,820\n    Stock: out of stock\n    Sponsored: no\n\n[B] Title: PeakWhey Protein Blend Strawberry 16oz\n    Brand: PeakWhey\n    Flavor: Strawberry\n    Size: 16oz\n    Protein per serving: 22g\n    Price: $47.00\n    Reviews: 4,233\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
       "brand": "PeakWhey",
-      "flavor": "Cookies & Cream",
-      "size_raw": "2000g",
-      "size_value": 2000,
+      "flavor": "Strawberry",
+      "size_raw": "500g",
+      "size_value": 500,
       "size_unit": "g",
-      "protein_value": 25,
+      "protein_value": 22,
       "protein_unit": "g",
       "stock": "out of stock",
       "sponsored": false,
-      "price_usd": 47,
-      "reviews_raw": "4,483",
-      "review_count": 4483
+      "price_usd": 43,
+      "reviews_raw": "1,820",
+      "review_count": 1820
     },
     {
       "id": "B",
       "brand": "PeakWhey",
-      "flavor": "Cookies & Cream",
-      "size_raw": "1000g",
-      "size_value": 1000,
-      "size_unit": "g",
-      "protein_value": 25,
+      "flavor": "Strawberry",
+      "size_raw": "16oz",
+      "size_value": 16,
+      "size_unit": "oz",
+      "protein_value": 22,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 46,
-      "reviews_raw": "1,121",
-      "review_count": 1121
+      "price_usd": 47,
+      "reviews_raw": "4,233",
+      "review_count": 4233
     }
   ],
   "ground_truth": {

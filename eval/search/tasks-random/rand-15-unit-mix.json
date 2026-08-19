@@ -1,56 +1,56 @@
 {
   "id": "rand-15-unit-mix",
-  "note": "RANDOMIZED (unit-mix, seed 42): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
-  "query": "Whey Protein strawberry 2000g 20g protein CoreFuel",
+  "note": "RANDOMIZED (unit-mix, seed 1337): The match is expressed in a different unit than a near-miss — judge must normalize units before comparing.",
+  "query": "Casein Protein chocolate 907g 23g protein TrueGain",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "strawberry"
+      "value": "chocolate"
     },
     {
       "kind": "size_g",
-      "value": 2000
+      "value": 907
     },
     {
       "kind": "protein_g",
-      "value": 20
+      "value": 23
     },
     {
       "kind": "brand",
-      "value": "CoreFuel"
+      "value": "TrueGain"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nWhey Protein strawberry 2000g 20g protein CoreFuel\n\n=== RESULTS ===\n[B] Title: CoreFuel Whey Isolate Strawberry 5.4LB\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 5.4LB\n    Protein per serving: 20g\n    Price: $44.00\n    Reviews: 811\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: CoreFuel Casein Protein Strawberry 4.4LB\n    Brand: CoreFuel\n    Flavor: Strawberry\n    Size: 4.4LB\n    Protein per serving: 20g\n    Price: $50.00\n    Reviews: 4,410\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein chocolate 907g 23g protein TrueGain\n\n=== RESULTS ===\n[B] Title: TrueGain Casein Protein Chocolate 908g\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 908g\n    Protein per serving: 23g\n    Price: $43.00\n    Reviews: 4,770\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: TrueGain Casein Protein Chocolate 907g\n    Brand: TrueGain\n    Flavor: Chocolate\n    Size: 907g\n    Protein per serving: 23g\n    Price: $34.00\n    Reviews: 1,696\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "CoreFuel",
-      "flavor": "Strawberry",
-      "size_raw": "5.4LB",
-      "size_value": 5.4,
-      "size_unit": "LB",
-      "protein_value": 20,
+      "brand": "TrueGain",
+      "flavor": "Chocolate",
+      "size_raw": "908g",
+      "size_value": 908,
+      "size_unit": "g",
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 44,
-      "reviews_raw": "811",
-      "review_count": 811
+      "price_usd": 43,
+      "reviews_raw": "4,770",
+      "review_count": 4770
     },
     {
       "id": "A",
-      "brand": "CoreFuel",
-      "flavor": "Strawberry",
-      "size_raw": "4.4LB",
-      "size_value": 4.4,
-      "size_unit": "LB",
-      "protein_value": 20,
+      "brand": "TrueGain",
+      "flavor": "Chocolate",
+      "size_raw": "907g",
+      "size_value": 907,
+      "size_unit": "g",
+      "protein_value": 23,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 50,
-      "reviews_raw": "4,410",
-      "review_count": 4410
+      "price_usd": 34,
+      "reviews_raw": "1,696",
+      "review_count": 1696
     }
   ],
   "ground_truth": {
@@ -58,7 +58,7 @@
     "selected_listing": "A",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing A satisfies all 4 constraints — search is enough."
+    "explanation": "Listing A satisfies all 4 constraints and is the cheapest qualifying match ($34) and the highest review count (1696)."
   },
   "scoring": {
     "weights": {

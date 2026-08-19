@@ -1,57 +1,57 @@
 {
-  "id": "rand-24-multipack",
+  "id": "rand-39-multipack",
   "note": "RANDOMIZED (multipack, seed 1337): Target size is only reachable via the multipack's TOTAL (per-unit x pack). Code parses pack from size_raw.",
-  "query": "Plant Protein chocolate 6000g 26g protein ProLean",
+  "query": "Casein Protein banana 12000g 27g protein NutriGain",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "chocolate"
+      "value": "banana"
     },
     {
       "kind": "size_g",
-      "value": 6000
+      "value": 12000
     },
     {
       "kind": "protein_g",
-      "value": 26
+      "value": 27
     },
     {
       "kind": "brand",
-      "value": "ProLean"
+      "value": "NutriGain"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nPlant Protein chocolate 6000g 26g protein ProLean\n\n=== RESULTS ===\n[B] Title: ProLean Plant Protein Chocolate 3KG\n    Brand: ProLean\n    Flavor: Chocolate\n    Size: 3KG\n    Protein per serving: 26g\n    Price: $36.00\n    Reviews: 4,041\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: ProLean Plant Protein Chocolate 3KG\n    Brand: ProLean\n    Flavor: Chocolate\n    Size: 3KG (Pack of 2)\n    Protein per serving: 26g\n    Price: $54.00\n    Reviews: 869\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein banana 12000g 27g protein NutriGain\n\n=== RESULTS ===\n[B] Title: NutriGain Casein Protein Banana 3KG\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 3KG\n    Protein per serving: 27g\n    Price: $44.00\n    Reviews: 984\n    Stock: in stock\n    Sponsored: no\n\n[A] Title: NutriGain Casein Protein Banana 3KG\n    Brand: NutriGain\n    Flavor: Banana\n    Size: 3KG (Pack of 4)\n    Protein per serving: 27g\n    Price: $53.00\n    Reviews: 4,748\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "B",
-      "brand": "ProLean",
-      "flavor": "Chocolate",
+      "brand": "NutriGain",
+      "flavor": "Banana",
       "size_raw": "3KG",
       "size_value": 3,
       "size_unit": "KG",
-      "protein_value": 26,
+      "protein_value": 27,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 36,
-      "reviews_raw": "4,041",
-      "review_count": 4041
+      "price_usd": 44,
+      "reviews_raw": "984",
+      "review_count": 984
     },
     {
       "id": "A",
-      "brand": "ProLean",
-      "flavor": "Chocolate",
-      "size_raw": "3KG (Pack of 2)",
+      "brand": "NutriGain",
+      "flavor": "Banana",
+      "size_raw": "3KG (Pack of 4)",
       "size_value": 3,
       "size_unit": "KG",
-      "protein_value": 26,
+      "protein_value": 27,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "pack_count": 2,
-      "price_usd": 54,
-      "reviews_raw": "869",
-      "review_count": 869
+      "pack_count": 4,
+      "price_usd": 53,
+      "reviews_raw": "4,748",
+      "review_count": 4748
     }
   ],
   "ground_truth": {

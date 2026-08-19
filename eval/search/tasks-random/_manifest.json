@@ -1,7 +1,7 @@
 {
-  "seed": 42,
+  "seed": 1337,
   "count": 40,
-  "generated": "2026-08-19T20:49:15.095Z",
+  "generated": "2026-08-19T21:52:33.176Z",
   "tasks": [
     {
       "id": "rand-1-unique-match",
@@ -61,7 +61,7 @@
       "id": "rand-10-no-match",
       "scenario": "no-match",
       "action": "stop",
-      "selected": "B"
+      "selected": "A"
     },
     {
       "id": "rand-11-oos-full-match",
@@ -109,7 +109,7 @@
       "id": "rand-18-protein-mg",
       "scenario": "protein-mg",
       "action": "stop",
-      "selected": "A"
+      "selected": "C"
     },
     {
       "id": "rand-19-missing-reviews",
@@ -124,16 +124,16 @@
       "selected": "A"
     },
     {
-      "id": "rand-21-multipack",
-      "scenario": "multipack",
+      "id": "rand-21-tiebreak-price",
+      "scenario": "tiebreak-price",
       "action": "stop",
-      "selected": "A"
+      "selected": "B"
     },
     {
-      "id": "rand-22-no-match",
-      "scenario": "no-match",
-      "action": "reformulate",
-      "selected": null
+      "id": "rand-22-tiebreak-price",
+      "scenario": "tiebreak-price",
+      "action": "stop",
+      "selected": "B"
     },
     {
       "id": "rand-23-protein-mg",
@@ -148,56 +148,56 @@
       "selected": "A"
     },
     {
-      "id": "rand-25-tiebreak-price",
-      "scenario": "tiebreak-price",
+      "id": "rand-25-no-match",
+      "scenario": "no-match",
       "action": "stop",
       "selected": "B"
     },
     {
-      "id": "rand-26-oos-full-match",
+      "id": "rand-26-sponsored-pref",
+      "scenario": "sponsored-pref",
+      "action": "stop",
+      "selected": "B"
+    },
+    {
+      "id": "rand-27-oos-full-match",
       "scenario": "oos-full-match",
       "action": "reformulate",
       "selected": null
     },
     {
-      "id": "rand-27-tiebreak-reviews",
-      "scenario": "tiebreak-reviews",
+      "id": "rand-28-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-29-oos-full-match",
+      "scenario": "oos-full-match",
+      "action": "reformulate",
+      "selected": null
+    },
+    {
+      "id": "rand-30-oos-full-match",
+      "scenario": "oos-full-match",
       "action": "stop",
       "selected": "B"
     },
     {
-      "id": "rand-28-multipack",
+      "id": "rand-31-multipack",
       "scenario": "multipack",
       "action": "stop",
       "selected": "A"
     },
     {
-      "id": "rand-29-protein-mg",
-      "scenario": "protein-mg",
+      "id": "rand-32-tiebreak-price",
+      "scenario": "tiebreak-price",
       "action": "stop",
       "selected": "B"
     },
     {
-      "id": "rand-30-no-match",
+      "id": "rand-33-no-match",
       "scenario": "no-match",
-      "action": "stop",
-      "selected": "A"
-    },
-    {
-      "id": "rand-31-tiebreak-reviews",
-      "scenario": "tiebreak-reviews",
-      "action": "stop",
-      "selected": "B"
-    },
-    {
-      "id": "rand-32-protein-mg",
-      "scenario": "protein-mg",
-      "action": "stop",
-      "selected": "B"
-    },
-    {
-      "id": "rand-33-unit-mix",
-      "scenario": "unit-mix",
       "action": "stop",
       "selected": "A"
     },
@@ -208,40 +208,40 @@
       "selected": "B"
     },
     {
-      "id": "rand-35-tiebreak-price",
-      "scenario": "tiebreak-price",
+      "id": "rand-35-tiebreak-reviews",
+      "scenario": "tiebreak-reviews",
       "action": "stop",
       "selected": "B"
     },
     {
-      "id": "rand-36-oos-full-match",
+      "id": "rand-36-unit-mix",
+      "scenario": "unit-mix",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-37-oos-full-match",
       "scenario": "oos-full-match",
       "action": "reformulate",
       "selected": null
     },
     {
-      "id": "rand-37-multipack",
+      "id": "rand-38-missing-reviews",
+      "scenario": "missing-reviews",
+      "action": "stop",
+      "selected": "A"
+    },
+    {
+      "id": "rand-39-multipack",
       "scenario": "multipack",
       "action": "stop",
       "selected": "A"
     },
     {
-      "id": "rand-38-multipack",
-      "scenario": "multipack",
-      "action": "stop",
-      "selected": "A"
-    },
-    {
-      "id": "rand-39-unique-match",
+      "id": "rand-40-unique-match",
       "scenario": "unique-match",
       "action": "stop",
       "selected": "A"
-    },
-    {
-      "id": "rand-40-no-match",
-      "scenario": "no-match",
-      "action": "reformulate",
-      "selected": null
     }
   ]
 }

@@ -1,56 +1,56 @@
 {
   "id": "rand-5-tiebreak-reviews",
-  "note": "RANDOMIZED (tiebreak-reviews, seed 42): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
-  "query": "Casein Protein unflavored 3000g 23g protein MuscleMax",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 1337): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Protein Blend banana 2000g 27g protein IronPeak",
   "constraints": [
     {
       "kind": "flavor",
-      "value": "unflavored"
+      "value": "banana"
     },
     {
       "kind": "size_g",
-      "value": 3000
+      "value": 2000
     },
     {
       "kind": "protein_g",
-      "value": 23
+      "value": 27
     },
     {
       "kind": "brand",
-      "value": "MuscleMax"
+      "value": "IronPeak"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nCasein Protein unflavored 3000g 23g protein MuscleMax\n\n=== RESULTS ===\n[A] Title: MuscleMax Protein Blend Unflavored 3KG\n    Brand: MuscleMax\n    Flavor: Unflavored\n    Size: 3KG\n    Protein per serving: 23g\n    Price: $39.00\n    Reviews: 775\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: MuscleMax Protein Blend Unflavored 3KG\n    Brand: MuscleMax\n    Flavor: Unflavored\n    Size: 3KG\n    Protein per serving: 23g\n    Price: $39.00\n    Reviews: 3,360\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend banana 2000g 27g protein IronPeak\n\n=== RESULTS ===\n[A] Title: IronPeak Protein Blend Banana 2000g\n    Brand: IronPeak\n    Flavor: Banana\n    Size: 2000g\n    Protein per serving: 27g\n    Price: $36.00\n    Reviews: 416\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: IronPeak Protein Blend Banana 2000g\n    Brand: IronPeak\n    Flavor: Banana\n    Size: 2000g\n    Protein per serving: 27g\n    Price: $36.00\n    Reviews: 3,249\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "MuscleMax",
-      "flavor": "Unflavored",
-      "size_raw": "3KG",
-      "size_value": 3,
-      "size_unit": "KG",
-      "protein_value": 23,
+      "brand": "IronPeak",
+      "flavor": "Banana",
+      "size_raw": "2000g",
+      "size_value": 2000,
+      "size_unit": "g",
+      "protein_value": 27,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 39,
-      "reviews_raw": "775",
-      "review_count": 775
+      "price_usd": 36,
+      "reviews_raw": "416",
+      "review_count": 416
     },
     {
       "id": "B",
-      "brand": "MuscleMax",
-      "flavor": "Unflavored",
-      "size_raw": "3KG",
-      "size_value": 3,
-      "size_unit": "KG",
-      "protein_value": 23,
+      "brand": "IronPeak",
+      "flavor": "Banana",
+      "size_raw": "2000g",
+      "size_value": 2000,
+      "size_unit": "g",
+      "protein_value": 27,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 39,
-      "reviews_raw": "3,360",
-      "review_count": 3360
+      "price_usd": 36,
+      "reviews_raw": "3,249",
+      "review_count": 3249
     }
   ],
   "ground_truth": {
@@ -58,7 +58,7 @@
     "selected_listing": "B",
     "matched_constraints": 4,
     "total_constraints": 4,
-    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($39) and the highest review count (3360)."
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($36) and the highest review count (3249)."
   },
   "scoring": {
     "weights": {

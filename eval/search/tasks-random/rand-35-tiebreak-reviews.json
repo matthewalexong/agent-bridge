@@ -1,0 +1,72 @@
+{
+  "id": "rand-35-tiebreak-reviews",
+  "note": "RANDOMIZED (tiebreak-reviews, seed 1337): Two organic full matches at the SAME price — judge tie-breaks on higher review count.",
+  "query": "Protein Blend cookies & cream 4536g 20g protein PeakWhey",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "cookies & cream"
+    },
+    {
+      "kind": "size_g",
+      "value": 4536
+    },
+    {
+      "kind": "protein_g",
+      "value": 20
+    },
+    {
+      "kind": "brand",
+      "value": "PeakWhey"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nProtein Blend cookies & cream 4536g 20g protein PeakWhey\n\n=== RESULTS ===\n[A] Title: PeakWhey Protein Blend Cookies & Cream 10LB\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 10LB\n    Protein per serving: 20g\n    Price: $50.00\n    Reviews: 572\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PeakWhey Protein Blend Cookies & Cream 10LB\n    Brand: PeakWhey\n    Flavor: Cookies & Cream\n    Size: 10LB\n    Protein per serving: 20g\n    Price: $50.00\n    Reviews: 1,110\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "brand": "PeakWhey",
+      "flavor": "Cookies & Cream",
+      "size_raw": "10LB",
+      "size_value": 10,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 50,
+      "reviews_raw": "572",
+      "review_count": 572
+    },
+    {
+      "id": "B",
+      "brand": "PeakWhey",
+      "flavor": "Cookies & Cream",
+      "size_raw": "10LB",
+      "size_value": 10,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "price_usd": 50,
+      "reviews_raw": "1,110",
+      "review_count": 1110
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4,
+    "explanation": "Listing B satisfies all 4 constraints and is the cheapest qualifying match ($50) and the highest review count (1110)."
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Two organic full matches at the SAME price — judge tie-breaks on higher review count."
+}

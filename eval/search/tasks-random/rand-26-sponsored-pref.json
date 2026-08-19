@@ -1,7 +1,7 @@
 {
-  "id": "rand-8-sponsored-pref",
+  "id": "rand-26-sponsored-pref",
   "note": "RANDOMIZED (sponsored-pref, seed 1337): Sponsored match is cheaper+more reviewed, but an organic full match exists — judge prefers organic.",
-  "query": "Plant Protein cookies & cream 2268g 24g protein NutriGain",
+  "query": "Casein Protein cookies & cream 1814g 28g protein ProLean",
   "constraints": [
     {
       "kind": "flavor",
@@ -9,48 +9,48 @@
     },
     {
       "kind": "size_g",
-      "value": 2268
+      "value": 1814
     },
     {
       "kind": "protein_g",
-      "value": 24
+      "value": 28
     },
     {
       "kind": "brand",
-      "value": "NutriGain"
+      "value": "ProLean"
     }
   ],
-  "snapshot": "=== SEARCH QUERY ===\nPlant Protein cookies & cream 2268g 24g protein NutriGain\n\n=== RESULTS ===\n[A] Title: NutriGain Plant Protein Cookies & Cream 5LB\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 5LB\n    Protein per serving: 24g\n    Price: $42.00\n    Reviews: 4,713\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: NutriGain Plant Protein Cookies & Cream 5LB\n    Brand: NutriGain\n    Flavor: Cookies & Cream\n    Size: 5LB\n    Protein per serving: 24g\n    Price: $44.00\n    Reviews: 428\n    Stock: in stock\n    Sponsored: no",
+  "snapshot": "=== SEARCH QUERY ===\nCasein Protein cookies & cream 1814g 28g protein ProLean\n\n=== RESULTS ===\n[A] Title: ProLean Casein Protein Cookies & Cream 64oz\n    Brand: ProLean\n    Flavor: Cookies & Cream\n    Size: 64oz\n    Protein per serving: 28g\n    Price: $46.00\n    Reviews: 4,934\n    Stock: in stock\n    Sponsored: yes\n\n[B] Title: ProLean Casein Protein Cookies & Cream 64oz\n    Brand: ProLean\n    Flavor: Cookies & Cream\n    Size: 64oz\n    Protein per serving: 28g\n    Price: $48.00\n    Reviews: 398\n    Stock: in stock\n    Sponsored: no",
   "ground_truth_listings": [
     {
       "id": "A",
-      "brand": "NutriGain",
+      "brand": "ProLean",
       "flavor": "Cookies & Cream",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 24,
+      "size_raw": "64oz",
+      "size_value": 64,
+      "size_unit": "oz",
+      "protein_value": 28,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": true,
-      "price_usd": 42,
-      "reviews_raw": "4,713",
-      "review_count": 4713
+      "price_usd": 46,
+      "reviews_raw": "4,934",
+      "review_count": 4934
     },
     {
       "id": "B",
-      "brand": "NutriGain",
+      "brand": "ProLean",
       "flavor": "Cookies & Cream",
-      "size_raw": "5LB",
-      "size_value": 5,
-      "size_unit": "LB",
-      "protein_value": 24,
+      "size_raw": "64oz",
+      "size_value": 64,
+      "size_unit": "oz",
+      "protein_value": 28,
       "protein_unit": "g",
       "stock": "in stock",
       "sponsored": false,
-      "price_usd": 44,
-      "reviews_raw": "428",
-      "review_count": 428
+      "price_usd": 48,
+      "reviews_raw": "398",
+      "review_count": 398
     }
   ],
   "ground_truth": {
