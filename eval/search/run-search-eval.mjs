@@ -86,6 +86,9 @@ function scoreTranscription(got, want) {
       ["protein_unit", () => unitEq(g.protein_unit, w.protein_unit)],
       ["stock", () => textEq(g.stock, w.stock)],
       ["sponsored", () => Boolean(g.sponsored) === Boolean(w.sponsored)],
+      // pack_count is optional on old-corpus listings; absent ≡ 1. Only scored
+      // when the ground truth states it, and null/missing ≡ 1 as well.
+      ...("pack_count" in w ? [["pack_count", () => numEq(g.pack_count ?? 1, w.pack_count)]] : []),
     ];
     for (const [, check] of fields) {
       total++;

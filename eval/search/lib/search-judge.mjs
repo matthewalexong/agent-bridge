@@ -35,18 +35,34 @@ export function normalizeProteinG(value, unit) {
   return n; // g or unstated
 }
 
+// Brand canonicalization: listings render brand names inconsistently
+// ("Muscle Max", "MUSCLEMAX", "muscle-max"). Strip non-alphanumerics and
+// lowercase before comparing — matching is still exact on the canonical form.
+export function canonicalBrand(s) {
+  return norm(s).replace(/[^a-z0-9]/g, "");
+}
+
+// Total package size in grams, accounting for multipacks: a "1KG (Pack of 2)"
+// listing delivers 2000g total. Missing/absent pack_count means single unit.
+export function totalSizeG(listing) {
+  const perUnit = normalizeWeightG(listing.size_value, listing.size_unit);
+  if (perUnit == null) return null;
+  const pack = num(listing.pack_count);
+  return perUnit * (pack != null && pack >= 1 ? pack : 1);
+}
+
 // ---- Constraint scoring ---------------------------------------------------
 // Each constraint is { kind, value, unit? }. Kinds:
 //   flavor    — case-insensitive substring on the listing's flavor text
-//   size_g    — package size, grams (listing side normalized first)
+//   size_g    — TOTAL package size, grams (per-unit size × pack_count, normalized)
 //   protein_g — protein per serving, grams (listing side normalized first)
-//   brand     — exact lowercase brand match
+//   brand     — canonical brand match (case/space/hyphen insensitive)
 function constraintMet(c, listing) {
   switch (c.kind) {
     case "flavor":
       return norm(listing.flavor).includes(norm(c.value));
     case "size_g": {
-      const g = normalizeWeightG(listing.size_value, listing.size_unit);
+      const g = totalSizeG(listing);
       // 0.5% relative tolerance: round-tripped unit conversions (1 KG -> 1000g,
       // 2.2 LB -> 998g) must not flip decisions at kilogram scale.
       return g != null && Math.abs(g - c.value) <= Math.max(2, c.value * 0.005);
@@ -56,7 +72,7 @@ function constraintMet(c, listing) {
       return g != null && Math.abs(g - c.value) <= 0.5;
     }
     case "brand":
-      return norm(listing.brand) === norm(c.value);
+      return canonicalBrand(listing.brand) === canonicalBrand(c.value);
     default:
       return false;
   }

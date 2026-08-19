@@ -25,7 +25,10 @@ if (text.length < 200) { console.error("skill too short"); process.exit(1); }
 const forbidden = [
   "twin-distractor", "sponsored-twin", "oos-full-match", "mg-protein-distractor",
   "no-match-honest", "mixed-units-size",
+  "brand-variant-twin", "contradictory-title", "missing-fields",
+  "multipack-total", "multipack-verdict-flip", "brand-rendering-trap", "long-serp-attention",
   "MuscleMax", "GreenGain", "OptiPure", "CaseinPro", "NitroFuel", "PureFuel",
+  "TrueFuel", "NutraMax", "CoreFuel", "PeakIron", "IronPeak", "Iron Peak", "PureGain",
   "Vanilla Whey Protein Trial Pack", "25000 MG", "Slow-Release Casein",
 ];
 for (const f of forbidden) {

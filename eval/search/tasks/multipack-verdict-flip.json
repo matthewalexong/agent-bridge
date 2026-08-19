@@ -1,0 +1,27 @@
+{
+  "id": "multipack-verdict-flip",
+  "note": "HARD SYNTHETIC: the ONLY way to reach the requested total (1200g) in stock is via multipacks (300g x4 organic, 600g x2 sponsored). If the agent drops or folds pack info, no listing hits 1200g and the verdict flips stop->reformulate. Tests whether the model transcribes pack_count faithfully.",
+  "query": "unflavored creatine 1200g PureGain",
+  "constraints": [
+    { "kind": "flavor", "value": "unflavored" },
+    { "kind": "size_g", "value": 1200 },
+    { "kind": "brand", "value": "PureGain" }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nunflavored creatine 1200g PureGain\n\n=== RESULTS ===\n[A] Title: PureGain Creatine Monohydrate Unflavored 300g (Pack of 4)\n    Brand: PureGain\n    Flavor: Unflavored\n    Size: 300g (Pack of 4)\n    Protein per serving: 0g\n    Price: $33.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PureGain Creatine - Unflavored, 1.2KG Tub\n    Brand: PureGain\n    Flavor: Unflavored\n    Size: 1.2KG\n    Protein per serving: 0g\n    Price: $38.99\n    Stock: out of stock\n    Sponsored: no\n\n[C] Title: PureGain Creatine Unflavored 600g (Pack of 2)\n    Brand: PureGain\n    Flavor: Unflavored\n    Size: 600g (Pack of 2)\n    Protein per serving: 0g\n    Price: $36.99\n    Stock: in stock\n    Sponsored: yes\n\n[D] Title: PureGain Creatine Unflavored 1KG\n    Brand: PureGain\n    Flavor: Unflavored\n    Size: 1KG\n    Protein per serving: 0g\n    Price: $29.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "PureGain", "flavor": "Unflavored", "size_value": 300, "size_unit": "g", "pack_count": 4, "protein_value": 0, "protein_unit": "g", "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "PureGain", "flavor": "Unflavored", "size_value": 1.2, "size_unit": "KG", "protein_value": 0, "protein_unit": "g", "stock": "out of stock", "sponsored": false },
+    { "id": "C", "brand": "PureGain", "flavor": "Unflavored", "size_value": 600, "size_unit": "g", "pack_count": 2, "protein_value": 0, "protein_unit": "g", "stock": "in stock", "sponsored": true },
+    { "id": "D", "brand": "PureGain", "flavor": "Unflavored", "size_value": 1, "size_unit": "KG", "protein_value": 0, "protein_unit": "g", "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 3,
+    "total_constraints": 3
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "Reaching 1200g total requires reading the pack multiplier: A is 300g x4 = 1200g (in stock, organic), C is 600g x2 = 1200g (in stock, sponsored), B is the right total but out of stock, D is only 1000g. A correct agent stops on the organic full match A. If pack info is dropped, no listing reaches 1200g and the verdict wrongly flips to reformulate."
+}
