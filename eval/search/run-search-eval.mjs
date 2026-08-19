@@ -32,26 +32,40 @@ const URL_ = process.env.LOCAL_LLM_URL || "http://127.0.0.1:8080/v1/chat/complet
 const MODEL = process.env.LOCAL_LLM_MODEL || "gemma-4-e2b";
 
 async function localAsk(prompt) {
-  const res = await fetch(URL_, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SKILL },
-        { role: "user", content: prompt },
-      ],
-      temperature: TEMP,
-      // Output cap: 12 listings x 13 fields runs ~1900+ tokens of JSON. The
-      // old 1600 cap truncated long SERPs mid-object (Round 3: long-serp-
-      // attention 0%, "no listings array parsed") — a harness bug, not model
-      // failure. Gemma serves 4K comfortably; keep headroom for growth.
-      max_tokens: 4096,
-    }),
-  });
-  if (!res.ok) throw new Error(`local model HTTP ${res.status}`);
-  const data = await res.json();
-  return data.choices[0].message.content;
+  // Bounded retry with backoff: on a single-GPU box a request can fail when
+  // another client contends on the server (or the server hiccups). Without
+  // retry, a transient fetch failure scores the task 0 — and inside the
+  // cascade loop that reads as "skill regressed", burning a repair cycle
+  // chasing a server blip. Retry transient errors; let true failures throw.
+  let lastErr = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 2000 * attempt));
+    try {
+      const res = await fetch(URL_, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: "system", content: SKILL },
+            { role: "user", content: prompt },
+          ],
+          temperature: TEMP,
+          // Output cap: 12 listings x 13 fields runs ~1900+ tokens of JSON. The
+          // old 1600 cap truncated long SERPs mid-object (Round 3: long-serp-
+          // attention 0%, "no listings array parsed") — a harness bug, not model
+          // failure. Gemma serves 4K comfortably; keep headroom for growth.
+          max_tokens: 4096,
+        }),
+      });
+      if (!res.ok) throw new Error(`local model HTTP ${res.status}`);
+      const data = await res.json();
+      return data.choices[0].message.content;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }
 
 // ---- Extract the model's JSON (fenced, bare, or embedded) ----
