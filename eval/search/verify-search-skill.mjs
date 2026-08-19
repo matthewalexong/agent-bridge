@@ -27,6 +27,7 @@ const forbidden = [
   "no-match-honest", "mixed-units-size",
   "brand-variant-twin", "contradictory-title", "missing-fields",
   "multipack-total", "multipack-verdict-flip", "brand-rendering-trap", "long-serp-attention",
+  "price-tiebreak", "price-unknown-later",
   "MuscleMax", "GreenGain", "OptiPure", "CaseinPro", "NitroFuel", "PureFuel",
   "TrueFuel", "NutraMax", "CoreFuel", "PeakIron", "IronPeak", "Iron Peak", "PureGain",
   "Vanilla Whey Protein Trial Pack", "25000 MG", "Slow-Release Casein",

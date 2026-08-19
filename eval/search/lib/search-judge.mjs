@@ -111,12 +111,14 @@ export function judgeSearch(constraints, listings) {
       full: met.every(Boolean) && met.length === total,
       inStock: norm(l.stock) !== "out of stock",
       sponsored: Boolean(l.sponsored),
+      price: num(l.price_usd),
     };
   });
 
   // Decision rules, in priority order:
-  // 1. In-stock FULL match exists → STOP. Prefer organic over sponsored twins
-  //    (a sponsored duplicate of the right product does not change the pick).
+  // 1. In-stock FULL match exists → STOP. Prefer organic over sponsored twins;
+  //    among equally-qualified matches prefer the CHEAPEST (unknown prices
+  //    sort after known ones; price ties keep SERP order — stable sort).
   // 2. Full matches exist but ALL out of stock → REFORMULATE (the search as it
   //    stands cannot deliver the product; a different query or size/flavor is
   //    needed — the agent must not just declare failure).
@@ -124,15 +126,22 @@ export function judgeSearch(constraints, listings) {
   const fullInStock = scored.filter((s) => s.full && s.inStock);
   if (fullInStock.length) {
     const organic = fullInStock.filter((s) => !s.sponsored);
-    const pick = (organic.length ? organic : fullInStock)[0];
+    const pool = organic.length ? organic : fullInStock;
+    const pick = [...pool].sort((a, b) => {
+      if (a.price == null && b.price == null) return 0;
+      if (a.price == null) return 1;
+      if (b.price == null) return -1;
+      return a.price - b.price;
+    })[0];
+    const tiebroken = pool.length > 1 && pick.price != null;
     return {
       action: "stop",
       selected_listing: pick.id,
       matched_constraints: pick.metCount,
       total_constraints: total,
-      explanation: organic.length
-        ? `Listing ${pick.id} satisfies all ${total} query constraints and is in stock — search is enough.`
-        : `Listing ${pick.id} satisfies all ${total} constraints (sponsored, but the only in-stock full match).`,
+      explanation: tiebroken
+        ? `Listing ${pick.id} satisfies all ${total} constraints and is the cheapest qualifying match ($${pick.price}).`
+        : `Listing ${pick.id} satisfies all ${total} constraints${organic.length ? "" : " (sponsored, but the only in-stock full match)"} — search is enough.`,
     };
   }
 

@@ -1,0 +1,26 @@
+{
+  "id": "price-unknown-later",
+  "note": "HARD SYNTHETIC: two organic full matches; the FIRST-listed has no price line (unknown price), the second has a known price. Judge sorts unknown prices after known ones, so the known-price listing wins despite appearing later. Tests both price transcription AND the unknown-price ordering.",
+  "query": "chocolate whey concentrate 500g PureGain",
+  "constraints": [
+    { "kind": "flavor", "value": "chocolate" },
+    { "kind": "size_g", "value": 500 },
+    { "kind": "brand", "value": "PureGain" }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nchocolate whey concentrate 500g PureGain\n\n=== RESULTS ===\n[A] Title: PureGain Whey Concentrate Chocolate 500g\n    Brand: PureGain\n    Flavor: Chocolate\n    Size: 500g\n    Protein per serving: 24g\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PureGain Whey Concentrate - Chocolate, 500 grams\n    Brand: PureGain\n    Flavor: Chocolate\n    Size: 500g\n    Protein per serving: 24g\n    Price: $21.99\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: PureGain Whey Concentrate Chocolate 1KG\n    Brand: PureGain\n    Flavor: Chocolate\n    Size: 1KG\n    Protein per serving: 24g\n    Price: $34.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "PureGain", "flavor": "Chocolate", "size_raw": "500g", "size_value": 500, "size_unit": "g", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "PureGain", "flavor": "Chocolate", "size_raw": "500g", "size_value": 500, "size_unit": "g", "protein_value": 24, "protein_unit": "g", "price_usd": 21.99, "stock": "in stock", "sponsored": false },
+    { "id": "C", "brand": "PureGain", "flavor": "Chocolate", "size_raw": "1KG", "size_value": 1, "size_unit": "KG", "protein_value": 24, "protein_unit": "g", "price_usd": 34.99, "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 3,
+    "total_constraints": 3
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "A and B both fully match all three constraints and are organic. A has no Price line (unknown); B has $21.99. The judge orders unknown prices after known ones, so B wins even though A appears first. C is 1KG — wrong size."
+}

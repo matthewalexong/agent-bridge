@@ -1,0 +1,27 @@
+{
+  "id": "price-tiebreak",
+  "note": "HARD SYNTHETIC: two ORGANIC listings satisfy all constraints. The judge tie-breaks on price — the cheaper must be selected. The current skill does not transcribe price, so the loop must add price_usd. Also guards against picking the first-listed (more expensive) match by position bias.",
+  "query": "vanilla whey isolate 1kg 25g protein CoreFuel",
+  "constraints": [
+    { "kind": "flavor", "value": "vanilla" },
+    { "kind": "size_g", "value": 1000 },
+    { "kind": "protein_g", "value": 25 },
+    { "kind": "brand", "value": "CoreFuel" }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nvanilla whey isolate 1kg 25g protein CoreFuel\n\n=== RESULTS ===\n[A] Title: CoreFuel Whey Isolate Vanilla 1KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 1KG\n    Protein per serving: 25g\n    Price: $36.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: CoreFuel Whey Isolate - Vanilla, 1000g\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 1000g\n    Protein per serving: 25g\n    Price: $32.49\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: CoreFuel Whey Isolate Vanilla 2KG\n    Brand: CoreFuel\n    Flavor: Vanilla\n    Size: 2KG\n    Protein per serving: 25g\n    Price: $58.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "CoreFuel", "flavor": "Vanilla", "size_raw": "1KG", "size_value": 1, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "price_usd": 36.99, "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "CoreFuel", "flavor": "Vanilla", "size_raw": "1000g", "size_value": 1000, "size_unit": "g", "protein_value": 25, "protein_unit": "g", "price_usd": 32.49, "stock": "in stock", "sponsored": false },
+    { "id": "C", "brand": "CoreFuel", "flavor": "Vanilla", "size_raw": "2KG", "size_value": 2, "size_unit": "KG", "protein_value": 25, "protein_unit": "g", "price_usd": 58.99, "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 4,
+    "total_constraints": 4
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "A and B both fully match all four constraints and are organic. The judge tie-breaks on price: B ($32.49) beats A ($36.99). C is 2KG — wrong size. Picking A would be a position-bias failure."
+}

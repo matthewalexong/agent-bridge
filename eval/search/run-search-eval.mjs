@@ -128,6 +128,10 @@ function scoreTranscription(got, want) {
       // out of it in code (Gemma transcribes pack_count unreliably ~50% of the
       // time). Verbatim dictation is what the architecture depends on.
       ...("size_raw" in w ? [["size_raw", () => sizeRawEq(g.size_raw, w.size_raw)]] : []),
+      // price_usd is scored only on tasks whose ground truth states it (older
+      // corpus tasks predate it). The judge uses it to tie-break between
+      // equally-qualifying matches, so a missing/wrong price can flip picks.
+      ...("price_usd" in w ? [["price_usd", () => numEq(g.price_usd, w.price_usd)]] : []),
       // pack_count is NOT scored: it is a best-effort fallback for the judge.
       // The code-parsed pack from size_raw wins, so demanding pack_count from
       // the model would penalize the correct architecture.
