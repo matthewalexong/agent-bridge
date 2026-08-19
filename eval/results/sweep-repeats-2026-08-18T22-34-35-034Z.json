@@ -1,0 +1,20 @@
+{
+  "knob": "repeats",
+  "runs": 5,
+  "cells": [
+    {
+      "cell": "baseline",
+      "scores": [
+        83.3,
+        83.3,
+        83.3,
+        83.3,
+        83.3
+      ],
+      "mean": 83.3,
+      "std": 0,
+      "min": 83.3,
+      "max": 83.3
+    }
+  ]
+}

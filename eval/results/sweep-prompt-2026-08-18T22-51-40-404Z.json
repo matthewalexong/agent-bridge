@@ -1,0 +1,30 @@
+{
+  "knob": "prompt",
+  "runs": 3,
+  "cells": [
+    {
+      "cell": "extract-verify",
+      "scores": [
+        83.3,
+        83.3,
+        83.3
+      ],
+      "mean": 83.3,
+      "std": 0,
+      "min": 83.3,
+      "max": 83.3
+    },
+    {
+      "cell": "extract-verify-v4-one-edit",
+      "scores": [
+        70,
+        70,
+        70
+      ],
+      "mean": 70,
+      "std": 0,
+      "min": 70,
+      "max": 70
+    }
+  ]
+}

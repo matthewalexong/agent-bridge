@@ -1,0 +1,290 @@
+{
+  "when": "2026-08-18T23:26:29.461Z",
+  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/extract-facts-v1.md",
+  "model": "gemma-4-E2B-it",
+  "overall": 1,
+  "results": [
+    {
+      "task": "container-weight-trap",
+      "file": "container-weight-trap.json",
+      "ms": 2983,
+      "tokens": 687,
+      "facts": {
+        "price_usd": 19.99,
+        "headline_protein_g": 1250,
+        "protein_per_scoop_g": 10,
+        "scoops_per_serving": 2,
+        "servings_per_container": 40,
+        "net_weight_g": 5600
+      },
+      "derived": {
+        "total_protein_g": 800,
+        "cost_per_g_protein_usd": 0.025,
+        "misleading_claim": true,
+        "explanation": "Headline claims 1250g protein but the entire container holds only 800g of protein in total"
+      },
+      "score": {
+        "total": 1,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 1,
+            "weighted": 0.2,
+            "expected": 0.025,
+            "got": 0.025,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 10,
+            "got": 10,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1250,
+            "got": 1250,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 800,
+            "got": 800,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 19.99,
+            "got": 19.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 40,
+            "got": 40,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "price_usd": 19.99,
+        "headline_protein_g": 1250,
+        "protein_per_scoop_g": 10,
+        "scoops_per_serving": 2,
+        "servings_per_container": 40,
+        "net_weight_g": 5600,
+        "total_protein_g": 800,
+        "cost_per_g_protein_usd": 0.025,
+        "misleading_claim": true,
+        "explanation": "Headline claims 1250g protein but the entire container holds only 800g of protein in total"
+      }
+    },
+    {
+      "task": "honest-control",
+      "file": "honest-control.json",
+      "ms": 2870,
+      "tokens": 652,
+      "facts": {
+        "price_usd": 49.99,
+        "headline_protein_g": 25,
+        "protein_per_scoop_g": 25,
+        "scoops_per_serving": 1,
+        "servings_per_container": 50,
+        "net_weight_g": 2041.17
+      },
+      "derived": {
+        "total_protein_g": 1250,
+        "cost_per_g_protein_usd": 0.04,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      },
+      "score": {
+        "total": 1,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": false,
+            "got": false,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 1,
+            "weighted": 0.2,
+            "expected": 0.04,
+            "got": 0.04,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 25,
+            "got": 25,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 25,
+            "got": 25,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1,
+            "got": 1,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1250,
+            "got": 1250,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 49.99,
+            "got": 49.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 50,
+            "got": 50,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "price_usd": 49.99,
+        "headline_protein_g": 25,
+        "protein_per_scoop_g": 25,
+        "scoops_per_serving": 1,
+        "servings_per_container": 50,
+        "net_weight_g": 2041.17,
+        "total_protein_g": 1250,
+        "cost_per_g_protein_usd": 0.04,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      }
+    },
+    {
+      "task": "two-scoop-trap",
+      "file": "two-scoop-trap.json",
+      "ms": 2861,
+      "tokens": 717,
+      "facts": {
+        "price_usd": 34.99,
+        "headline_protein_g": 60,
+        "protein_per_scoop_g": 30,
+        "scoops_per_serving": 2,
+        "servings_per_container": 30,
+        "net_weight_g": 2268
+      },
+      "derived": {
+        "total_protein_g": 1800,
+        "cost_per_g_protein_usd": 0.0194,
+        "misleading_claim": true,
+        "explanation": "Headline claims 60g protein but one scoop delivers only 30g — reaching the headline number requires 2 scoops per serving, which the marketing does not disclose up front"
+      },
+      "score": {
+        "total": 1,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 1,
+            "weighted": 0.2,
+            "expected": 0.0194,
+            "got": 0.0194,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 30,
+            "got": 30,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 60,
+            "got": 60,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1800,
+            "got": 1800,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 34.99,
+            "got": 34.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 30,
+            "got": 30,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "price_usd": 34.99,
+        "headline_protein_g": 60,
+        "protein_per_scoop_g": 30,
+        "scoops_per_serving": 2,
+        "servings_per_container": 30,
+        "net_weight_g": 2268,
+        "total_protein_g": 1800,
+        "cost_per_g_protein_usd": 0.0194,
+        "misleading_claim": true,
+        "explanation": "Headline claims 60g protein but one scoop delivers only 30g — reaching the headline number requires 2 scoops per serving, which the marketing does not disclose up front"
+      }
+    }
+  ]
+}

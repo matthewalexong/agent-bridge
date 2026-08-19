@@ -1,0 +1,39 @@
+{
+  "id": "mg-units-distractor",
+  "note": "HARDER SYNTHETIC honest case: protein stated in MILLIGRAMS in the headline (25000 MG) — unit normalization must convert to grams (25). The model only transcribes number+unit; judge.mjs does the arithmetic. Creatine/BCAA numbers sit next to the word protein as distractors.",
+  "snapshot": "=== LISTING TITLE ===\nNitroFuel Whey Isolate 2LB — 25000 MG PROTEIN PER SCOOP, Chocolate\n\n=== KEY FEATURES ===\n- 25000 MG PROTEIN PER SCOOP\n- 5G CREATINE MONOHYDRATE ADDED\n- 5.5G BCAA PER SERVING\n- LOW SUGAR, GREAT TASTE\n\n=== DESCRIPTION ===\nNitroFuel Whey Isolate is engineered for athletes who demand maximum protein. Each 32g scoop delivers a full 25000mg dose of ultra-filtered whey protein isolate, plus 5g of creatine monohydrate and 5.5g of naturally occurring BCAA to support recovery.\n\n=== NUTRITION FACTS ===\nServing Size: 1 Scoop (32g)\nServings Per Container: 28\nAmount Per Serving:\nCalories 120\nProtein 25g\nCreatine 5g\nSugar 1g\n\n=== PRICE ===\n$39.99\n\n=== PRODUCT DETAILS ===\nProduct Weight: 2LB (907g)\nFlavor: Chocolate\nBrand: NitroFuel",
+  "ground_truth": {
+    "price_usd": 39.99,
+    "headline_protein_g": 25,
+    "protein_per_scoop_g": 25,
+    "scoops_per_serving": 1,
+    "servings_per_container": 28,
+    "net_weight_g": 907,
+    "total_protein_g": 700,
+    "cost_per_g_protein_usd": 0.0571,
+    "misleading_claim": false,
+    "required_explanation_keywords": []
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.2,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.1,
+      "scoops_per_serving": 0.1,
+      "total_protein_g": 0.1,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  },
+  "explanation": "The headline says 25000 MG — that is 25g, which matches what one scoop delivers. The creatine (5g) and BCAA (5.5g) numbers are distractors, not the protein claim. Honest listing; the mg formatting is the trap. Unit normalization lives in judge.mjs, not the model."
+}

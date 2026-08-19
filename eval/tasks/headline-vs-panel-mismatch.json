@@ -1,0 +1,37 @@
+{
+  "id": "headline-vs-panel-mismatch",
+  "note": "HARDER SYNTHETIC trap: headline/image claim 20g protein but the nutrition panel shows only 15g per serving. The discrepancy is between marketing and the panel itself.",
+  "snapshot": "=== LISTING TITLE ===\nGreenFuel Plant Protein 2LB - 20g Protein Per Serving, Vanilla, 28 Servings\n\n=== PRICE ===\n$39.99\n\n=== IMAGE TEXT (transcribed from main product image) ===\nGREENFUEL\n20G PLANT PROTEIN\nVANILLA\n\n=== DESCRIPTION (excerpt) ===\nGreenFuel Plant Protein blends pea and rice protein for a complete amino profile with 20g of protein in every serving.\n\n=== NUTRITION FACTS PANEL ===\nServing Size: 1 Scoop (32g)\nServings Per Container: 28\nAmount Per Serving:\nCalories 120\nTotal Fat 1g\nTotal Carbohydrate 4g\nSugars 1g\nProtein 15g\n\n=== KEY FEATURES (bullet list) ===\n- 20g protein per serving\n- Vegan & gluten free\n- 28 servings\n",
+  "ground_truth": {
+    "price_usd": 39.99,
+    "headline_protein_g": 20,
+    "protein_per_scoop_g": 15,
+    "scoops_per_serving": 1,
+    "servings_per_container": 28,
+    "total_protein_g": 420,
+    "cost_per_g_protein_usd": 0.0952,
+    "misleading_claim": true,
+    "required_explanation_keywords": ["15"]
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.20,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.10,
+      "scoops_per_serving": 0.10,
+      "total_protein_g": 0.10,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  }
+}

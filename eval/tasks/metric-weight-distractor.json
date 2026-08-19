@@ -1,0 +1,37 @@
+{
+  "id": "metric-weight-distractor",
+  "note": "HARDER SYNTHETIC honest case: headline claims per-Scoop (18g) so it is honest even though a serving is 1.5 scoops (27g). Description's 27g-per-serving is a distractor for headline extraction. Weight in grams is a distractor.",
+  "snapshot": "=== LISTING TITLE ===\nNightCasein Slow Protein 908g - 18g Protein Per Scoop, Chocolate, 20 Servings\n\n=== PRICE ===\n$44.00\n\n=== IMAGE TEXT (transcribed from main product image) ===\nNIGHTCASEIN\n18G PROTEIN PER SCOOP\n908g JAR\n\n=== DESCRIPTION (excerpt) ===\nNightCasein delivers slow-digesting micellar casein: 27g of protein per serving from 1.5 scoops. Take one serving before bed.\n\n=== NUTRITION FACTS PANEL ===\nServing Size: 1.5 Scoops (45g)\nServings Per Container: 20\nAmount Per Serving:\nCalories 170\nTotal Fat 1g\nTotal Carbohydrate 5g\nSugars 2g\nProtein 27g\n\n=== KEY FEATURES (bullet list) ===\n- 18g protein per scoop\n- Slow release overnight\n- 908g jar\n",
+  "ground_truth": {
+    "price_usd": 44.0,
+    "headline_protein_g": 18,
+    "protein_per_scoop_g": 18,
+    "scoops_per_serving": 1.5,
+    "servings_per_container": 20,
+    "total_protein_g": 540,
+    "cost_per_g_protein_usd": 0.0815,
+    "misleading_claim": false,
+    "required_explanation_keywords": []
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.20,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.10,
+      "scoops_per_serving": 0.10,
+      "total_protein_g": 0.10,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  }
+}

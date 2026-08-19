@@ -1,0 +1,37 @@
+{
+  "id": "fractional-servings",
+  "note": "HARDER SYNTHETIC: servings count is fractional (22.5) — tests numeric fidelity beyond clean integers.",
+  "snapshot": "=== LISTING TITLE ===\nIronPeak Whey Blend 4LB - 24g Protein Per Serving, Strawberry, 22 Servings\n\n=== PRICE ===\n$42.50\n\n=== IMAGE TEXT (transcribed from main product image) ===\nIRONPEAK WHEY\n24g PROTEIN\nSTRAWBERRY\n4LB\n\n=== DESCRIPTION (excerpt) ===\nIronPeak Whey Blend delivers 24g of protein per single-scoop serving. Mix one scoop with water or milk.\n\n=== NUTRITION FACTS PANEL ===\nServing Size: 1 Scoop (36g)\nServings Per Container: 22.5\nAmount Per Serving:\nCalories 140\nTotal Fat 1.5g\nTotal Carbohydrate 3g\nSugars 1g\nProtein 24g\n\n=== KEY FEATURES (bullet list) ===\n- 24g protein per serving\n- Great strawberry taste\n- No artificial dyes\n",
+  "ground_truth": {
+    "price_usd": 42.5,
+    "headline_protein_g": 24,
+    "protein_per_scoop_g": 24,
+    "scoops_per_serving": 1,
+    "servings_per_container": 22.5,
+    "total_protein_g": 540,
+    "cost_per_g_protein_usd": 0.0787,
+    "misleading_claim": false,
+    "required_explanation_keywords": []
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.20,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.10,
+      "scoops_per_serving": 0.10,
+      "total_protein_g": 0.10,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "container-weight-trap",
+  "note": "SYNTHETIC trap. Title/image claim '1250G PROTEIN' but the whole container only holds 800g of protein. Cheap price looks like a bargain unless you do the math.",
+  "snapshot": "=== LISTING TITLE ===\nMASSO Weight Gainer 5LB - 1250G PROTEIN FORMULA! Chocolate Peanut Butter, Best Value\n\n=== PRICE ===\n$19.99\n\n=== IMAGE TEXT (transcribed from main product image) ===\nMASSO GAINER\n1250G PROTEIN FORMULA\nEXTREME VALUE 5LB\n\n=== DESCRIPTION (excerpt) ===\nMASSO Weight Gainer is packed with calories and protein to help you gain mass fast. Our 1250G Protein Formula combines whey concentrate with complex carbs. Each serving delivers 2 scoops of mass-building nutrition.\n\n=== NUTRITION FACTS PANEL ===\nServing Size: 2 Scoops (56g)\nServings Per Container: 40\nAmount Per Serving:\nCalories 210\nTotal Fat 2g\nTotal Carbohydrate 30g\nSugars 8g\nProtein 20g\n\n=== KEY FEATURES (bullet list) ===\n- 1250G PROTEIN FORMULA\n- 40 servings\n- Great value 5lb bag\n- With added creatine\n",
+  "ground_truth": {
+    "price_usd": 19.99,
+    "headline_protein_g": 1250,
+    "protein_per_scoop_g": 10,
+    "scoops_per_serving": 2,
+    "servings_per_container": 40,
+    "total_protein_g": 800,
+    "cost_per_g_protein_usd": 0.025,
+    "misleading_claim": true,
+    "required_explanation_keywords": ["800"]
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.20,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.10,
+      "scoops_per_serving": 0.10,
+      "total_protein_g": 0.10,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  }
+}

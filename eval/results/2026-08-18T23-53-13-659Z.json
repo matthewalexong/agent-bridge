@@ -1,0 +1,592 @@
+{
+  "when": "2026-08-18T23:53:13.661Z",
+  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/.candidate-task4.md",
+  "model": "gemma-4-E2B-it",
+  "overall": 0.65,
+  "results": [
+    {
+      "task": "container-weight-trap",
+      "file": "container-weight-trap.json",
+      "ms": 4224,
+      "tokens": 802,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "MASSO Weight Gainer 5LB - 1250G PROTEIN FORMULA! Chocolate Peanut Butter, Best Value",
+        "price_usd": 19.99,
+        "net_weight_g": 5625,
+        "protein_per_scoop_g": 10,
+        "scoops_per_serving": 2,
+        "servings_count": 40,
+        "headline_protein_g": 1250
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 1250g protein but one serving delivers only 20g"
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.025,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 10,
+            "got": 10,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1250,
+            "got": 1250,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 800,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 19.99,
+            "got": 19.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 40,
+            "source": "model"
+          }
+        },
+        "missing_keywords": [
+          "800"
+        ]
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "MASSO Weight Gainer 5LB - 1250G PROTEIN FORMULA! Chocolate Peanut Butter, Best Value",
+        "price_usd": 19.99,
+        "net_weight_g": 5625,
+        "protein_per_scoop_g": 10,
+        "scoops_per_serving": 2,
+        "servings_count": 40,
+        "headline_protein_g": 1250,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 1250g protein but one serving delivers only 20g"
+      }
+    },
+    {
+      "task": "fractional-servings",
+      "file": "fractional-servings.json",
+      "ms": 3441,
+      "tokens": 764,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "IronPeak Whey Blend 4LB - 24g Protein Per Serving, Strawberry, 22 Servings",
+        "price_usd": 42.5,
+        "net_weight_g": 1981,
+        "protein_per_scoop_g": 24,
+        "scoops_per_serving": 1,
+        "servings_count": 22.5,
+        "headline_protein_g": 24
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": false,
+            "got": false,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.0787,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 24,
+            "got": 24,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 24,
+            "got": 24,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1,
+            "got": 1,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 540,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 42.5,
+            "got": 42.5,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 22.5,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "IronPeak Whey Blend 4LB - 24g Protein Per Serving, Strawberry, 22 Servings",
+        "price_usd": 42.5,
+        "net_weight_g": 1981,
+        "protein_per_scoop_g": 24,
+        "scoops_per_serving": 1,
+        "servings_count": 22.5,
+        "headline_protein_g": 24,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      }
+    },
+    {
+      "task": "headline-vs-panel-mismatch",
+      "file": "headline-vs-panel-mismatch.json",
+      "ms": 3753,
+      "tokens": 752,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "GreenFuel Plant Protein 2LB - 20g Protein Per Serving, Vanilla, 28 Servings",
+        "price_usd": 39.99,
+        "net_weight_g": 1016,
+        "protein_per_scoop_g": 15,
+        "scoops_per_serving": 1,
+        "servings_count": 28,
+        "headline_protein_g": 20
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 20g protein but one serving delivers only 15g"
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.0952,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 15,
+            "got": 15,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 20,
+            "got": 20,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1,
+            "got": 1,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 420,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 39.99,
+            "got": 39.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 28,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "GreenFuel Plant Protein 2LB - 20g Protein Per Serving, Vanilla, 28 Servings",
+        "price_usd": 39.99,
+        "net_weight_g": 1016,
+        "protein_per_scoop_g": 15,
+        "scoops_per_serving": 1,
+        "servings_count": 28,
+        "headline_protein_g": 20,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 20g protein but one serving delivers only 15g"
+      }
+    },
+    {
+      "task": "honest-control",
+      "file": "honest-control.json",
+      "ms": 3639,
+      "tokens": 760,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "Pure Whey Concentrate 2LB - 25g Protein Per Serving, Vanilla, 50 Servings",
+        "price_usd": 49.99,
+        "net_weight_g": 1016,
+        "protein_per_scoop_g": 25,
+        "scoops_per_serving": 1,
+        "servings_count": 50,
+        "headline_protein_g": 25
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": false,
+            "got": false,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.04,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 25,
+            "got": 25,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 25,
+            "got": 25,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1,
+            "got": 1,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 1250,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 49.99,
+            "got": 49.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 50,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "Pure Whey Concentrate 2LB - 25g Protein Per Serving, Vanilla, 50 Servings",
+        "price_usd": 49.99,
+        "net_weight_g": 1016,
+        "protein_per_scoop_g": 25,
+        "scoops_per_serving": 1,
+        "servings_count": 50,
+        "headline_protein_g": 25,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      }
+    },
+    {
+      "task": "metric-weight-distractor",
+      "file": "metric-weight-distractor.json",
+      "ms": 3582,
+      "tokens": 778,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "NightCasein Slow Protein 908g - 18g Protein Per Scoop, Chocolate, 20 Servings",
+        "price_usd": 44,
+        "net_weight_g": 908,
+        "protein_per_scoop_g": 18,
+        "scoops_per_serving": 1.5,
+        "servings_count": 20,
+        "headline_protein_g": 18
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": false,
+            "got": false,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.0815,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 18,
+            "got": 18,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 18,
+            "got": 18,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1.5,
+            "got": 1.5,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 540,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 44,
+            "got": 44,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 20,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "NightCasein Slow Protein 908g - 18g Protein Per Scoop, Chocolate, 20 Servings",
+        "price_usd": 44,
+        "net_weight_g": 908,
+        "protein_per_scoop_g": 18,
+        "scoops_per_serving": 1.5,
+        "servings_count": 20,
+        "headline_protein_g": 18,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": false,
+        "explanation": "Headline matches what one serving actually delivers."
+      }
+    },
+    {
+      "task": "two-scoop-trap",
+      "file": "two-scoop-trap.json",
+      "ms": 4114,
+      "tokens": 835,
+      "facts": {
+        "listing_id": "N/A",
+        "title": "Titan Whey Isolate 5LB - 60G PROTEIN PER SERVING! Chocolate Flavor, 30 Servings, Sugar Free",
+        "price_usd": 34.99,
+        "net_weight_g": 2500,
+        "protein_per_scoop_g": 30,
+        "scoops_per_serving": 2,
+        "servings_count": 30,
+        "headline_protein_g": 60
+      },
+      "derived": {
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 60g protein but one scoop delivers only 30g — reaching the headline number requires 2 scoops per serving, which the marketing does not disclose up front"
+      },
+      "score": {
+        "total": 0.65,
+        "perField": {
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true,
+            "source": "code"
+          },
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.0194,
+            "got": null,
+            "source": "code"
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.15,
+            "expected": 30,
+            "got": 30,
+            "source": "model"
+          },
+          "headline_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 60,
+            "got": 60,
+            "source": "model"
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2,
+            "source": "model"
+          },
+          "total_protein_g": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 1800,
+            "got": null,
+            "source": "code"
+          },
+          "price_usd": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 34.99,
+            "got": 34.99,
+            "source": "model"
+          },
+          "servings_per_container": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 30,
+            "source": "model"
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "listing_id": "N/A",
+        "title": "Titan Whey Isolate 5LB - 60G PROTEIN PER SERVING! Chocolate Flavor, 30 Servings, Sugar Free",
+        "price_usd": 34.99,
+        "net_weight_g": 2500,
+        "protein_per_scoop_g": 30,
+        "scoops_per_serving": 2,
+        "servings_count": 30,
+        "headline_protein_g": 60,
+        "total_protein_g": null,
+        "cost_per_g_protein_usd": null,
+        "misleading_claim": true,
+        "explanation": "Headline claims 60g protein but one scoop delivers only 30g — reaching the headline number requires 2 scoops per serving, which the marketing does not disclose up front"
+      }
+    }
+  ]
+}

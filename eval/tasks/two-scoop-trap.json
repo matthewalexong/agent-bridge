@@ -1,0 +1,37 @@
+{
+  "id": "two-scoop-trap",
+  "note": "SYNTHETIC template modeled on user's real example. Image/key-features claim 60g protein without disclosing it requires 2 scoops per serving.",
+  "snapshot": "=== LISTING TITLE ===\nTitan Whey Isolate 5LB - 60G PROTEIN PER SERVING! Chocolate Flavor, 30 Servings, Sugar Free\n\n=== PRICE ===\n$34.99 (Subscribe & Save $31.49)\n\n=== IMAGE TEXT (transcribed from main product image) ===\nTITAN WHEY ISOLATE\n60G PROTEIN\nZERO SUGAR\n5LB BAG\n\n=== DESCRIPTION (excerpt) ===\nTitan Whey Isolate delivers 60g of ultra-filtered whey protein isolate in every serving. Each scoop contains 30g of pure whey isolate for fast absorption. Mix 2 scoops with 12-16oz of water after training. No added sugars, no fillers.\n\n=== NUTRITION FACTS PANEL ===\nServing Size: 2 Scoops (64g)\nServings Per Container: 30\nAmount Per Serving:\nCalories 240\nTotal Fat 1.5g\nTotal Carbohydrate 3g\nSugars 0g\nProtein 60g\n\n=== KEY FEATURES (bullet list) ===\n- 60G PROTEIN TO FUEL YOUR GAINS\n- Zero sugar, zero gluten\n- 30 servings per bag\n- Naturally sweetened with stevia\n",
+  "ground_truth": {
+    "price_usd": 34.99,
+    "headline_protein_g": 60,
+    "protein_per_scoop_g": 30,
+    "scoops_per_serving": 2,
+    "servings_per_container": 30,
+    "total_protein_g": 1800,
+    "cost_per_g_protein_usd": 0.0194,
+    "misleading_claim": true,
+    "required_explanation_keywords": ["2", "scoop"]
+  },
+  "scoring": {
+    "weights": {
+      "misleading_claim": 0.25,
+      "cost_per_g_protein_usd": 0.20,
+      "protein_per_scoop_g": 0.15,
+      "headline_protein_g": 0.10,
+      "scoops_per_serving": 0.10,
+      "total_protein_g": 0.10,
+      "price_usd": 0.05,
+      "servings_per_container": 0.05
+    },
+    "tolerance_pct": {
+      "price_usd": 0.0,
+      "headline_protein_g": 0.0,
+      "protein_per_scoop_g": 0.0,
+      "scoops_per_serving": 0.0,
+      "servings_per_container": 0.0,
+      "total_protein_g": 0.02,
+      "cost_per_g_protein_usd": 0.02
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "when": "2026-08-18T22:48:21.691Z",
+  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/extract-verify-v3-buyer-frame.md",
+  "model": "gemma-4-E2B-it",
+  "overall": 0.7833333333333333,
+  "results": [
+    {
+      "task": "container-weight-trap",
+      "file": "container-weight-trap.json",
+      "ms": 3828,
+      "tokens": 906,
+      "score": {
+        "total": 0.6,
+        "perField": {
+          "cost_per_g_protein_usd": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": 0.025,
+            "got": 2.4988
+          },
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": true,
+            "got": true
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 10,
+            "got": 10
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 800,
+            "got": 800
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 40,
+            "got": 40
+          }
+        },
+        "missing_keywords": [
+          "800"
+        ]
+      },
+      "answer": {
+        "price_usd": 19.99,
+        "protein_per_scoop_g": 10,
+        "scoops_per_serving": 2,
+        "servings_per_container": 40,
+        "total_protein_g": 800,
+        "cost_per_g_protein_usd": 2.4988,
+        "misleading_claim": true,
+        "explanation": "The headline implies a high protein content per scoop, but the nutrition facts show 20g of protein per 2 scoops, meaning 10g per scoop."
+      }
+    },
+    {
+      "task": "honest-control",
+      "file": "honest-control.json",
+      "ms": 3602,
+      "tokens": 867,
+      "score": {
+        "total": 1,
+        "perField": {
+          "cost_per_g_protein_usd": {
+            "credit": 1,
+            "weighted": 0.4,
+            "expected": 0.04,
+            "got": 0.04
+          },
+          "misleading_claim": {
+            "credit": 1,
+            "weighted": 0.25,
+            "expected": false,
+            "got": false
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 25,
+            "got": 25
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1,
+            "got": 1
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1250,
+            "got": 1250
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 50,
+            "got": 50
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "price_usd": 49.99,
+        "protein_per_scoop_g": 25,
+        "scoops_per_serving": 1,
+        "servings_per_container": 50,
+        "total_protein_g": 1250,
+        "cost_per_g_protein_usd": 0.04,
+        "misleading_claim": false,
+        "explanation": "The headline claim of '25g Protein Per Serving' matches the nutrition facts panel, where 1 scoop delivers 25g of protein."
+      }
+    },
+    {
+      "task": "two-scoop-trap",
+      "file": "two-scoop-trap.json",
+      "ms": 4677,
+      "tokens": 977,
+      "score": {
+        "total": 0.75,
+        "perField": {
+          "cost_per_g_protein_usd": {
+            "credit": 1,
+            "weighted": 0.4,
+            "expected": 0.0194,
+            "got": 0.0194
+          },
+          "misleading_claim": {
+            "credit": 0,
+            "weighted": 0,
+            "expected": true,
+            "got": false
+          },
+          "protein_per_scoop_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 30,
+            "got": 30
+          },
+          "scoops_per_serving": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 2,
+            "got": 2
+          },
+          "total_protein_g": {
+            "credit": 1,
+            "weighted": 0.1,
+            "expected": 1800,
+            "got": 1800
+          },
+          "servings_per_container": {
+            "credit": 1,
+            "weighted": 0.05,
+            "expected": 30,
+            "got": 30
+          }
+        },
+        "missing_keywords": []
+      },
+      "answer": {
+        "price_usd": 34.99,
+        "protein_per_scoop_g": 30,
+        "scoops_per_serving": 2,
+        "servings_per_container": 30,
+        "total_protein_g": 1800,
+        "cost_per_g_protein_usd": 0.0194,
+        "misleading_claim": false,
+        "explanation": "The headline claims 60g protein per serving, which is accurate based on the nutrition panel (2 scoops * 30g/scoop = 60g). The buyer's assumption that one serving equals one scoop is incorrect, but the actual delivery matches the headline claim for the defined serving size."
+      }
+    }
+  ]
+}
