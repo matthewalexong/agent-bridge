@@ -1,0 +1,26 @@
+{
+  "id": "review-evidence-over-position",
+  "note": "HARD SYNTHETIC: two ORGANIC listings satisfy all constraints at the same price, but only one prints a review count. The judge's review tier sorts KNOWN values ahead of unknowns — a listing WITH evidence must beat one without, even though the evidence-less listing appears FIRST (position-bias trap). The loop must add review_count AND transcribe its ABSENCE as null; fabricating a count for A would flip the pick.",
+  "query": "chocolate plant protein 908g GreenVita",
+  "constraints": [
+    { "kind": "flavor", "value": "chocolate" },
+    { "kind": "size_g", "value": 908 },
+    { "kind": "brand", "value": "GreenVita" }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nchocolate plant protein 908g GreenVita\n\n=== RESULTS ===\n[A] Title: GreenVita Plant Protein Chocolate 2LB\n    Brand: GreenVita\n    Flavor: Chocolate\n    Size: 2LB\n    Protein per serving: 20g\n    Price: $34.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: GreenVita Organic Plant Protein - Chocolate, 908g\n    Brand: GreenVita\n    Flavor: Chocolate\n    Size: 908g\n    Protein per serving: 20g\n    Price: $34.99\n    Reviews: 445\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: GreenVita Plant Protein Vanilla 908g\n    Brand: GreenVita\n    Flavor: Vanilla\n    Size: 908g\n    Protein per serving: 20g\n    Price: $34.99\n    Reviews: 1,203\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "GreenVita", "flavor": "Chocolate", "size_raw": "2LB", "size_value": 2, "size_unit": "LB", "protein_value": 20, "protein_unit": "g", "price_usd": 34.99, "reviews_raw": null, "review_count": null, "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "GreenVita", "flavor": "Chocolate", "size_raw": "908g", "size_value": 908, "size_unit": "g", "protein_value": 20, "protein_unit": "g", "price_usd": 34.99, "reviews_raw": "445", "review_count": 445, "stock": "in stock", "sponsored": false },
+    { "id": "C", "brand": "GreenVita", "flavor": "Vanilla", "size_value": 908, "size_unit": "g", "size_raw": "908g", "protein_value": 20, "protein_unit": "g", "price_usd": 34.99, "reviews_raw": "1,203", "review_count": 1203, "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 3,
+    "total_constraints": 3
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "A and B fully match at the same price; A prints no review count, B prints 445. Known evidence beats absent evidence, so B wins despite A being listed first. C has more reviews (1,203) but is Vanilla — wrong flavor. Two failure modes tested: picking A by position, and fabricating a review count for A to make the model's own ranking 'fair'."
+}

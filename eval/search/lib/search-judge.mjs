@@ -9,7 +9,16 @@
 // Output: { action: "stop"|"reformulate", selected_listing: id|null,
 //           matched_constraints, total_constraints, explanation }
 
-const num = (v) => (typeof v === "number" && isFinite(v) ? v : null);
+const num = (v) => {
+  if (typeof v === "number" && isFinite(v)) return v;
+  // Review counts often print with thousands separators ("2,140"); a faithful
+  // transcription of the digits is still the right number.
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[, ]/g, ""));
+    if (isFinite(n) && v.trim() !== "") return n;
+  }
+  return null;
+};
 const norm = (s) => String(s ?? "").trim().toLowerCase();
 
 // ---- Unit normalization (arithmetic lives HERE, never in the model) ------
@@ -58,6 +67,24 @@ export function extractPackCount(sizeRaw) {
   m = s.match(/bundle\s*of\s*(\d+)/);
   if (m) return parseInt(m[1], 10);
   return null;
+}
+
+// ---- Review-count parsing ---------------------------------------------------
+// Same architecture as pack counts: Gemma transcribes review counts
+// unreliably (Round 3: null on every listing despite the field being defined
+// in the skill — selective attention, not arithmetic). The fix is the
+// size_raw precedent: the model dictates the Reviews line VERBATIM into
+// reviews_raw (copying "2,310" with the comma is easy; knowing to look at
+// the line is the hard part, and feedback names it), and the number is
+// parsed HERE. Handles the "Reviews:" prefix, thousands separators, and
+// absent lines (null stays null — fabricating a count is scored as wrong).
+export function extractReviewCount(reviewsRaw) {
+  if (reviewsRaw == null) return null;
+  const s = norm(reviewsRaw).replace(/^reviews:\s*/, "");
+  const m = s.match(/(\d[\d,]*)/);
+  if (!m) return null;
+  const n = parseInt(m[1].replace(/,/g, ""), 10);
+  return isFinite(n) ? n : null;
 }
 
 // Total package size in grams, accounting for multipacks: a "1KG (Pack of 2)"
@@ -112,7 +139,9 @@ export function judgeSearch(constraints, listings) {
       inStock: norm(l.stock) !== "out of stock",
       sponsored: Boolean(l.sponsored),
       price: num(l.price_usd),
-      reviews: num(l.review_count),
+      // Code-parsed reviews_raw (verbatim dictation) wins over any
+      // model-emitted review_count — same precedence as pack counts.
+      reviews: extractReviewCount(l.reviews_raw) ?? num(l.review_count),
     };
   });
 

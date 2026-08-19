@@ -1,0 +1,26 @@
+{
+  "id": "review-count-tiebreak",
+  "note": "HARD SYNTHETIC: two ORGANIC listings satisfy all constraints AND have identical prices, so the price tier cannot separate them. The judge falls through to the review-count tier: the higher count must be selected. The current skill does not transcribe reviews, so the loop must add review_count (the '2,310' comma form is a deliberate transcription hazard). Picking A would be a position-bias failure.",
+  "query": "strawberry whey 5lb NutriGain",
+  "constraints": [
+    { "kind": "flavor", "value": "strawberry" },
+    { "kind": "size_g", "value": 2268 },
+    { "kind": "brand", "value": "NutriGain" }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nstrawberry whey 5lb NutriGain\n\n=== RESULTS ===\n[A] Title: NutriGain Whey Protein Strawberry 5LB\n    Brand: NutriGain\n    Flavor: Strawberry\n    Size: 5LB\n    Protein per serving: 24g\n    Price: $44.99\n    Reviews: 890\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: NutriGain Whey Protein - Strawberry, 2268g\n    Brand: NutriGain\n    Flavor: Strawberry\n    Size: 2268g\n    Protein per serving: 24g\n    Price: $44.99\n    Reviews: 2,310\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: NutriGain Whey Protein Strawberry 10LB Bulk\n    Brand: NutriGain\n    Flavor: Strawberry\n    Size: 10LB\n    Protein per serving: 24g\n    Price: $79.99\n    Reviews: 4,502\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "NutriGain", "flavor": "Strawberry", "size_raw": "5LB", "size_value": 5, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "price_usd": 44.99, "reviews_raw": "890", "review_count": 890, "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "NutriGain", "flavor": "Strawberry", "size_raw": "2268g", "size_value": 2268, "size_unit": "g", "protein_value": 24, "protein_unit": "g", "price_usd": 44.99, "reviews_raw": "2,310", "review_count": 2310, "stock": "in stock", "sponsored": false },
+    { "id": "C", "brand": "NutriGain", "flavor": "Strawberry", "size_raw": "10LB", "size_value": 10, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "price_usd": 79.99, "reviews_raw": "4,502", "review_count": 4502, "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "B",
+    "matched_constraints": 3,
+    "total_constraints": 3
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "A and B both fully match and cost the same ($44.99), so price cannot break the tie. Review counts decide: B (2,310) beats A (890). C has the most reviews but is 10LB — wrong size, so reviews must not rescue a non-match. Picking A would be position bias; picking C would be 'highest number wins' confusion."
+}

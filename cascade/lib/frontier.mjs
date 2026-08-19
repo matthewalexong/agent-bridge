@@ -64,7 +64,22 @@ async function frontierCallOnce(messages, maxTokens) {
         continue;
       }
       const data = await resp.json();
-      const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
+      const blocks = data.content || [];
+      let text = blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+      // Reasoning models (e.g. qwen3.8-max on Aliyun) can burn the whole
+      // max_tokens budget on internal thinking and emit zero text blocks.
+      // Fall back to the thinking content so the escalation tier is never
+      // silently empty; if there's nothing at all, treat it as a transient
+      // failure the retry loop can recover from.
+      if (!text) {
+        text = blocks.filter((b) => b.type === "thinking" || b.type === "reasoning")
+          .map((b) => b.thinking ?? b.text ?? "").join("\n").trim();
+      }
+      if (!text) {
+        throw new Error(
+          `frontier returned no text (stop=${data.stop_reason}, blocks=${blocks.length}, out=${data.usage?.output_tokens}) — likely a reasoning model that spent its whole budget on thinking`
+        );
+      }
       return {
         text,
         promptTokens: data.usage?.input_tokens || 0,

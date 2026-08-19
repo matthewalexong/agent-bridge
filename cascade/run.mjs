@@ -116,8 +116,8 @@ ${baseline.failures}
 TASK: Revise the skill to fix those specific failures. Rules:
 - Preserve the existing output format and keys. Do not rename or drop existing keys.
 - You may ADD a new field ONLY when a measured failure names a field that the current skill never asks the model to emit (e.g. a missing "pack_count" or "price_usd"). When adding a field:
-  1. Add it to the per-listing field list with an exact transcription instruction (copy verbatim, never infer).
-  2. Add it to the Rules section (e.g. "Price information must be extracted verbatim if present. If no price is visible, use null.").
+  1. Add it to the per-listing field list with an exact transcription instruction (copy verbatim, never infer). CRITICAL: quote the EXACT source-line label as it prints in the snapshot (e.g. "Size:", "Price:", "Reviews:") — the model will not find the value unless the skill names the line it lives on. Field names in feedback (like "review_count") are NOT snapshot labels; map them to the printed line (e.g. review_count ← the "Reviews:" line).
+  2. Add it to the Rules section (e.g. "Reviews information must be extracted verbatim if present. If no Reviews line is visible, use null.").
   3. Add it to the Output format JSON schema.
   All three locations must be updated for the field to actually appear in the model's output.
 - If a failure says a field is WRONG (value differs from expected), fix the transcription instruction for that specific field.

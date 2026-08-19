@@ -10,7 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { judgeSearch, normalizeWeightG, normalizeProteinG } from "./lib/search-judge.mjs";
+import { judgeSearch, normalizeWeightG, normalizeProteinG, extractReviewCount } from "./lib/search-judge.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -128,10 +128,29 @@ function scoreTranscription(got, want) {
       // out of it in code (Gemma transcribes pack_count unreliably ~50% of the
       // time). Verbatim dictation is what the architecture depends on.
       ...("size_raw" in w ? [["size_raw", () => sizeRawEq(g.size_raw, w.size_raw)]] : []),
+      // reviews_raw is the LOAD-BEARING reviews field (mirror of size_raw): the
+      // judge parses the review number out of it in code, because Gemma
+      // transcribes review_count unreliably (selective attention). Verbatim
+      // dictation of the "Reviews:" line is what the architecture depends on.
+      ...("reviews_raw" in w ? [["reviews_raw", () => {
+        // Semantic compare on the parsed number, like sizeRawEq: a copied
+        // "Reviews:" prefix or thousands comma must not fail the field.
+        return extractReviewCount(g.reviews_raw) === extractReviewCount(w.reviews_raw);
+      }]] : []),
       // price_usd is scored only on tasks whose ground truth states it (older
       // corpus tasks predate it). The judge uses it to tie-break between
       // equally-qualifying matches, so a missing/wrong price can flip picks.
       ...("price_usd" in w ? [["price_usd", () => numEq(g.price_usd, w.price_usd)]] : []),
+      // review_count is scored via the same code-parsed path the judge uses:
+      // the model's verbatim reviews_raw (or, failing that, its review_count)
+      // must parse to the expected number. Comma-formatted counts ("2,310")
+      // and a copied "Reviews:" prefix are both fine — only the digits matter.
+      // Absent Reviews line must stay null: a fabricated count fails here.
+      ...("review_count" in w ? [["review_count", () => {
+        const got = extractReviewCount(g.reviews_raw) ?? extractReviewCount(g.review_count) ?? (typeof g.review_count === "number" && isFinite(g.review_count) ? g.review_count : null);
+        const want = extractReviewCount(w.review_count) ?? w.review_count;
+        return got === want; // null === null passes; any mismatch fails
+      }]] : []),
       // pack_count is NOT scored: it is a best-effort fallback for the judge.
       // The code-parsed pack from size_raw wins, so demanding pack_count from
       // the model would penalize the correct architecture.

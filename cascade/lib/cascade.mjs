@@ -50,7 +50,11 @@ export async function cascade(task, verify, ledger, {
     { role: "system", content: "You are a principal engineer giving a CONSULTATION, not writing the full solution. In UNDER 1500 words: (1) diagnose precisely why the junior's approach fails — cite the exact arithmetic/logic bug; (2) state the correct algorithm as numbered steps or a compact formula; (3) list the edge cases that must be handled. Do NOT write the complete implementation — the junior will code it from your diagnosis." },
     { role: "user", content: task.prompt + (lastFeedback ? `\n\nThe junior engineer's best attempt failed verification. Verifier output:\n${lastFeedback}` : "") },
   ];
-  const f = await frontierCall(consultMessages, { maxTokens: Math.min(task.frontierMaxTokens || 3000, 3000) });
+  // Reasoning-model frontier (e.g. qwen3.8-max): the model spends tokens on
+  // internal thinking BEFORE emitting the consultation text. A 3000 cap got
+  // fully burned on thinking, returning empty text (Round 3 failure). 8000
+  // leaves room to finish reasoning AND deliver the diagnosis.
+  const f = await frontierCall(consultMessages, { maxTokens: Math.min(task.frontierMaxTokens || 8000, 8000) });
   ledger.record({ phase: "frontier-consult", task: task.id, ...f });
   onEvent({ phase: "frontier", tokens: f.promptTokens + f.completionTokens, ms: f.ms });
 
