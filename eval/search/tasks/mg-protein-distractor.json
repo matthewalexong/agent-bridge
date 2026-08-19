@@ -1,0 +1,66 @@
+{
+  "id": "mg-protein-distractor",
+  "note": "SYNTHETIC SERP trap: one listing states protein in MILLIGRAMS (25000 MG = 25g). Unit transcription must survive so the judge can normalize; flavor and protein constraints together pick the right listing.",
+  "query": "chocolate whey 25g protein per serving",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "chocolate"
+    },
+    {
+      "kind": "protein_g",
+      "value": 25
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nchocolate whey 25g protein per serving\n\n=== RESULTS ===\n[A] Title: NitroFuel Whey Isolate Chocolate — 25000 MG PROTEIN\n    Brand: NitroFuel\n    Flavor: Chocolate\n    Size: 2LB (907g)\n    Protein per serving: 25000 MG\n    Price: $39.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: PureFuel Whey Blend Chocolate\n    Brand: PureFuel\n    Flavor: Chocolate\n    Size: 2LB (907g)\n    Protein per serving: 15g\n    Price: $27.99\n    Stock: in stock\n    Sponsored: yes\n\n[C] Title: NitroFuel Whey Isolate Vanilla — 25g Protein\n    Brand: NitroFuel\n    Flavor: Vanilla\n    Size: 2LB (907g)\n    Protein per serving: 25g\n    Price: $39.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "flavor": "Chocolate",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 25000,
+      "protein_unit": "mg",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "NitroFuel"
+    },
+    {
+      "id": "B",
+      "flavor": "Chocolate",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 15,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "brand": "PureFuel"
+    },
+    {
+      "id": "C",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 25,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "NitroFuel"
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 2,
+    "total_constraints": 2
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Listing A states 25000 MG which is 25g — exactly the query's protein requirement, and chocolate. The model must transcribe the number AND unit as printed; the judge normalizes mg->g. B under-delivers protein; C has the protein but wrong flavor."
+}

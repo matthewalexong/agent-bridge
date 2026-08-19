@@ -1,0 +1,25 @@
+{
+  "id": "contradictory-title",
+  "note": "SYNTHETIC SERP trap: listing titles CONTRADICT the explicit field lines (title says 1LB, field says 5LB). The skill must instruct trust of field lines over titles. Ground truth is built from the FIELD lines.",
+  "query": "chocolate whey protein 5lb",
+  "constraints": [
+    { "kind": "flavor", "value": "chocolate" },
+    { "kind": "size_g", "value": 2268 }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nchocolate whey protein 5lb\n\n=== RESULTS ===\n[A] Title: MuscleMax Chocolate Whey 1LB Sampler Bag\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 5LB (2268g)\n    Protein per serving: 24g\n    Price: $41.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: MuscleMax Chocolate Whey 5LB Family Size\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 1LB (454g)\n    Protein per serving: 24g\n    Price: $14.99\n    Stock: in stock\n    Sponsored: yes\n\n[C] Title: GreenGain Chocolate Plant Protein 5LB\n    Brand: GreenGain\n    Flavor: Chocolate\n    Size: 5LB (2268g)\n    Protein per serving: 18g\n    Price: $46.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    { "id": "A", "brand": "MuscleMax", "flavor": "Chocolate", "size_value": 5, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": false },
+    { "id": "B", "brand": "MuscleMax", "flavor": "Chocolate", "size_value": 1, "size_unit": "LB", "protein_value": 24, "protein_unit": "g", "stock": "in stock", "sponsored": true },
+    { "id": "C", "brand": "GreenGain", "flavor": "Chocolate", "size_value": 5, "size_unit": "LB", "protein_value": 18, "protein_unit": "g", "stock": "in stock", "sponsored": false }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 2,
+    "total_constraints": 2
+  },
+  "scoring": {
+    "weights": { "action": 0.45, "selected_listing": 0.35, "matched_constraints": 0.05, "transcription": 0.15 }
+  },
+  "explanation": "A's title says '1LB Sampler Bag' but its Size field says 5LB (2268g) — the field wins, so A is the true 5LB chocolate match. B is the mirror trap: title says 5LB but the field says 1LB. A model transcribing from titles gets both wrong and picks B. Trusting field lines is the skill under test."
+}

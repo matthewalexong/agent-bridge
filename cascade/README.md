@@ -162,3 +162,43 @@ persisted as the next version number. Verifier: `eval/verify-skill.mjs`
 One frontier consult (~4K tokens, ~$0.03) produced the v1→v2 insight; Gemma
 implemented it. The loop then correctly self-gated at 100% with **zero
 tokens spent** — that is the architecture policing itself.
+
+## TASK 5 — improve-search-transcribe-skill (search disambiguation, recursive)
+
+The Agent Bridge search-skill proper: **listing disambiguation** and **knowing
+when a search is "enough"**. Same extract-then-judge shape:
+
+```
+Gemma transcribes SERP listings (brand, flavor, size+unit, protein+unit,
+        stock, sponsored) — pure transcription, no decision-making
+        ▼
+eval/search/lib/search-judge.mjs (pure code): unit normalization (kg/lb/g/mg),
+        constraint matching (exact brand/flavor, relative size tolerance),
+        verdict: stop+select (prefer organic over sponsored twins)
+        | reformulate (no full match / full match but out of stock)
+        ▼
+deterministic scorer vs ground truth  →  OVERALL %
+```
+
+Corpus (`eval/search/tasks/`, 9 synthetic SERPs): near-twin size traps,
+sponsored-vs-organic twins, out-of-stock full matches, mg protein claims,
+contradictory title-vs-field, missing fields, brand-variant twins
+("MuscleMax" vs "MuscleMax Pro"), mixed kg/lb/g units. Every task's ground
+truth was machine-verified against the judge's own rules before use.
+
+Loop properties are identical to TASK 4: compounding versions, live-grounded
+baseline, score-gated skip (never "no failure lines"), anti-cheat guard.
+Both tasks share one factory (`makeSkillTask`) in `run.mjs` — adding a third
+recursively-improved skill is a ~10-line registration.
+
+### TASK 5 results (2026-08-19)
+
+| Corpus | Best skill | Score |
+|---|---|---|
+| 9 search tasks | v1 | 100%, holds at temp 0.3 |
+
+Two apparent failures during corpus construction were bugs in the *scorer*
+(`numEq(null, null) === false` penalized correct missing-field transcription;
+`""` vs `null` unit encodings) — fixed, and the model was right all along.
+That is the discipline this architecture enforces: the first explanation for
+a failure is always checked against the judge itself.

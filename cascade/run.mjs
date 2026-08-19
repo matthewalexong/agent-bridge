@@ -15,37 +15,24 @@ const ledger = new Ledger(path.join(root, "ledger.jsonl"));
 
 // ---------------- Task definitions (real agent-bridge targets) ----------------
 
-// Verifier for TASK 4 (skill improvement): writes the candidate skill markdown to
-// a temp file and runs the deterministic extract-then-judge eval against it.
-// No LLM judgment anywhere — Gemma extracts facts, code scores everything.
+// ---------------- Generic skill-improvement task factory ----------------
+// Both recursive skill tasks (TASK 4 protein extraction, TASK 5 search
+// transcription) share one shape: a versioned skill markdown is the ONLY knob,
+// a deterministic extract-then-judge eval is the ONLY judge. The factory gives
+// each domain: compounding versions, live-grounded prompts, score-gated skip,
+// anti-hardcoding verifier, and append-only persistence of the winner.
 const repoRoot = path.join(root, "..");
 
-// Find the current-best extraction skill: highest-numbered extract-facts-v*.md.
-// This makes the loop COMPOUNDING — each run starts from the last winner, so
-// improvements accumulate across cascade invocations instead of resetting.
-function currentBestSkill() {
-  const dir = path.join(repoRoot, "eval", "skills");
-  const versions = fs.readdirSync(dir)
-    .map(f => f.match(/^extract-facts-v(\d+)\.md$/))
-    .filter(Boolean)
-    .sort((a, b) => Number(b[1]) - Number(a[1]));
-  if (!versions.length) throw new Error("no extract-facts-v*.md skills found");
-  return { name: versions[0][0], path: path.join(dir, versions[0][0]), version: Number(versions[0][1]) };
-}
-
-// Run the baseline eval once to find WHICH fields actually fail right now, so the
-// improvement prompt is grounded in live measurement rather than a stale hand-written
-// example. Returns { score, failures }.
+// Run the domain's eval once against a skill. Returns { score, failures }.
 //
 // TRUST RULE: the parsed OVERALL score is the ONLY gate signal. A task that crashes
 // during scoring prints "ERROR:" with NO ✗ lines, so gating on "no ✗ lines" would
-// treat a crash as a perfect score. We include ERROR: lines in the failure context
-// so the model sees crashes too.
-function baselineSkillResult(skillPath) {
+// treat a crash as a perfect score. ERROR lines are included so the model sees crashes.
+function baselineSkillResult(skillPath, evalRunner) {
   let out;
   try {
     out = execSync(
-      `EVAL_LLM_TEMPERATURE=0 node ${JSON.stringify(path.join(repoRoot, "eval", "run-eval.mjs"))} --skill ${JSON.stringify(skillPath)}`,
+      `EVAL_LLM_TEMPERATURE=0 node ${JSON.stringify(evalRunner)} --skill ${JSON.stringify(skillPath)}`,
       { encoding: "utf8", timeout: 300000, maxBuffer: 8 * 1024 * 1024 }
     );
   } catch (e) {
@@ -61,7 +48,7 @@ function baselineSkillResult(skillPath) {
   return { score, failures: failures || "(none captured)" };
 }
 
-function makeSkillVerifier(threshold = 0.98) {
+function makeSkillVerifier(verifierScript, candidatePath, threshold = 0.98) {
   return async function verify(markdown) {
     if (!markdown || markdown.trim().length < 200) {
       return { pass: false, report: "candidate too short / not a skill document" };
@@ -69,11 +56,10 @@ function makeSkillVerifier(threshold = 0.98) {
     if (!/^#\s/m.test(markdown)) {
       return { pass: false, report: "candidate is not markdown (no # heading)" };
     }
-    const skillPath = path.join(repoRoot, "eval", "skills", ".candidate-task4.md");
     try {
-      fs.writeFileSync(skillPath, markdown);
+      fs.writeFileSync(candidatePath, markdown);
       const out = execSync(
-        `node ${JSON.stringify(path.join(repoRoot, "eval", "verify-skill.mjs"))} ${JSON.stringify(skillPath)} ${threshold}`,
+        `node ${JSON.stringify(verifierScript)} ${JSON.stringify(candidatePath)} ${threshold}`,
         { encoding: "utf8", timeout: 300000, maxBuffer: 4 * 1024 * 1024 }
       );
       return { pass: true, report: out.trim() };
@@ -81,54 +67,95 @@ function makeSkillVerifier(threshold = 0.98) {
       const msg = ((e.stdout || "") + (e.stderr || "")) || String(e.message);
       return { pass: false, report: msg.slice(-1200) };
     } finally {
-      try { fs.unlinkSync(skillPath); } catch {}
+      try { fs.unlinkSync(candidatePath); } catch {}
     }
   };
 }
 
-// ---------------- TASK 4 setup: recursive skill improvement ----------------
-// COMPOUNDING: each cascade run starts from the highest-numbered skill (the last
-// winner), so improvements accumulate across invocations instead of resetting to v1.
-// GROUNDED: the improvement prompt is built from a LIVE baseline eval — the actual
-// per-field failures measured right now, not a stale hand-written example.
-const bestSkill = currentBestSkill();
-const baseline = baselineSkillResult(bestSkill.path);
-const bestSkillText = fs.readFileSync(bestSkill.path, "utf8");
-
-const tasks = {
-  // TASK 4: improve the product fact-extraction skill itself.
-  // Recursive improvement: Gemma improves the instructions Gemma follows.
-  "improve-extract-facts-skill": {
-    id: "improve-extract-facts-skill",
-    skip: baseline.score >= 0.99,
-    skipReason: `current best (${bestSkill.name}) scores ${(baseline.score * 100).toFixed(1)}% — no headroom to improve. Add harder tasks to eval/tasks/ first.`,
-    system: "You are an expert at writing precise extraction instructions for a small language model. Output exactly one ```markdown code block containing the complete revised skill document. No prose outside it.",
-    prompt: `Below is the CURRENT BEST extraction skill (v${bestSkill.version}) used by a small language model.
+// Build one recursive skill-improvement task for a domain.
+// All heavy work (baseline eval) is LAZY — computed only when the task is
+// actually selected, so --list and other tasks cost nothing.
+function makeSkillTask({ id, skillDir, skillPattern, versionedName, evalRunner, verifierScript, candidateName, kindLabel }) {
+  const dir = path.join(repoRoot, ...skillDir);
+  let cached = null;
+  const setup = () => {
+    if (cached) return cached;
+    const versions = fs.readdirSync(dir)
+      .map(f => f.match(skillPattern))
+      .filter(Boolean)
+      .sort((a, b) => Number(b[1]) - Number(a[1]));
+    if (!versions.length) throw new Error(`no versioned skills found in ${dir}`);
+    const best = { name: versions[0][0], path: path.join(dir, versions[0][0]), version: Number(versions[0][1]) };
+    const baseline = baselineSkillResult(best.path, evalRunner);
+    cached = { best, baseline, text: fs.readFileSync(best.path, "utf8") };
+    return cached;
+  };
+  return {
+    id,
+    get skip() { return setup().baseline.score >= 0.99; },
+    get skipReason() {
+      const { best, baseline } = setup();
+      return `current best (${best.name}) scores ${(baseline.score * 100).toFixed(1)}% — no headroom to improve. Add harder tasks to the corpus first.`;
+    },
+    system: `You are an expert at writing precise ${kindLabel} instructions for a small language model. Output exactly one \`\`\`markdown code block containing the complete revised skill document. No prose outside it.`,
+    get prompt() {
+      const { best, baseline, text } = setup();
+      return `Below is the CURRENT BEST ${kindLabel} skill (v${best.version}) used by a small language model.
 
 CURRENT SKILL:
 \`\`\`markdown
-${bestSkillText}
+${text}
 \`\`\`
 
 MEASURED FAILURES from a live run of the deterministic eval against this exact skill (baseline score: ${(baseline.score * 100).toFixed(1)}%):
 ${baseline.failures}
 
-TASK: Revise the skill to fix those specific field failures. Rules:
+TASK: Revise the skill to fix those specific failures. Rules:
 - Keep the exact same output format (the same JSON object with the same keys) as the current skill.
 - Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
-- The skill must stay generic: no task-specific numbers, product names, or listing IDs.
+- The skill must stay generic: no task-specific numbers, product names, brand names, or listing IDs.
 
-If verification fails again, the verifier will show you the exact per-task scores and extracted values. Read them and fix the specific field that is wrong.
+If verification fails again, the verifier will show you the exact per-task scores. Read them and fix the specific thing that is wrong.
 
-Return the complete revised skill as one \`\`\`markdown block.`,
+Return the complete revised skill as one \`\`\`markdown block.`;
+    },
     maxTokens: 1600,
-    verify: makeSkillVerifier(0.98),
+    verify: makeSkillVerifier(verifierScript, path.join(dir, candidateName), 0.98),
     persist: (code) => {
-      const dest = path.join(repoRoot, "eval", "skills", `extract-facts-v${bestSkill.version + 1}.md`);
+      const { best } = setup();
+      const dest = path.join(dir, versionedName(best.version + 1));
       fs.writeFileSync(dest, code);
       console.log(`  persisted winning skill -> ${dest}`);
     },
-  },
+  };
+}
+
+const tasks = {
+  // TASK 4: recursively improve the product fact-extraction skill.
+  // Gemma improves the instructions Gemma follows; code is the only judge.
+  "improve-extract-facts-skill": makeSkillTask({
+    id: "improve-extract-facts-skill",
+    skillDir: ["eval", "skills"],
+    skillPattern: /^extract-facts-v(\d+)\.md$/,
+    versionedName: (v) => `extract-facts-v${v}.md`,
+    evalRunner: path.join(repoRoot, "eval", "run-eval.mjs"),
+    verifierScript: path.join(repoRoot, "eval", "verify-skill.mjs"),
+    candidateName: ".candidate-task4.md",
+    kindLabel: "extraction",
+  }),
+  // TASK 5: recursively improve the search-listing transcription skill.
+  // The Agent Bridge search skill proper: listing disambiguation and
+  // "is this search enough?" — verdicts computed by eval/search/lib/search-judge.mjs.
+  "improve-search-transcribe-skill": makeSkillTask({
+    id: "improve-search-transcribe-skill",
+    skillDir: ["eval", "search", "skills"],
+    skillPattern: /^search-transcribe-v(\d+)\.md$/,
+    versionedName: (v) => `search-transcribe-v${v}.md`,
+    evalRunner: path.join(repoRoot, "eval", "search", "run-search-eval.mjs"),
+    verifierScript: path.join(repoRoot, "eval", "search", "verify-search-skill.mjs"),
+    candidateName: ".candidate-task5.md",
+    kindLabel: "search-result transcription",
+  }),
   // TASK 1: pure refactor — well within local capability
   "bounded-error-class": {
     id: "bounded-error-class",

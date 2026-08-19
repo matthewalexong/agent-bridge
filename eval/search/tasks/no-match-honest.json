@@ -1,0 +1,70 @@
+{
+  "id": "no-match-honest",
+  "note": "SYNTHETIC honest control: no listing satisfies all constraints. The agent must REFORMULATE, not settle for the 'closest' listing. Prevents the corpus from rewarding pick-something-always behavior.",
+  "query": "vegan protein 3lb chocolate GreenGain",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "chocolate"
+    },
+    {
+      "kind": "size_g",
+      "value": 1361
+    },
+    {
+      "kind": "brand",
+      "value": "GreenGain"
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nvegan protein 3lb chocolate GreenGain\n\n=== RESULTS ===\n[A] Title: GreenGain Plant Protein Vanilla 3LB\n    Brand: GreenGain\n    Flavor: Vanilla\n    Size: 3LB (1361g)\n    Protein per serving: 20g\n    Price: $44.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: GreenGain Plant Protein Chocolate 2LB\n    Brand: GreenGain\n    Flavor: Chocolate\n    Size: 2LB (907g)\n    Protein per serving: 20g\n    Price: $32.99\n    Stock: in stock\n    Sponsored: no\n\n[C] Title: MuscleMax Vegan Blend Chocolate 3LB\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 3LB (1361g)\n    Protein per serving: 18g\n    Price: $39.99\n    Stock: in stock\n    Sponsored: yes",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "flavor": "Vanilla",
+      "size_value": 3,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "GreenGain"
+    },
+    {
+      "id": "B",
+      "flavor": "Chocolate",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "GreenGain"
+    },
+    {
+      "id": "C",
+      "flavor": "Chocolate",
+      "size_value": 3,
+      "size_unit": "LB",
+      "protein_value": 18,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "brand": "MuscleMax"
+    }
+  ],
+  "ground_truth": {
+    "action": "reformulate",
+    "selected_listing": null,
+    "matched_constraints": 2,
+    "total_constraints": 3
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Every listing misses exactly one constraint: A wrong flavor, B wrong size, C wrong brand. Each matches 2 of 3. No full match exists — the honest action is reformulate, never 'close enough'. matched_constraints reports the best partial (2)."
+}

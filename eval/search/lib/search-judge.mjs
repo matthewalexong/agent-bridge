@@ -1,0 +1,120 @@
+// eval/search/lib/search-judge.mjs — the deterministic judgment layer for search.
+// NO LLM involvement. The model transcribes listing attributes; this code does
+// ALL constraint matching, unit normalization, and the stop/reformulate decision.
+// Same extract-then-judge principle as eval/lib/judge.mjs.
+//
+// Input:  constraints (the user's parsed intent — fixed by the task, so the only
+//         thing that can move the score is how well listings were transcribed)
+//         listings    (the model's transcription of the search results page)
+// Output: { action: "stop"|"reformulate", selected_listing: id|null,
+//           matched_constraints, total_constraints, explanation }
+
+const num = (v) => (typeof v === "number" && isFinite(v) ? v : null);
+const norm = (s) => String(s ?? "").trim().toLowerCase();
+
+// ---- Unit normalization (arithmetic lives HERE, never in the model) ------
+// Gemma empirically cannot convert units on its own (proven on the protein
+// corpus). Search results mix units: g/kg/lb/oz for package size, g/mg for
+// protein per serving. Conversions are deterministic code.
+export function normalizeWeightG(value, unit) {
+  const n = num(value);
+  if (n == null) return null;
+  const u = norm(unit);
+  if (!u || u === "g" || u === "grams" || u === "gram") return n;
+  if (u === "kg" || u === "kilograms" || u === "kilogram") return n * 1000;
+  if (u === "lb" || u === "lbs" || u === "pounds" || u === "pound") return Math.round(n * 453.592);
+  if (u === "oz" || u === "ounces" || u === "ounce") return Math.round(n * 28.3495);
+  return n; // unknown unit: take as grams
+}
+
+export function normalizeProteinG(value, unit) {
+  const n = num(value);
+  if (n == null) return null;
+  const u = norm(unit);
+  if (u === "mg" || u === "milligrams" || u === "milligram") return n / 1000;
+  return n; // g or unstated
+}
+
+// ---- Constraint scoring ---------------------------------------------------
+// Each constraint is { kind, value, unit? }. Kinds:
+//   flavor    — case-insensitive substring on the listing's flavor text
+//   size_g    — package size, grams (listing side normalized first)
+//   protein_g — protein per serving, grams (listing side normalized first)
+//   brand     — exact lowercase brand match
+function constraintMet(c, listing) {
+  switch (c.kind) {
+    case "flavor":
+      return norm(listing.flavor).includes(norm(c.value));
+    case "size_g": {
+      const g = normalizeWeightG(listing.size_value, listing.size_unit);
+      // 0.5% relative tolerance: round-tripped unit conversions (1 KG -> 1000g,
+      // 2.2 LB -> 998g) must not flip decisions at kilogram scale.
+      return g != null && Math.abs(g - c.value) <= Math.max(2, c.value * 0.005);
+    }
+    case "protein_g": {
+      const g = normalizeProteinG(listing.protein_value, listing.protein_unit);
+      return g != null && Math.abs(g - c.value) <= 0.5;
+    }
+    case "brand":
+      return norm(listing.brand) === norm(c.value);
+    default:
+      return false;
+  }
+}
+
+export function judgeSearch(constraints, listings) {
+  const ls = Array.isArray(listings) ? listings : [];
+  const total = constraints.length;
+
+  // Score every listing against the constraints.
+  const scored = ls.map((l, i) => {
+    const met = constraints.map((c) => constraintMet(c, l));
+    return {
+      id: l.id ?? `listing-${i}`,
+      metCount: met.filter(Boolean).length,
+      full: met.every(Boolean) && met.length === total,
+      inStock: norm(l.stock) !== "out of stock",
+      sponsored: Boolean(l.sponsored),
+    };
+  });
+
+  // Decision rules, in priority order:
+  // 1. In-stock FULL match exists → STOP. Prefer organic over sponsored twins
+  //    (a sponsored duplicate of the right product does not change the pick).
+  // 2. Full matches exist but ALL out of stock → REFORMULATE (the search as it
+  //    stands cannot deliver the product; a different query or size/flavor is
+  //    needed — the agent must not just declare failure).
+  // 3. No full match at all → REFORMULATE.
+  const fullInStock = scored.filter((s) => s.full && s.inStock);
+  if (fullInStock.length) {
+    const organic = fullInStock.filter((s) => !s.sponsored);
+    const pick = (organic.length ? organic : fullInStock)[0];
+    return {
+      action: "stop",
+      selected_listing: pick.id,
+      matched_constraints: pick.metCount,
+      total_constraints: total,
+      explanation: organic.length
+        ? `Listing ${pick.id} satisfies all ${total} query constraints and is in stock — search is enough.`
+        : `Listing ${pick.id} satisfies all ${total} constraints (sponsored, but the only in-stock full match).`,
+    };
+  }
+
+  const bestPartial = scored.reduce((a, b) => (b.metCount > (a?.metCount ?? -1) ? b : a), null);
+  const oosFull = scored.filter((s) => s.full && !s.inStock);
+  return {
+    action: "reformulate",
+    selected_listing: null,
+    // metCount semantics: the best constraint coverage ANY listing achieves,
+    // stock-independent. An out-of-stock full match reports total_constraints
+    // here while the action is still "reformulate" — the match exists, it just
+    // cannot be bought. This is exactly what the oos-full-match task tests.
+    matched_constraints: oosFull.length
+      ? total
+      : (bestPartial ? bestPartial.metCount : 0),
+    total_constraints: total,
+    explanation: oosFull.length
+      ? `A full match exists but is out of stock; the search needs reformulation.`
+      : `No listing satisfies all ${total} query constraints; reformulate the search.`,
+  };
+}

@@ -1,0 +1,77 @@
+{
+  "id": "twin-distractor",
+  "note": "SYNTHETIC SERP trap: a near-twin listing has a title that omits the size and a size line that does not match the query (2LB vs the wanted 5LB). The agent must read the size line, not the title.",
+  "query": "vanilla whey protein 5lb",
+  "constraints": [
+    {
+      "kind": "flavor",
+      "value": "vanilla"
+    },
+    {
+      "kind": "size_g",
+      "value": 2268
+    }
+  ],
+  "snapshot": "=== SEARCH QUERY ===\nvanilla whey protein 5lb\n\n=== RESULTS ===\n[A] Title: Vanilla Whey Protein Powder - Smooth & Mixable\n    Brand: MuscleMax\n    Flavor: Vanilla\n    Size: 5LB (2268g)\n    Protein per serving: 24g\n    Price: $42.99\n    Stock: in stock\n    Sponsored: no\n\n[B] Title: Vanilla Whey Protein Powder - Great Value Jug\n    Brand: MuscleMax\n    Flavor: Vanilla\n    Size: 2LB (907g)\n    Protein per serving: 24g\n    Price: $21.99\n    Stock: in stock\n    Sponsored: yes\n\n[C] Title: Chocolate Whey Protein Powder - Rich Cocoa\n    Brand: MuscleMax\n    Flavor: Chocolate\n    Size: 5LB (2268g)\n    Protein per serving: 24g\n    Price: $42.99\n    Stock: in stock\n    Sponsored: no\n\n[D] Title: Vanilla Whey Protein Trial Pack\n    Brand: GreenGain\n    Flavor: Vanilla\n    Size: 1LB (454g)\n    Protein per serving: 20g\n    Price: $12.99\n    Stock: in stock\n    Sponsored: no",
+  "ground_truth_listings": [
+    {
+      "id": "A",
+      "flavor": "Vanilla",
+      "size_value": 5,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "MuscleMax"
+    },
+    {
+      "id": "B",
+      "flavor": "Vanilla",
+      "size_value": 2,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": true,
+      "brand": "MuscleMax"
+    },
+    {
+      "id": "C",
+      "flavor": "Chocolate",
+      "size_value": 5,
+      "size_unit": "LB",
+      "protein_value": 24,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "MuscleMax"
+    },
+    {
+      "id": "D",
+      "flavor": "Vanilla",
+      "size_value": 1,
+      "size_unit": "LB",
+      "protein_value": 20,
+      "protein_unit": "g",
+      "stock": "in stock",
+      "sponsored": false,
+      "brand": "GreenGain"
+    }
+  ],
+  "ground_truth": {
+    "action": "stop",
+    "selected_listing": "A",
+    "matched_constraints": 2,
+    "total_constraints": 2
+  },
+  "scoring": {
+    "weights": {
+      "action": 0.45,
+      "selected_listing": 0.35,
+      "matched_constraints": 0.05,
+      "transcription": 0.15
+    }
+  },
+  "explanation": "Listing B is the trap: same brand and flavor, sponsored, and a title that never states the size — but its size line says 2LB, half of what the query asks for. Listing A matches both constraints. Search is enough; stop and pick A."
+}
