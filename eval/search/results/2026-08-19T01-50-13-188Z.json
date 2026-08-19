@@ -1,0 +1,185 @@
+{
+  "when": "2026-08-19T01:50:13.190Z",
+  "skill": ".candidate-task5.md",
+  "temperature": 0,
+  "overall": 0.8757828054298642,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing A satisfies all 3 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "brand-variant-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "contradictory-title",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "long-serp-attention",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "K",
+        "matched_constraints": 4,
+        "total_constraints": 4,
+        "explanation": "Listing K satisfies all 4 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "mg-protein-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "missing-fields",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "mixed-units-size",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "multipack-total",
+      "score": 0.194,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "transcription 96% of listing fields correct"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 0.96
+    },
+    {
+      "task": "multipack-verdict-flip",
+      "score": 0.19117647058823528,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "transcription 94% of listing fields correct"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 0.9411764705882353
+    },
+    {
+      "task": "no-match-honest",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 2,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "oos-full-match",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "A full match exists but is out of stock; the search needs reformulation."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "sponsored-twin",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "B",
+        "matched_constraints": 3,
+        "total_constraints": 3,
+        "explanation": "Listing B satisfies all 3 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    },
+    {
+      "task": "twin-distractor",
+      "score": 1,
+      "failures": [],
+      "verdict": {
+        "action": "stop",
+        "selected_listing": "A",
+        "matched_constraints": 2,
+        "total_constraints": 2,
+        "explanation": "Listing A satisfies all 2 query constraints and is in stock — search is enough."
+      },
+      "transcription": 1
+    }
+  ]
+}

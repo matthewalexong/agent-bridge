@@ -111,11 +111,12 @@ MEASURED FAILURES from a live run of the deterministic eval against this exact s
 ${baseline.failures}
 
 TASK: Revise the skill to fix those specific failures. Rules:
-- Keep the exact same output format (the same JSON object with the same keys) as the current skill.
+- Preserve the existing output format and keys. You may ADD a new field ONLY when a measured failure names a field that the current skill never asks the model to emit (e.g. a missing "pack_count"). Do not rename or drop existing keys.
+- If a listing prints a multiplier/bundle note (e.g. "(Pack of N)", "N-pack", "bundle of N"), the skill must instruct the model to transcribe the PER-UNIT size exactly as printed AND report the multiplier as a separate integer field — never multiply, fold, or total the sizes yourself; downstream code does all arithmetic.
 - Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
 - The skill must stay generic: no task-specific numbers, product names, brand names, or listing IDs.
 
-If verification fails again, the verifier will show you the exact per-task scores. Read them and fix the specific thing that is wrong.
+If verification fails again, the verifier will show you the exact per-task scores AND the exact failing field(s) with got/expected values. Read them and fix the specific field that is wrong.
 
 Return the complete revised skill as one \`\`\`markdown block.`;
     },

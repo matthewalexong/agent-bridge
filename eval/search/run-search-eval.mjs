@@ -73,8 +73,11 @@ const textEq = (a, b) => normS(a) === normS(b);
 
 function scoreTranscription(got, want) {
   // want = ground_truth_listings (authoritative). Compare listing-by-listing by id.
+  // Returns { fraction, fieldFailures } — fieldFailures names the EXACT field and
+  // values, so the improvement loop's feedback points at the precise gap.
   const gotById = new Map((Array.isArray(got) ? got : []).map((l) => [String(l?.id ?? "").toUpperCase(), l]));
   let total = 0, ok = 0;
+  const fieldFailures = [];
   for (const w of want) {
     const g = gotById.get(String(w.id).toUpperCase()) || {};
     const fields = [
@@ -90,16 +93,19 @@ function scoreTranscription(got, want) {
       // when the ground truth states it, and null/missing ≡ 1 as well.
       ...("pack_count" in w ? [["pack_count", () => numEq(g.pack_count ?? 1, w.pack_count)]] : []),
     ];
-    for (const [, check] of fields) {
+    for (const [name, check] of fields) {
       total++;
-      if (check()) ok++;
+      const pass = check();
+      if (pass) ok++;
+      else fieldFailures.push(`listing ${w.id} field ${name}: got ${JSON.stringify(g[name] ?? null)}, expected ${JSON.stringify(w[name])}`);
     }
   }
-  return total ? ok / total : 0;
+  return { fraction: total ? ok / total : 0, fieldFailures };
 }
 
 // ---- Per-task scoring: weighted verdict components ----
-function scoreTask(verdict, gt, transcription) {
+function scoreTask(verdict, gt, t) {
+  // t = { fraction, fieldFailures } from scoreTranscription
   const w = { action: 0.45, selected_listing: 0.35, matched_constraints: 0.05, transcription: 0.15 };
   const failures = [];
   const parts = [];
@@ -119,8 +125,11 @@ function scoreTask(verdict, gt, transcription) {
   if (verdict.matched_constraints !== gt.matched_constraints)
     failures.push(`matched_constraints expected ${gt.matched_constraints} got ${verdict.matched_constraints}`);
 
-  parts.push(w.transcription * transcription);
-  if (transcription < 0.999) failures.push(`transcription ${(transcription * 100).toFixed(0)}% of listing fields correct`);
+  parts.push(w.transcription * t.fraction);
+  if (t.fraction < 0.999) {
+    failures.push(`transcription ${(t.fraction * 100).toFixed(0)}% of listing fields correct`);
+    failures.push(...t.fieldFailures.slice(0, 6));
+  }
 
   return { total: parts.reduce((a, b) => a + b, 0), failures };
 }
@@ -139,13 +148,15 @@ for (const f of taskFiles) {
     const raw = await localAsk(prompt);
     const parsed = extractJson(raw);
     const listings = parsed?.listings ?? parsed;
-    const transcription = Array.isArray(listings) ? scoreTranscription(listings, task.ground_truth_listings) : 0;
+    const tResult = Array.isArray(listings)
+      ? scoreTranscription(listings, task.ground_truth_listings)
+      : { fraction: 0, fieldFailures: ["no listings array parsed from model output"] };
     // The judge receives the MODEL'S transcription — a bad transcription
     // propagates into a wrong verdict, exactly as it would in production.
     const verdict = judgeSearch(task.constraints, Array.isArray(listings) ? listings : []);
-    const score = scoreTask(verdict, task.ground_truth, transcription);
+    const score = scoreTask(verdict, task.ground_truth, tResult);
     const ms = Date.now() - t0;
-    results.push({ task: task.id, score: score.total, failures: score.failures, verdict, transcription });
+    results.push({ task: task.id, score: score.total, failures: score.failures, verdict, transcription: tResult.fraction });
     console.log(`  TOTAL SCORE: ${(score.total * 100).toFixed(1)}%  (${ms}ms)`);
     for (const fl of score.failures) console.log(`  ✗ ${fl}`);
   } catch (e) {
