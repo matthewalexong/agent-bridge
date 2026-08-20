@@ -1,0 +1,1908 @@
+{
+  "capturedAt": "2026-08-20T04:52:47.347Z",
+  "url": "https://www.amazon.com/s?k=whey+protein+isolate+5lb",
+  "listings": {
+    "listings": [
+      {
+        "asin": "B01HOPJAAE",
+        "computed_per_oz": 1.349,
+        "displayed_unit_price": {
+          "raw": "($1.35$1.35/ounce)",
+          "unit": "ounce",
+          "value": 1.35
+        },
+        "id": 1,
+        "price_usd": 107.95,
+        "rating": null,
+        "review_count": 3000,
+        "review_count_raw": "(3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Nutricost Whey Protein Isolate (Unflavored) 5LBS",
+        "unit_price_check": {
+          "computed": 1.349,
+          "delta_pct": 0,
+          "displayed": 1.35,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01HYIEXVW",
+        "computed_per_oz": 1.14,
+        "displayed_unit_price": {
+          "raw": "($1.14$1.14/ounce)",
+          "unit": "ounce",
+          "value": 1.14
+        },
+        "id": 2,
+        "price_usd": 72.95,
+        "rating": null,
+        "review_count": 973,
+        "review_count_raw": "(973)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 64,
+          "unit": "Pound",
+          "value": 4
+        },
+        "size_raw": "4 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Animal Whey Isolate Protein Powder, 25G High Protein | Brownie Batter 4LB | Great Tasting Blend for Pre & Post Workout | Digestive Enzymes & 5.6g BCAAs | Build Strength, Lean Muscle & Recover Faster",
+        "unit_price_check": {
+          "computed": 1.14,
+          "delta_pct": 0,
+          "displayed": 1.14,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01KITQEPM",
+        "computed_per_oz": 1.287,
+        "displayed_unit_price": {
+          "raw": "($1.29$1.29/ounce)",
+          "unit": "ounce",
+          "value": 1.29
+        },
+        "id": 3,
+        "price_usd": 102.95,
+        "rating": null,
+        "review_count": 3200,
+        "review_count_raw": "(3.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Nutricost Whey Protein Powder, Vanilla, 5 pounds - Whey Protein Concentrate",
+        "unit_price_check": {
+          "computed": 1.287,
+          "delta_pct": 0.2,
+          "displayed": 1.29,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0F9Z2M7PF",
+        "computed_per_oz": 1.375,
+        "displayed_unit_price": {
+          "raw": "($1.37$1.37/ounce)",
+          "unit": "ounce",
+          "value": 1.37
+        },
+        "id": 4,
+        "price_usd": 109.99,
+        "rating": null,
+        "review_count": 184,
+        "review_count_raw": "(184)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Rival Nutrition Clean Rival Whey Protein Powder (True Vanilla, 5 lb) | Whey Isolate Primary Source, No Artificial Flavors or Colors, 25g Protein & 5.7g BCAA for Muscle Recovery, Easy to Use",
+        "unit_price_check": {
+          "computed": 1.375,
+          "delta_pct": 0.4,
+          "displayed": 1.37,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0015AQL1Q",
+        "computed_per_oz": 1.124,
+        "displayed_unit_price": {
+          "raw": "($1.12$1.12/ounce)",
+          "unit": "ounce",
+          "value": 1.12
+        },
+        "id": 5,
+        "price_usd": 89.94,
+        "rating": null,
+        "review_count": 7000,
+        "review_count_raw": "(7K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NOW Foods Sports Nutrition, Whey Protein Isolate, 25 g With BCAAs, Unflavored Powder, 5-Pound",
+        "unit_price_check": {
+          "computed": 1.124,
+          "delta_pct": 0.4,
+          "displayed": 1.12,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00G6QHYZ6",
+        "computed_per_oz": 1.362,
+        "displayed_unit_price": {
+          "raw": "($1.36$1.36/ounce)",
+          "unit": "ounce",
+          "value": 1.36
+        },
+        "id": 6,
+        "price_usd": 108.99,
+        "rating": null,
+        "review_count": 20600,
+        "review_count_raw": "(20.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Gourmet Vanilla | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 76 Servings, 5 lb",
+        "unit_price_check": {
+          "computed": 1.362,
+          "delta_pct": 0.2,
+          "displayed": 1.36,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01HOPJAAE",
+        "computed_per_oz": 1.349,
+        "displayed_unit_price": {
+          "raw": "($1.35$1.35/ounce)",
+          "unit": "ounce",
+          "value": 1.35
+        },
+        "id": 7,
+        "price_usd": 107.95,
+        "rating": null,
+        "review_count": 3000,
+        "review_count_raw": "(3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutricost Whey Protein Isolate (Unflavored) 5LBS",
+        "unit_price_check": {
+          "computed": 1.349,
+          "delta_pct": 0,
+          "displayed": 1.35,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B000GISU1M",
+        "computed_per_oz": 1.204,
+        "displayed_unit_price": {
+          "raw": "($1.20$1.20/ounce)",
+          "unit": "ounce",
+          "value": 1.2
+        },
+        "id": 8,
+        "price_usd": 96.28,
+        "rating": null,
+        "review_count": 48500,
+        "review_count_raw": "(48.5K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 80,
+          "unit": "LB",
+          "value": 5
+        },
+        "size_raw": "10K+ bought in past month",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Optimum Nutrition Gold Standard Whey Protein Powder, Vanilla Ice Cream, 5LB | 24g 100% Whey Protein Per Serving, with BCAAs, Gluten Free, Banned Substance Tested, Easy Mixing, Muscle Support & Recovery",
+        "unit_price_check": {
+          "computed": 1.204,
+          "delta_pct": 0.3,
+          "displayed": 1.2,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0013OWAEQ",
+        "computed_per_oz": 1.227,
+        "displayed_unit_price": {
+          "raw": "($1.23$1.23/ounce)",
+          "unit": "ounce",
+          "value": 1.23
+        },
+        "id": 9,
+        "price_usd": 98.12,
+        "rating": null,
+        "review_count": 1500,
+        "review_count_raw": "(1.5K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NOW Foods Sports Nutrition, Whey Protein Isolate, 25 g With BCAAs, Creamy Vanilla Powder, 5-Pound",
+        "unit_price_check": {
+          "computed": 1.227,
+          "delta_pct": 0.3,
+          "displayed": 1.23,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01MYZ7CJG",
+        "computed_per_oz": 0.832,
+        "displayed_unit_price": {
+          "raw": "($0.83$0.83/ounce)",
+          "unit": "ounce",
+          "value": 0.83
+        },
+        "id": 10,
+        "price_usd": 66.6,
+        "rating": null,
+        "review_count": 3500,
+        "review_count_raw": "(3.5K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Muscle Milk Pro Series Protein Powder Supplement, Intense Vanilla, 5 Pound, 28 Servings, 50g Protein, 3g Sugar, 20 Vitamins & Minerals, NSF Certified for Sport, Workout Recovery, Packaging May Vary",
+        "unit_price_check": {
+          "computed": 0.832,
+          "delta_pct": 0.3,
+          "displayed": 0.83,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00NBDMN8U",
+        "computed_per_oz": 1.75,
+        "displayed_unit_price": {
+          "raw": "($1.75$1.75/ounce)",
+          "unit": "ounce",
+          "value": 1.75
+        },
+        "id": 11,
+        "price_usd": 139.99,
+        "rating": null,
+        "review_count": 10600,
+        "review_count_raw": "(10.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "NAKED Whey 5LB 100% Grass Fed Unflavored Whey Protein Powder - Only 1 Ingredient, NSF Certified, Undenatured, Gluten Free, Soy Free, Promote Muscle Growth and Recovery - 76 Servings",
+        "unit_price_check": {
+          "computed": 1.75,
+          "delta_pct": 0,
+          "displayed": 1.75,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01JUA738M",
+        "computed_per_oz": 0.975,
+        "displayed_unit_price": {
+          "raw": "($0.98$0.98/ounce)",
+          "unit": "ounce",
+          "value": 0.98
+        },
+        "id": 12,
+        "price_usd": 78.02,
+        "rating": null,
+        "review_count": 2300,
+        "review_count_raw": "(2.3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "MuscleTech Whey Protein Powder (Vanilla Cream, 5LB), 24g Protein | Nitro-Tech Whey Gold Isolate Smoothie Mix for Lean Muscle & Recovery for Women & Men - Packaging May Vary",
+        "unit_price_check": {
+          "computed": 0.975,
+          "delta_pct": 0.5,
+          "displayed": 0.98,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B074XDYT6P",
+        "computed_per_oz": 1.387,
+        "displayed_unit_price": {
+          "raw": "($1.39$1.39/ounce)",
+          "unit": "ounce",
+          "value": 1.39
+        },
+        "id": 13,
+        "price_usd": 110.95,
+        "rating": null,
+        "review_count": 286,
+        "review_count_raw": "(286)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Nutricost Grass-Fed Whey Protein Concentrate Powder (Vanilla) 5LBS | Undenatured, GMO-Free, Gluten Free, Natural Flavors",
+        "unit_price_check": {
+          "computed": 1.387,
+          "delta_pct": 0.2,
+          "displayed": 1.39,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B008IC0Z8Y",
+        "computed_per_oz": 1.177,
+        "displayed_unit_price": {
+          "raw": "($1.18$1.18/ounce)",
+          "unit": "ounce",
+          "value": 1.18
+        },
+        "id": 14,
+        "price_usd": 75.35,
+        "rating": null,
+        "review_count": 5500,
+        "review_count_raw": "(5.5K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 64,
+          "unit": "LB",
+          "value": 4
+        },
+        "size_raw": "2K+ bought in past month",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "MuscleTech Whey Protein Powder (Vanilla Cream, 4LB) - 30g Protein | Nitro-Tech Ultimate Muscle Building Formula with Whey Protein Isolate - 3g of Creatine & 6.8g of BCAA - Packaging May Vary",
+        "unit_price_check": {
+          "computed": 1.177,
+          "delta_pct": 0.2,
+          "displayed": 1.18,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B000QSNYGI",
+        "computed_per_oz": 1.204,
+        "displayed_unit_price": {
+          "raw": "($1.20$1.20/ounce)",
+          "unit": "ounce",
+          "value": 1.2
+        },
+        "id": 15,
+        "price_usd": 96.28,
+        "rating": null,
+        "review_count": 99900,
+        "review_count_raw": "(99.9K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Optimum Nutrition Gold Standard Whey Protein, Double Rich Chocolate, 5 LB | 24g of 100% Whey Protein Powder Per Serving, with BCAAs, Gluten Free, Banned Substance Tested, Easy Mixing, Muscle Support",
+        "unit_price_check": {
+          "computed": 1.204,
+          "delta_pct": 0.3,
+          "displayed": 1.2,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B000QSTBNS",
+        "computed_per_oz": 1.204,
+        "displayed_unit_price": {
+          "raw": "($1.20$1.20/ounce)",
+          "unit": "ounce",
+          "value": 1.2
+        },
+        "id": 16,
+        "price_usd": 96.28,
+        "rating": null,
+        "review_count": 29900,
+        "review_count_raw": "(29.9K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Optimum Nutrition Gold Standard Whey Protein, Extreme Milk Chocolate, 5 LB | 24g of 100% Whey Protein Powder Per Serving, with BCAAs, Gluten Free, Banned Substance Tested, Easy Mixing, Muscle Support",
+        "unit_price_check": {
+          "computed": 1.204,
+          "delta_pct": 0.3,
+          "displayed": 1.2,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01HOPJ522",
+        "computed_per_oz": 1.349,
+        "displayed_unit_price": {
+          "raw": "($1.35$1.35/ounce)",
+          "unit": "ounce",
+          "value": 1.35
+        },
+        "id": 17,
+        "price_usd": 107.95,
+        "rating": null,
+        "review_count": 2100,
+        "review_count_raw": "(2.1K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutricost Whey Protein Isolate Powder (Milk Chocolate) 5LBS",
+        "unit_price_check": {
+          "computed": 1.349,
+          "delta_pct": 0,
+          "displayed": 1.35,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00XOXP8G6",
+        "computed_per_oz": 1.14,
+        "displayed_unit_price": {
+          "raw": "($1.14$1.14/ounce)",
+          "unit": "ounce",
+          "value": 1.14
+        },
+        "id": 18,
+        "price_usd": 72.95,
+        "rating": null,
+        "review_count": 2200,
+        "review_count_raw": "(2.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 64,
+          "unit": "Pound",
+          "value": 4
+        },
+        "size_raw": "4 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Animal Whey Isolate Protein Powder, 25G High Protein | Vanilla 4LB | Great Tasting Blend for Pre & Post Workout | Digestive Enzymes & 5.6g BCAAs | Build Strength, Lean Muscle & Recover Faster",
+        "unit_price_check": {
+          "computed": 1.14,
+          "delta_pct": 0,
+          "displayed": 1.14,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0D1RQ2WR7",
+        "computed_per_oz": 1.846,
+        "displayed_unit_price": {
+          "raw": "($1.85$1.85/ounce)",
+          "unit": "ounce",
+          "value": 1.85
+        },
+        "id": 19,
+        "price_usd": 59.95,
+        "rating": null,
+        "review_count": 160,
+        "review_count_raw": "(160)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 32.5,
+          "unit": "Pound",
+          "value": 2.03
+        },
+        "size_raw": "2.03 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Nutricost Grass-Fed Whey Protein Isolate Powder (Chocolate PB) 2LBS | GMO-Free, Gluten Free, Natural Flavors",
+        "unit_price_check": {
+          "computed": 1.846,
+          "delta_pct": 0.2,
+          "displayed": 1.85,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B08G9LXYNW",
+        "computed_per_oz": 1.702,
+        "displayed_unit_price": {
+          "raw": "($1.70$1.70/ounce)",
+          "unit": "ounce",
+          "value": 1.7
+        },
+        "id": 20,
+        "price_usd": 136.17,
+        "rating": null,
+        "review_count": 665,
+        "review_count_raw": "(665)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Z Natural Foods Ultra Whey Protein Isolate - Unflavored & Unsweetened, 5 lb | Unflavored, Unsweetened Whey Protein Powder, Whey Isolate with Vital Proteins for Fitness, Sports Nutrition, Immune Support",
+        "unit_price_check": {
+          "computed": 1.702,
+          "delta_pct": 0.1,
+          "displayed": 1.7,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B003BVI5FW",
+        "computed_per_oz": 1.042,
+        "displayed_unit_price": {
+          "raw": "($1.04$1.04/ounce)",
+          "unit": "ounce",
+          "value": 1.04
+        },
+        "id": 21,
+        "price_usd": 69.99,
+        "rating": null,
+        "review_count": 8700,
+        "review_count_raw": "(8.7K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 67.2,
+          "unit": "lb",
+          "value": 4.2
+        },
+        "size_raw": "1K+ bought in past month",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "MusclePharm Combat Protein Powder, Chocolate Milk Flavor, Fuels Muscles for Productive Workouts, 5 Protein Sources including Whey Protein Isolate & Egg Albumin, Gluten Free, 4.2 lb, 52 Servings | 5 Protein Sources, Whey Protein Isolate, Egg Albumin, Gluten Free Formula, Muscle Fuel, Productive Workout Support",
+        "unit_price_check": {
+          "computed": 1.042,
+          "delta_pct": 0.1,
+          "displayed": 1.04,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B07M6LWRPV",
+        "computed_per_oz": 1.718,
+        "displayed_unit_price": {
+          "raw": "($1.72$1.72/ounce)",
+          "unit": "ounce",
+          "value": 1.72
+        },
+        "id": 22,
+        "price_usd": 54.99,
+        "rating": null,
+        "review_count": 1600,
+        "review_count_raw": "(1.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 32,
+          "unit": "lb",
+          "value": 2
+        },
+        "size_raw": "1K+ bought in past month",
+        "sponsored": true,
+        "stock": "in stock",
+        "title": "Ascent 100% Whey Protein Powder - Post Workout Whey Protein Isolate, Zero Artificial Flavors & Sweeteners, Gluten Free, 5.5g BCAA, 2.6g Leucine, Essential Amino Acids, Chocolate Peanut Butter 2 lb",
+        "unit_price_check": {
+          "computed": 1.718,
+          "delta_pct": 0.1,
+          "displayed": 1.72,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01HOPJ5JU",
+        "computed_per_oz": 1.349,
+        "displayed_unit_price": {
+          "raw": "($1.35$1.35/ounce)",
+          "unit": "ounce",
+          "value": 1.35
+        },
+        "id": 23,
+        "price_usd": 107.95,
+        "rating": null,
+        "review_count": 2400,
+        "review_count_raw": "(2.4K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutricost Isolate Whey Protein Powder, Vanilla, 5 pounds",
+        "unit_price_check": {
+          "computed": 1.349,
+          "delta_pct": 0,
+          "displayed": 1.35,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0013OXOKU",
+        "computed_per_oz": 1.227,
+        "displayed_unit_price": {
+          "raw": "($1.23$1.23/ounce)",
+          "unit": "ounce",
+          "value": 1.23
+        },
+        "id": 24,
+        "price_usd": 98.13,
+        "rating": null,
+        "review_count": 1700,
+        "review_count_raw": "(1.7K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NOW Foods Sports Nutrition, Whey Protein Isolate, 25 G With BCAAs, Creamy Chocolate Powder, 5-Pound",
+        "unit_price_check": {
+          "computed": 1.227,
+          "delta_pct": 0.3,
+          "displayed": 1.23,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B002N6F2UW",
+        "computed_per_oz": 1.375,
+        "displayed_unit_price": {
+          "raw": "($1.37$1.37/ounce)",
+          "unit": "ounce",
+          "value": 1.37
+        },
+        "id": 25,
+        "price_usd": 109.99,
+        "rating": null,
+        "review_count": 4600,
+        "review_count_raw": "(4.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Gourmet Chocolate | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 76 Servings, 5 lb",
+        "unit_price_check": {
+          "computed": 1.375,
+          "delta_pct": 0.4,
+          "displayed": 1.37,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0CQ32D39X",
+        "computed_per_oz": 1.623,
+        "displayed_unit_price": {
+          "raw": "($1.63$1.63/ounce)",
+          "unit": "ounce",
+          "value": 1.63
+        },
+        "id": 26,
+        "price_usd": 59.99,
+        "rating": null,
+        "review_count": 1800,
+        "review_count_raw": "(1.8K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 37,
+          "unit": "Pound",
+          "value": 2.31
+        },
+        "size_raw": "2.31 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Transparent Labs Grass-Fed Whey Protein Isolate - Naturally Flavored, Gluten Free Whey Protein Powder with 28g of Protein per Serving & 9 Amino Acids - 30 Servings, Milk Chocolate",
+        "unit_price_check": {
+          "computed": 1.623,
+          "delta_pct": 0.4,
+          "displayed": 1.63,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00ITXWNUK",
+        "computed_per_oz": 1.362,
+        "displayed_unit_price": {
+          "raw": "($1.36$1.36/ounce)",
+          "unit": "ounce",
+          "value": 1.36
+        },
+        "id": 27,
+        "price_usd": 108.99,
+        "rating": null,
+        "review_count": 4200,
+        "review_count_raw": "(4.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Fudge Brownie | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 70 Servings, 5 lb",
+        "unit_price_check": {
+          "computed": 1.362,
+          "delta_pct": 0.2,
+          "displayed": 1.36,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0CQ3JTR6F",
+        "computed_per_oz": null,
+        "displayed_unit_price": {
+          "raw": "($1.65$1.65/ounce)",
+          "unit": "ounce",
+          "value": 1.65
+        },
+        "id": 28,
+        "price_usd": 59.99,
+        "rating": null,
+        "review_count": 1700,
+        "review_count_raw": "(1.7K)",
+        "size_parsed": null,
+        "size_raw": "30 Servings (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Transparent Labs Grass-Fed Whey Protein Isolate - Naturally Flavored, Gluten Free Whey Protein Powder with 28g of Protein per Serving & 9 Amino Acids - 30 Servings, French Vanilla",
+        "unit_price_check": null
+      },
+      {
+        "asin": "B0756NHJRY",
+        "computed_per_oz": 1.524,
+        "displayed_unit_price": {
+          "raw": "($1.52$1.52/ounce)",
+          "unit": "ounce",
+          "value": 1.52
+        },
+        "id": 29,
+        "price_usd": 121.95,
+        "rating": null,
+        "review_count": 975,
+        "review_count_raw": "(975)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutricost Grass-Fed Whey Protein Isolate (Unflavored) 5LBS | rBGH Free, GMO-Free & Gluten Free",
+        "unit_price_check": {
+          "computed": 1.524,
+          "delta_pct": 0.3,
+          "displayed": 1.52,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B08PYB6SY9",
+        "computed_per_oz": 1.035,
+        "displayed_unit_price": {
+          "raw": "($1.04$1.04/ounce)",
+          "unit": "ounce",
+          "value": 1.04
+        },
+        "id": 30,
+        "price_usd": 89.95,
+        "rating": null,
+        "review_count": 1800,
+        "review_count_raw": "(1.8K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 86.9,
+          "unit": "Pound",
+          "value": 5.43
+        },
+        "size_raw": "5.43 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Sports Research® Whey Protein Isolate Powder Dutch Chocolate, 5.42lb Bag | 25g U.S. Grass-Fed Protein per Scoop | Essential Amino Acids & BCAA's | Informed Sport, NSF, <1g of Sugar - 60 Servings",
+        "unit_price_check": {
+          "computed": 1.035,
+          "delta_pct": 0.5,
+          "displayed": 1.04,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B002DYJ1C4",
+        "computed_per_oz": 0.873,
+        "displayed_unit_price": {
+          "raw": "($0.87$0.87/ounce)",
+          "unit": "ounce",
+          "value": 0.87
+        },
+        "id": 31,
+        "price_usd": 69.84,
+        "rating": null,
+        "review_count": 10000,
+        "review_count_raw": "(10K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "BSN SYNTHA-6 Premium Protein Powder, 6g Fiber, Whey Isolate, 48 Servings | Multi-Source Protein Blend with Whey Isolate, Micellar Casein and Milk Protein Isolate, Fiber and Healthy Fats",
+        "unit_price_check": {
+          "computed": 0.873,
+          "delta_pct": 0.3,
+          "displayed": 0.87,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01JUA738M",
+        "computed_per_oz": 0.975,
+        "displayed_unit_price": {
+          "raw": "($0.98$0.98/ounce)",
+          "unit": "ounce",
+          "value": 0.98
+        },
+        "id": 32,
+        "price_usd": 78.02,
+        "rating": null,
+        "review_count": 2300,
+        "review_count_raw": "(2.3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "MuscleTech Whey Protein Powder (Vanilla Cream, 5LB), 24g Protein | Nitro-Tech Whey Gold Isolate Smoothie Mix for Lean Muscle & Recovery for Women & Men - Packaging May Vary",
+        "unit_price_check": {
+          "computed": 0.975,
+          "delta_pct": 0.5,
+          "displayed": 0.98,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0GPZ6JB5M",
+        "computed_per_oz": 0.694,
+        "displayed_unit_price": {
+          "raw": "($0.69$0.69/ounce)",
+          "unit": "ounce",
+          "value": 0.69
+        },
+        "id": 33,
+        "price_usd": 48.99,
+        "rating": null,
+        "review_count": 53,
+        "review_count_raw": "(53)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 70.6,
+          "unit": "Pound",
+          "value": 4.41
+        },
+        "size_raw": "4.41 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Musashi Whey Protein Powder, Vanilla, 25g Protein, WPC & WPI Blend, 2kg | 130 Calories per Serving, 2kg (4.4 lb), Whey Protein Concentrate (WPC) and Whey Protein Isolate (WPI) Blend",
+        "unit_price_check": {
+          "computed": 0.694,
+          "delta_pct": 0.6,
+          "displayed": 0.69,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00IOTPWHK",
+        "computed_per_oz": 1.375,
+        "displayed_unit_price": {
+          "raw": "($1.37$1.37/ounce)",
+          "unit": "ounce",
+          "value": 1.37
+        },
+        "id": 34,
+        "price_usd": 109.99,
+        "rating": null,
+        "review_count": 3000,
+        "review_count_raw": "(3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Birthday Cake | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 75 Servings, 5 lb",
+        "unit_price_check": {
+          "computed": 1.375,
+          "delta_pct": 0.4,
+          "displayed": 1.37,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B06XX7BCG6",
+        "computed_per_oz": 1.362,
+        "displayed_unit_price": {
+          "raw": "($1.36$1.36/ounce)",
+          "unit": "ounce",
+          "value": 1.36
+        },
+        "id": 35,
+        "price_usd": 108.99,
+        "rating": null,
+        "review_count": 4500,
+        "review_count_raw": "(4.5K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Chocolate Peanut Butter | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 71 Servings, 5 lb",
+        "unit_price_check": {
+          "computed": 1.362,
+          "delta_pct": 0.2,
+          "displayed": 1.36,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00KYKLQ0O",
+        "computed_per_oz": 0.962,
+        "displayed_unit_price": {
+          "raw": "($0.96$0.96/ounce)",
+          "unit": "ounce",
+          "value": 0.96
+        },
+        "id": 36,
+        "price_usd": 76.94,
+        "rating": null,
+        "review_count": 1100,
+        "review_count_raw": "(1.1K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NOW Foods Sports Nutrition, Whey Protein Concentrate, 24 G With BCAAs, Unflavored Powder, 5-Pound",
+        "unit_price_check": {
+          "computed": 0.962,
+          "delta_pct": 0.2,
+          "displayed": 0.96,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0GH2Y3JGZ",
+        "computed_per_oz": 1.375,
+        "displayed_unit_price": {
+          "raw": "($1.37$1.37/ounce)",
+          "unit": "ounce",
+          "value": 1.37
+        },
+        "id": 37,
+        "price_usd": 109.99,
+        "rating": null,
+        "review_count": 184,
+        "review_count_raw": "(184)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Rival Nutrition Clean Rival Whey Protein Powder (Unflavored, 5 lb) | Whey Isolate Primary Source, No Added Flavors, Sweeteners or Colors, Use for Recipes, 25g Protein & 5.7g BCAA, Clean Taste",
+        "unit_price_check": {
+          "computed": 1.375,
+          "delta_pct": 0.4,
+          "displayed": 1.37,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0BRWSVPSQ",
+        "computed_per_oz": 1.015,
+        "displayed_unit_price": {
+          "raw": "($1.01$1.01/ounce)",
+          "unit": "ounce",
+          "value": 1.01
+        },
+        "id": 38,
+        "price_usd": 64.95,
+        "rating": null,
+        "review_count": 1800,
+        "review_count_raw": "(1.8K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 64,
+          "unit": "Pound",
+          "value": 4
+        },
+        "size_raw": "4 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Animal 100% Whey Protein Powder, 20G High Protein | Chocolate 4LB | Pre & Post Workout Meal Replacement with BCAAs | Build Strength, Muscle & Recover Faster | Low Carb, Low Sugar, Great Taste",
+        "unit_price_check": {
+          "computed": 1.015,
+          "delta_pct": 0.5,
+          "displayed": 1.01,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0F8LFDHG6",
+        "computed_per_oz": 1.124,
+        "displayed_unit_price": {
+          "raw": "($1.12$1.12/ounce)",
+          "unit": "ounce",
+          "value": 1.12
+        },
+        "id": 39,
+        "price_usd": 89.95,
+        "rating": null,
+        "review_count": 478,
+        "review_count_raw": "(478)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Sports Research® Whey Protein Isolate Powder, Creamy Vanilla (5lb Bag) | 25g U.S. Grass-Fed Protein per Scoop | Essential Amino Acids & BCAA's | Informed Sport, NSF, <1g of Sugar - 56 Servings",
+        "unit_price_check": {
+          "computed": 1.124,
+          "delta_pct": 0.4,
+          "displayed": 1.12,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B002DUD6QU",
+        "computed_per_oz": 0.772,
+        "displayed_unit_price": {
+          "raw": "($0.77$0.77/ounce)",
+          "unit": "ounce",
+          "value": 0.77
+        },
+        "id": 40,
+        "price_usd": 60.99,
+        "rating": null,
+        "review_count": 3900,
+        "review_count_raw": "(3.9K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 79,
+          "unit": "Pound",
+          "value": 4.94
+        },
+        "size_raw": "4.94 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Muscle Milk Genuine Protein Powder, Chocolate, 4.94 Pound, 32 Servings, 32g Protein, 2g Sugar, Calcium, Vitamins A, C & D, NSF Certified for Sport, Energizing Snack, Packaging May Vary",
+        "unit_price_check": {
+          "computed": 0.772,
+          "delta_pct": 0.2,
+          "displayed": 0.77,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00E7IODXQ",
+        "computed_per_oz": 1.363,
+        "displayed_unit_price": {
+          "raw": "($1.36$1.36/ounce)",
+          "unit": "ounce",
+          "value": 1.36
+        },
+        "id": 41,
+        "price_usd": 47.97,
+        "rating": null,
+        "review_count": 8200,
+        "review_count_raw": "(8.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 35.2,
+          "unit": "Pound",
+          "value": 2.2
+        },
+        "size_raw": "2.2 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "BulkSupplements.com Whey Protein Isolate Powder - Unflavored Whey Protein Powder, Nutritional Supplement - Gluten Free, 30g per Serving, 1kg (2.2 lbs) (Pack of 1)",
+        "unit_price_check": {
+          "computed": 1.363,
+          "delta_pct": 0.2,
+          "displayed": 1.36,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01BUSUEWE",
+        "computed_per_oz": 1.437,
+        "displayed_unit_price": {
+          "raw": "($1.44$1.44/ounce)",
+          "unit": "ounce",
+          "value": 1.44
+        },
+        "id": 42,
+        "price_usd": 114.99,
+        "rating": null,
+        "review_count": 71,
+        "review_count_raw": "(71)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Mutant Hardcore ISO, Whey Protein Isolate, Vanilla Ice Cream, 5 lb",
+        "unit_price_check": {
+          "computed": 1.437,
+          "delta_pct": 0.2,
+          "displayed": 1.44,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0CZ7P65JH",
+        "computed_per_oz": 0.683,
+        "displayed_unit_price": {
+          "raw": "($0.68$0.68/ounce)",
+          "unit": "ounce",
+          "value": 0.68
+        },
+        "id": 43,
+        "price_usd": 64.99,
+        "rating": null,
+        "review_count": 91,
+        "review_count_raw": "(91)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 95.2,
+          "unit": "Pound",
+          "value": 5.95
+        },
+        "size_raw": "5.95 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Revolution Nutrition, High Whey, Protein Powder 6LB, Whey Isolate, Gluten Free, Lean Muscle Mass for Men & Women, 25g of Protein Per Scoop, 2.7kg, 73 Servings (Vanilla Cake, 6 Pound)",
+        "unit_price_check": {
+          "computed": 0.683,
+          "delta_pct": 0.4,
+          "displayed": 0.68,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00EACSHF4",
+        "computed_per_oz": null,
+        "displayed_unit_price": null,
+        "id": 44,
+        "price_usd": null,
+        "rating": null,
+        "review_count": 6800,
+        "review_count_raw": "(6.8K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Dymatize Elite 100% Whey Protein Powder, Vanilla, 25g of Protein, 5.5g BCAAs, Less Than 140 Cal., Gluten Free, 2g Carb, 2g Sugar, 3g Fat (67 Servings)",
+        "unit_price_check": null
+      },
+      {
+        "asin": "B00H4GW5NS",
+        "computed_per_oz": 1.5,
+        "displayed_unit_price": {
+          "raw": "($1.50$1.50/ounce)",
+          "unit": "ounce",
+          "value": 1.5
+        },
+        "id": 45,
+        "price_usd": 119.99,
+        "rating": null,
+        "review_count": 1300,
+        "review_count_raw": "(1.3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "ALLMAX ISOFLEX Whey Protein Isolate, Vanilla, 5 lb | Supports Lean Muscle Growth, Enhances Recovery, 27g Whey Protein Isolate, Ultra-Pure, Gluten Free",
+        "unit_price_check": {
+          "computed": 1.5,
+          "delta_pct": 0,
+          "displayed": 1.5,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01DOHWFGM",
+        "computed_per_oz": 1.062,
+        "displayed_unit_price": {
+          "raw": "($1.06$1.06/ounce)",
+          "unit": "ounce",
+          "value": 1.06
+        },
+        "id": 46,
+        "price_usd": 84.99,
+        "rating": null,
+        "review_count": 3400,
+        "review_count_raw": "(3.4K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "MusclePharm Combat 100% Whey Protein Powder, Chocolate Milk, Fast Recovery & Muscle Gain with Whey Isolate, High Protein Powder for Women & Men, Gluten Free, 5lb, 67 Servings | Chocolate Protein Shake, Whey Protein Isolate, Fast Recovery Support, Muscle Gain Support, Gluten Free Formula",
+        "unit_price_check": {
+          "computed": 1.062,
+          "delta_pct": 0.2,
+          "displayed": 1.06,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B016HHD420",
+        "computed_per_oz": 1.25,
+        "displayed_unit_price": {
+          "raw": "($1.25$1.25/ounce)",
+          "unit": "ounce",
+          "value": 1.25
+        },
+        "id": 47,
+        "price_usd": 99.99,
+        "rating": null,
+        "review_count": 25,
+        "review_count_raw": "(25)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "MFL 100% Isolate Protein l 30g of Protein l 12g Amino Acids l Keto Friendly l Low Carbs l 5 lbs. (Chocolate Lava)",
+        "unit_price_check": {
+          "computed": 1.25,
+          "delta_pct": 0,
+          "displayed": 1.25,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0DFZ29FSK",
+        "computed_per_oz": 0.75,
+        "displayed_unit_price": {
+          "raw": "($0.75$0.75/ounce)",
+          "unit": "ounce",
+          "value": 0.75
+        },
+        "id": 48,
+        "price_usd": 59.99,
+        "rating": null,
+        "review_count": 36,
+        "review_count_raw": "(36)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Maxler Golden 7 Protein Blend - Protein Powder for Muscle Gain & Recovery - Strawberry Protein Powder 5 lb",
+        "unit_price_check": {
+          "computed": 0.75,
+          "delta_pct": 0,
+          "displayed": 0.75,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B00NBDMN8U",
+        "computed_per_oz": 1.75,
+        "displayed_unit_price": {
+          "raw": "($1.75$1.75/ounce)",
+          "unit": "ounce",
+          "value": 1.75
+        },
+        "id": 49,
+        "price_usd": 139.99,
+        "rating": null,
+        "review_count": 10600,
+        "review_count_raw": "(10.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NAKED Whey 5LB 100% Grass Fed Unflavored Whey Protein Powder - Only 1 Ingredient, NSF Certified, Undenatured, Gluten Free, Soy Free, Promote Muscle Growth and Recovery - 76 Servings",
+        "unit_price_check": {
+          "computed": 1.75,
+          "delta_pct": 0,
+          "displayed": 1.75,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0DJ3KYNQ5",
+        "computed_per_oz": 2.031,
+        "displayed_unit_price": {
+          "raw": "($2.03$2.03/ounce)",
+          "unit": "ounce",
+          "value": 2.03
+        },
+        "id": 50,
+        "price_usd": 64.99,
+        "rating": null,
+        "review_count": 1600,
+        "review_count_raw": "(1.6K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 32,
+          "unit": "Pound",
+          "value": 2
+        },
+        "size_raw": "2 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "NAKED Whey Isolate Protein - Only 2 Ingredients, 30g Grass-Fed Protein, Zero Carb, Unflavored, Undenatured, Non-GMO, No Soy, Gluten-Free, No Preservatives - 28 Servings",
+        "unit_price_check": {
+          "computed": 2.031,
+          "delta_pct": 0,
+          "displayed": 2.03,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01KITQEPM",
+        "computed_per_oz": 1.287,
+        "displayed_unit_price": {
+          "raw": "($1.29$1.29/ounce)",
+          "unit": "ounce",
+          "value": 1.29
+        },
+        "id": 51,
+        "price_usd": 102.95,
+        "rating": null,
+        "review_count": 3200,
+        "review_count_raw": "(3.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutricost Whey Protein Powder, Vanilla, 5 pounds - Whey Protein Concentrate",
+        "unit_price_check": {
+          "computed": 1.287,
+          "delta_pct": 0.2,
+          "displayed": 1.29,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B07VMTSLQ3",
+        "computed_per_oz": 0.75,
+        "displayed_unit_price": {
+          "raw": "($0.75$0.75/ounce)",
+          "unit": "ounce",
+          "value": 0.75
+        },
+        "id": 52,
+        "price_usd": 59.99,
+        "rating": null,
+        "review_count": 35,
+        "review_count_raw": "(35)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Amazing Muscle Whey Protein Isolate & Concentrate Powder | 25 G Protein per Serving | Non-GMO | Gluten-Free (5 LB, Butterscotch)",
+        "unit_price_check": {
+          "computed": 0.75,
+          "delta_pct": 0,
+          "displayed": 0.75,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B086GCRCYR",
+        "computed_per_oz": 1.011,
+        "displayed_unit_price": {
+          "raw": "($1.01$1.01/ounce)",
+          "unit": "ounce",
+          "value": 1.01
+        },
+        "id": 53,
+        "price_usd": 80.88,
+        "rating": null,
+        "review_count": 178,
+        "review_count_raw": "(178)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Nutrex Research Vanilla Whey Protein Powder for Men and Women Muscle Recovery Support, 5 Lb Tub of Isolate Sports Nutrition Protein with Essential Amino Acids and Bcaas, Smooth Taste and Texture",
+        "unit_price_check": {
+          "computed": 1.011,
+          "delta_pct": 0.1,
+          "displayed": 1.01,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B07G8BM32L",
+        "computed_per_oz": 1.832,
+        "displayed_unit_price": {
+          "raw": "($1.83$1.83/ounce)",
+          "unit": "ounce",
+          "value": 1.83
+        },
+        "id": 54,
+        "price_usd": 87.94,
+        "rating": null,
+        "review_count": 1300,
+        "review_count_raw": "(1.3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 48,
+          "unit": "Pound",
+          "value": 3
+        },
+        "size_raw": "3 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Optimum Nutrition Gold Standard Isolate Protein Powder Chocolate Bliss 3 LB | 25g Ultra-Filtered Whey Protein Isolate per serving, 5.5g BCAAs, Gluten Free, Easy Mixing, Banned Substance Tested",
+        "unit_price_check": {
+          "computed": 1.832,
+          "delta_pct": 0.1,
+          "displayed": 1.83,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B000GIPJZ2",
+        "computed_per_oz": 1.204,
+        "displayed_unit_price": {
+          "raw": "($1.20$1.20/ounce)",
+          "unit": "ounce",
+          "value": 1.2
+        },
+        "id": 55,
+        "price_usd": 96.28,
+        "rating": null,
+        "review_count": 11200,
+        "review_count_raw": "(11.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Optimum Nutrition Gold Standard Whey Protein Powder, Cookies & Cream, 5 LB | 24g 100% Whey Protein Per Serving, with BCAAs, Gluten Free, Banned Substance Tested, Easy Mixing, Muscle Support & Recovery",
+        "unit_price_check": {
+          "computed": 1.204,
+          "delta_pct": 0.3,
+          "displayed": 1.2,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B09FQCNS5H",
+        "computed_per_oz": 1.375,
+        "displayed_unit_price": {
+          "raw": "($1.37$1.37/ounce)",
+          "unit": "ounce",
+          "value": 1.37
+        },
+        "id": 56,
+        "price_usd": 109.99,
+        "rating": null,
+        "review_count": 442,
+        "review_count_raw": "(442)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "RIVAL NUTRITION Rival Whey Protein Powder (Rich Chocolate, 5 lb) | Whey Isolate Primary Source, 24g Protein & 5.5g BCAA for Muscle Recovery, Gluten Free, Easy to Use, For Active Lifestyles",
+        "unit_price_check": {
+          "computed": 1.375,
+          "delta_pct": 0.4,
+          "displayed": 1.37,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B01M6WQ1JV",
+        "computed_per_oz": 1.686,
+        "displayed_unit_price": {
+          "raw": "($1.69$1.69/ounce)",
+          "unit": "ounce",
+          "value": 1.69
+        },
+        "id": 57,
+        "price_usd": 134.9,
+        "rating": null,
+        "review_count": 1200,
+        "review_count_raw": "(1.2K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 80,
+          "unit": "lb",
+          "value": 5
+        },
+        "size_raw": "75 Servings (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Muscle Feast Grass-Fed Whey Protein Isolate Powder, Vanilla (5lb) | All Natural Hormone Free Pasture Raised, Whey Isolate Protein for Men & Women, Clean, Non-GMO, Delicious Isolate Protein",
+        "unit_price_check": {
+          "computed": 1.686,
+          "delta_pct": 0.2,
+          "displayed": 1.69,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B06XX65GS1",
+        "computed_per_oz": 1.25,
+        "displayed_unit_price": {
+          "raw": "($1.25$1.25/ounce)",
+          "unit": "ounce",
+          "value": 1.25
+        },
+        "id": 58,
+        "price_usd": 99.99,
+        "rating": null,
+        "review_count": 4800,
+        "review_count_raw": "(4.8K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Pound",
+          "value": 5
+        },
+        "size_raw": "5 Pound (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "Raw Grass Fed Whey Protein Powder, Unflavored – 1 Ingredient, No Additives or Fillers, Undenatured, Made in USA, 5 lb",
+        "unit_price_check": {
+          "computed": 1.25,
+          "delta_pct": 0,
+          "displayed": 1.25,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B0D3JDN1QF",
+        "computed_per_oz": 1.25,
+        "displayed_unit_price": {
+          "raw": "($1.25$1.25/ounce)",
+          "unit": "ounce",
+          "value": 1.25
+        },
+        "id": 59,
+        "price_usd": 99.99,
+        "rating": null,
+        "review_count": 5300,
+        "review_count_raw": "(5.3K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "field",
+          "total_oz": 80,
+          "unit": "Ounce",
+          "value": 80
+        },
+        "size_raw": "80 Ounce (Pack of 1)",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "GHOST Whey Protein Powder, Cinnabon - 5LB, 25G of Protein | Whey Protein Isolate & Concentrate Blend - Post Workout Nutrition Shake, Smoothies - Soy & Gluten-Free - 5LB Tub, 64 Servings",
+        "unit_price_check": {
+          "computed": 1.25,
+          "delta_pct": 0,
+          "displayed": 1.25,
+          "matches": true,
+          "verdict": "verified"
+        }
+      },
+      {
+        "asin": "B008JC26E4",
+        "computed_per_oz": 1.177,
+        "displayed_unit_price": {
+          "raw": "($1.18$1.18/ounce)",
+          "unit": "ounce",
+          "value": 1.18
+        },
+        "id": 60,
+        "price_usd": 75.35,
+        "rating": null,
+        "review_count": 7700,
+        "review_count_raw": "(7.7K)",
+        "size_parsed": {
+          "pack": 1,
+          "source": "title",
+          "total_oz": 64,
+          "unit": "LB",
+          "value": 4
+        },
+        "size_raw": "3K+ bought in past month",
+        "sponsored": false,
+        "stock": "in stock",
+        "title": "MuscleTech Whey Protein Powder (Milk Chocolate, 4LB) - 30g Protein | Nitro-Tech Ultimate Muscle Building Formula with Whey Protein Isolate - 3g of Creatine & 6.8g of BCAA - Packaging May Vary",
+        "unit_price_check": {
+          "computed": 1.177,
+          "delta_pct": 0.2,
+          "displayed": 1.18,
+          "matches": true,
+          "verdict": "verified"
+        }
+      }
+    ],
+    "resultCount": 60,
+    "url": "https://www.amazon.com/s?k=whey+protein+isolate+5lb"
+  }
+}
