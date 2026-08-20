@@ -1,0 +1,87 @@
+{
+  "query": "whey protein isolate 5lb",
+  "capturedAt": "2026-08-20T14:11:10.721Z",
+  "serpResultCount": 60,
+  "shortlistSize": 6,
+  "resolved": 5,
+  "ranking": [
+    {
+      "rank": 1,
+      "asin": "B0015AQL1Q",
+      "price_usd": 89.94,
+      "dollars_per_gram_protein": 0.0444,
+      "total_protein_g": 2025,
+      "servings": 81,
+      "protein_per_serving_g": 25,
+      "claimed_weight_g": 2268,
+      "suspect": false,
+      "source": "facts-panel",
+      "title": "NOW Foods Sports Nutrition, Whey Protein Isolate, 25 g With BCAAs, Unflavored Powder, 5-Pound"
+    },
+    {
+      "rank": 2,
+      "asin": "B00XOXP8G6",
+      "price_usd": 72.95,
+      "dollars_per_gram_protein": 0.0531,
+      "total_protein_g": 1375,
+      "servings": 55,
+      "protein_per_serving_g": 25,
+      "claimed_weight_g": 1814,
+      "suspect": false,
+      "source": "facts-panel",
+      "title": "Animal Whey Isolate Protein Powder, 25G High Protein | Vanilla 4LB | Great Tasting Blend for Pre & Post Workout | Digestive Enzymes & 5.6g BCAAs | Build Strength, Lean Muscle & Recover Faster"
+    },
+    {
+      "rank": 3,
+      "asin": "B01HOPJAAE",
+      "price_usd": 107.95,
+      "dollars_per_gram_protein": 0.0554,
+      "total_protein_g": 1950,
+      "servings": 65,
+      "protein_per_serving_g": 30,
+      "claimed_weight_g": 2268,
+      "suspect": false,
+      "source": "facts-panel",
+      "title": "Nutricost Whey Protein Isolate (Unflavored) 5LBS"
+    },
+    {
+      "rank": 4,
+      "asin": "B00G6QHYZ6",
+      "price_usd": 108.99,
+      "dollars_per_gram_protein": 0.0574,
+      "total_protein_g": 1900,
+      "servings": 76,
+      "protein_per_serving_g": 25,
+      "claimed_weight_g": 2268,
+      "suspect": false,
+      "source": "info-table",
+      "title": "Dymatize ISO100 Protein Powder, 100% Whey Isolate, Gourmet Vanilla | 25g Protein, Hydrolyzed, Fast-Absorbing, Supports Muscle Health, 5.5g BCAAs, Gluten-Free, 76 Servings, 5 lb"
+    },
+    {
+      "rank": 5,
+      "asin": "B072M8FKRW",
+      "price_usd": 129.99,
+      "dollars_per_gram_protein": 0.0763,
+      "total_protein_g": 1704,
+      "servings": 71,
+      "protein_per_serving_g": 24,
+      "claimed_weight_g": 2268,
+      "suspect": false,
+      "source": "facts-panel",
+      "title": "Levels Whey Protein Powder, No Artificial Ingredients, Vanilla Bean, 5LB | 24G of Protein, 5.4G BCAAs, Clean Ingredients, Hormone Free Dairy, No Fillers, No Added Sugar, No Junk"
+    },
+    {
+      "rank": 6,
+      "asin": "B00E7IODXQ",
+      "price_usd": 47.97,
+      "dollars_per_gram_protein": null,
+      "total_protein_g": 100,
+      "servings": 4,
+      "protein_per_serving_g": 25,
+      "claimed_weight_g": 998,
+      "suspect": true,
+      "source": "facts-panel",
+      "title": "BulkSupplements.com Whey Protein Isolate Powder - Unflavored Whey Protein Powder, Nutritional Supplement - Gluten Free, 30g per Serving, 1kg (2.2 lbs) (Pack of 1)"
+    }
+  ]
+}
