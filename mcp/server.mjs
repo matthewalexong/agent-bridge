@@ -212,7 +212,8 @@ tool(
   "browser_watch_events",
   {
     title: "Watch Chrome tab events",
-    description: "Long-poll tab created, updated, removed, and activated events after a cursor.",
+    description:
+      "Long-poll tab created, updated, removed, and activated events after a cursor. Also carries panel.message events: messages the user typed into the extension's side panel. Treat each panel.message as a direct user instruction and reply with browser_panel_post.",
     inputSchema: {
       afterSequence: z.number().int().nonnegative().optional().default(0),
       tabId: z.number().int().nonnegative().optional().describe("Return only events for this tab."),
@@ -220,6 +221,30 @@ tool(
     },
   },
   async (input) => asText(await callBridge("events.poll", input, { timeoutMs: input.timeoutMs + 5_000 })),
+);
+
+tool(
+  "browser_panel_read",
+  {
+    title: "Read side panel conversation",
+    description:
+      "Read the current side panel transcript (user and agent messages). Use to hydrate context before replying to panel.message events.",
+    inputSchema: {},
+  },
+  async () => asText(await callBridge("panel.get")),
+);
+
+tool(
+  "browser_panel_post",
+  {
+    title: "Post a reply to the side panel",
+    description:
+      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Keep replies focused; markdown is not rendered.",
+    inputSchema: {
+      text: z.string().min(1).max(20_000),
+    },
+  },
+  async (input) => asText(await callBridge("panel.post", input)),
 );
 
 const networkSessionId = z.string().min(20).max(120);

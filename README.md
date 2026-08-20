@@ -124,7 +124,7 @@ The repository is also a Codex plugin: `.codex-plugin/plugin.json` registers the
 
 ## Tools
 
-The server exposes 96 tools: 19 browser primitives and 77 analysis tools grouped into three batches. The full names, prerequisites, exclusions, and recommended call chains are in [docs/analysis-tools.md](./docs/analysis-tools.md).
+The server exposes 98 tools: 21 browser primitives and 77 analysis tools grouped into three batches. The full names, prerequisites, exclusions, and recommended call chains are in [docs/analysis-tools.md](./docs/analysis-tools.md).
 
 Browser primitives:
 
@@ -140,6 +140,8 @@ Browser primitives:
 - `browser_click`
 - `browser_fill`
 - `browser_watch_events`
+- `browser_panel_read`
+- `browser_panel_post`
 - `browser_network_start`
 - `browser_network_poll`
 - `browser_network_stop`

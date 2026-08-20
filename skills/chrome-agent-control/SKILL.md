@@ -13,7 +13,7 @@ Use `chrome-agent-bridge` when a task depends on the user's existing Chrome tabs
 2. Before a browser operation, call `browser_status`. On failure, read [connection-and-recovery.md](references/connection-and-recovery.md).
 3. Call `browser_list_tabs` and select a current tab before any tab-scoped operation. Never guess a tab ID.
 4. Load only the reference required by the task:
-   - Navigation, snapshots, screenshots, clicks, fills, or tab events: read [page-control.md](references/page-control.md).
+   - Navigation, snapshots, screenshots, clicks, fills, tab events, or side-panel chat: read [page-control.md](references/page-control.md).
    - Sanitized request lifecycle monitoring: read [network-monitoring.md](references/network-monitoring.md).
    - Arbitrary CDP commands or original CDP events: read [raw-cdp.md](references/raw-cdp.md).
    - Collected scripts, breakpoints, scopes, watches, or Webpack modules: read [script-debugging.md](references/script-debugging.md), then follow its Raw CDP prerequisite.

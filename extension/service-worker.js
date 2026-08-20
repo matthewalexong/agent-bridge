@@ -28,6 +28,10 @@ const rawSessionByTabId = new Map();
 const rawSessionByChildSessionId = new Map();
 const pageSnapshotsByTabId = new Map();
 const pageActionChains = new Map();
+const PANEL_MAX_ENTRIES = 200;
+const PANEL_MAX_TEXT = 20_000;
+const panelTranscript = [];
+let nextPanelMessageId = 1;
 
 function errorPayload(error, fallbackCode = "extension_error") {
   return {
@@ -131,6 +135,48 @@ function emitBrowserEvent(event, data) {
   } catch {
     // The disconnect handler schedules reconnection.
   }
+}
+
+function recordPanelEntry(role, text) {
+  const entry = {
+    id: `panel_${nextPanelMessageId++}`,
+    role,
+    text,
+    at: new Date().toISOString(),
+  };
+  panelTranscript.push(entry);
+  if (panelTranscript.length > PANEL_MAX_ENTRIES) {
+    panelTranscript.splice(0, panelTranscript.length - PANEL_MAX_ENTRIES);
+  }
+  return entry;
+}
+
+function broadcastPanel() {
+  try {
+    // Without a callback this returns a promise; it rejects when no panel is
+    // open, which is expected — swallow it so the service worker stays clean.
+    const result = chrome.runtime.sendMessage({
+      type: "panel.update",
+      transcript: panelTranscript.slice(-100),
+    });
+    if (result && typeof result.catch === "function") result.catch(() => {});
+  } catch {
+    // No listeners attached (panel closed); benign.
+  }
+}
+
+function panelText(value) {
+  if (typeof value !== "string") {
+    throw codedError("invalid_request", "text must be a string");
+  }
+  const text = value.trim();
+  if (!text) {
+    throw codedError("invalid_request", "text must not be empty");
+  }
+  if (text.length > PANEL_MAX_TEXT) {
+    throw codedError("too_large", `text exceeds ${PANEL_MAX_TEXT} characters`);
+  }
+  return text;
 }
 
 function safeUrl(value) {
@@ -1503,6 +1549,14 @@ async function dispatch(method, params) {
       return pollRawSession(params);
     case "raw.detach":
       return detachRawSession(params);
+    case "panel.get":
+      return { transcript: panelTranscript.slice(-100) };
+    case "panel.post": {
+      const text = panelText(params.text);
+      const entry = recordPanelEntry("agent", text);
+      broadcastPanel();
+      return { posted: true, entry };
+    }
     default:
       throw codedError("method_not_found", `Unsupported method: ${method}`);
   }
@@ -1518,12 +1572,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     : message?.type === "auth.renew"
       ? "renew"
       : null;
-  if (!action) return false;
-  void requestAuth(action).then(
-    (result) => sendResponse({ ok: true, result }),
-    (error) => sendResponse({ ok: false, error: errorPayload(error, "auth_error") }),
-  );
-  return true;
+  if (action) {
+    void requestAuth(action).then(
+      (result) => sendResponse({ ok: true, result }),
+      (error) => sendResponse({ ok: false, error: errorPayload(error, "auth_error") }),
+    );
+    return true;
+  }
+  if (message?.type === "panel.get") {
+    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100) } });
+    return false;
+  }
+  if (message?.type === "panel.clear") {
+    panelTranscript.length = 0;
+    broadcastPanel();
+    sendResponse({ ok: true, result: { cleared: true } });
+    return false;
+  }
+  if (message?.type === "panel.send") {
+    try {
+      const text = panelText(message.text);
+      const entry = recordPanelEntry("user", text);
+      // Surface the user's message to whichever agent is attached via the
+      // bridge event stream (agents poll it with browser_watch_events).
+      emitBrowserEvent("panel.message", { role: "user", text, messageId: entry.id });
+      broadcastPanel();
+      sendResponse({ ok: true, result: { entry } });
+    } catch (error) {
+      sendResponse({ ok: false, error: errorPayload(error) });
+    }
+    return false;
+  }
+  return false;
 });
 chrome.tabs.onCreated.addListener((tab) => emitBrowserEvent("tab.created", publicTab(tab)));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

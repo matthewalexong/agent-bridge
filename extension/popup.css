@@ -126,6 +126,12 @@ button:disabled {
   background: #2fd7ff;
 }
 
+.secondary {
+  background: rgba(47, 215, 255, 0.18);
+  color: #50ddff;
+  border: 1px solid rgba(47, 215, 255, 0.35);
+}
+
 .danger {
   color: #ffdfe0;
   background: rgba(255, 104, 111, 0.18);

@@ -23,6 +23,7 @@ test("extension manifest requests only the documented capability set", async () 
     "debugger",
     "nativeMessaging",
     "scripting",
+    "sidePanel",
     "tabs",
   ]);
   assert.equal(manifest.permissions.includes("cookies"), false);
@@ -41,7 +42,7 @@ test("extension manifest requests only the documented capability set", async () 
   assert.equal(manifest.action.default_popup, "popup.html");
 
   await Promise.all(
-    [...Object.values(expectedIcons), "popup.html", "popup.css", "popup.js"].map(
+    [...Object.values(expectedIcons), "popup.html", "popup.css", "popup.js", "panel.html", "panel.css", "panel.js"].map(
       (filePath) => fs.access(path.join(root, "extension", filePath)),
     ),
   );

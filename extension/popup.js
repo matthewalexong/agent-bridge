@@ -76,6 +76,17 @@ export function startPopup(doc = document, clipboard = navigator.clipboard) {
     renderToken();
   });
 
+  const openPanel = doc.querySelector("#open-panel");
+  openPanel.addEventListener("click", async () => {
+    try {
+      const currentWindow = await chrome.windows.getCurrent();
+      await chrome.sidePanel.open({ windowId: currentWindow.id });
+      window.close();
+    } catch (error) {
+      notice.textContent = error instanceof Error ? error.message : "Could not open the chat panel";
+    }
+  });
+
   copy.addEventListener("click", async () => {
     if (!token) return;
     try {

@@ -9,6 +9,7 @@
     "debugger",
     "nativeMessaging",
     "scripting",
+    "sidePanel",
     "tabs"
   ],
   "host_permissions": [
@@ -17,6 +18,9 @@
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
   },
   "icons": {
     "16": "icons/icon16.png",
