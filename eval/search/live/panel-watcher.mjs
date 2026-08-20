@@ -70,7 +70,7 @@ async function handleMessage(text, context) {
 }
 
 // --- Watcher loop ---
-let cursor = 0;
+let cursor = null; // null = initialize to current stream position on first poll
 let running = true;
 
 process.on("SIGINT", () => { running = false; console.error("\n[watcher] stopping..."); });
@@ -88,6 +88,13 @@ async function identify() {
 
 async function pollOnce() {
   try {
+    if (cursor === null) {
+      // Start at the CURRENT stream position: never replay and re-answer old
+      // panel messages that a previous watcher run (or the user) already saw.
+      const snap = await callBridge("events.poll", { afterSequence: 0, timeoutMs: 0 });
+      cursor = snap.cursor;
+      console.error(`[watcher] starting at event cursor ${cursor}`);
+    }
     const res = await callBridge("events.poll", { afterSequence: cursor, timeoutMs: pollMs });
     cursor = res.cursor;
     const panelMessages = res.events.filter((e) => e.event === "panel.message");
