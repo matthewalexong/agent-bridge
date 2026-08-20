@@ -15,6 +15,7 @@ Read this reference for tab management, visible page inspection, screenshots, na
 - `browser_click` / `browser_fill`: Selector-based compatibility tools. Prefer `browser_act` for new work.
 - `browser_watch_events`: Poll tab lifecycle and navigation events after a cursor; pass `tabId` to exclude unrelated tabs. Also delivers `panel.message` events — text the user typed into the extension's side panel. Treat each as a direct user instruction.
 - `browser_panel_read`: Read the current side panel transcript (user and agent messages) to hydrate context.
+- `browser_panel_identify`: Declare which agent you are — the panel shows "Connected to <name>" so the user knows who is answering. Call once when you start answering panel messages.
 - `browser_panel_post`: Post your reply into the side panel so the user sees it. Answer every `panel.message` this way.
 
 Minimal call shapes:

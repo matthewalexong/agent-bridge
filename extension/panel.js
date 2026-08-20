@@ -54,21 +54,28 @@ export function startPanel(doc = document) {
   const clearButton = doc.querySelector("#clear");
 
   let connected = false;
+  let agentName = null;
 
-  function setBridgeState(ok) {
-    connected = ok;
-    if (ok) {
-      status.textContent = "Bridge connected — waiting for your agent";
-      status.className = "status connected";
-    } else {
+  function setStatus() {
+    if (!connected) {
       status.textContent = "Local bridge unavailable";
       status.className = "status error";
+      return;
+    }
+    if (agentName) {
+      status.textContent = `Connected to ${agentName}`;
+      status.className = "status connected";
+    } else {
+      status.textContent = "Bridge connected — waiting for your agent";
+      status.className = "status waiting";
     }
   }
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "panel.update") {
       renderAll(doc, transcript, message.transcript ?? []);
+      agentName = message.agent?.name ?? null;
+      setStatus();
     }
   });
 
@@ -93,7 +100,9 @@ export function startPanel(doc = document) {
       await send({ type: "panel.send", text });
       input.value = "";
       autosize();
-      status.textContent = "Sent — your agent will reply here";
+      status.textContent = agentName
+        ? `Sent to ${agentName} — reply will appear here`
+        : "Sent — your agent will reply here";
       status.className = "status waiting";
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : String(error);
@@ -112,17 +121,23 @@ export function startPanel(doc = document) {
     }
   });
 
-  // Hydrate: existing transcript plus bridge connectivity in parallel.
+  // Hydrate: existing transcript, agent identity, and bridge connectivity.
   send({ type: "panel.get" })
-    .then((result) => renderAll(doc, transcript, result.transcript ?? []))
+    .then((result) => {
+      renderAll(doc, transcript, result.transcript ?? []);
+      agentName = result.agent?.name ?? null;
+      setStatus();
+    })
     .catch(() => {});
   send({ type: "auth.get" })
     .then(() => {
-      setBridgeState(true);
+      connected = true;
+      setStatus();
       sendButton.disabled = false;
     })
     .catch(() => {
-      setBridgeState(false);
+      connected = false;
+      setStatus();
       sendButton.disabled = true;
     });
   input.focus();

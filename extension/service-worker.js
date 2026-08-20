@@ -30,8 +30,10 @@ const pageSnapshotsByTabId = new Map();
 const pageActionChains = new Map();
 const PANEL_MAX_ENTRIES = 200;
 const PANEL_MAX_TEXT = 20_000;
+const PANEL_MAX_AGENT_NAME = 80;
 const panelTranscript = [];
 let nextPanelMessageId = 1;
+let panelAgent = null;
 
 function errorPayload(error, fallbackCode = "extension_error") {
   return {
@@ -158,11 +160,28 @@ function broadcastPanel() {
     const result = chrome.runtime.sendMessage({
       type: "panel.update",
       transcript: panelTranscript.slice(-100),
+      agent: panelAgent,
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
     // No listeners attached (panel closed); benign.
   }
+}
+
+function setPanelAgent(name) {
+  if (typeof name !== "string") {
+    throw codedError("invalid_request", "agent name must be a string");
+  }
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw codedError("invalid_request", "agent name must not be empty");
+  }
+  if (trimmed.length > PANEL_MAX_AGENT_NAME) {
+    throw codedError("too_large", `agent name exceeds ${PANEL_MAX_AGENT_NAME} characters`);
+  }
+  panelAgent = { name: trimmed, since: new Date().toISOString() };
+  broadcastPanel();
+  return panelAgent;
 }
 
 function panelText(value) {
@@ -1550,7 +1569,9 @@ async function dispatch(method, params) {
     case "raw.detach":
       return detachRawSession(params);
     case "panel.get":
-      return { transcript: panelTranscript.slice(-100) };
+      return { transcript: panelTranscript.slice(-100), agent: panelAgent };
+    case "panel.identify":
+      return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.post": {
       const text = panelText(params.text);
       const entry = recordPanelEntry("agent", text);
@@ -1580,7 +1601,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "panel.get") {
-    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100) } });
+    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent } });
     return false;
   }
   if (message?.type === "panel.clear") {

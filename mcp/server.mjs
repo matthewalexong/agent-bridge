@@ -8,7 +8,7 @@ import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs"
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
-  version: "0.8.0",
+  version: "0.9.0",
 });
 
 function asText(value) {
@@ -228,10 +228,25 @@ tool(
   {
     title: "Read side panel conversation",
     description:
-      "Read the current side panel transcript (user and agent messages). Use to hydrate context before replying to panel.message events.",
+      "Read the current side panel transcript (user and agent messages) plus which agent is identified. Use to hydrate context before replying to panel.message events.",
     inputSchema: {},
   },
   async () => asText(await callBridge("panel.get")),
+);
+
+tool(
+  "browser_panel_identify",
+  {
+    title: "Identify your agent in the side panel",
+    description:
+      "Declare which agent is answering in the side panel. The panel shows 'Connected to <name>' so the user knows who they are talking to. Call once when you start answering panel messages; the most recent caller wins. Defaults to CHROME_AGENT_BRIDGE_AGENT_NAME or 'MCP Agent'.",
+    inputSchema: {
+      agent: z.string().min(1).max(80).optional().describe("Display name, e.g. 'Hermes' or 'OpenClaw'."),
+    },
+  },
+  async (input) => asText(await callBridge("panel.identify", {
+    agent: input.agent ?? process.env.CHROME_AGENT_BRIDGE_AGENT_NAME ?? "MCP Agent",
+  })),
 );
 
 tool(
@@ -239,12 +254,16 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Keep replies focused; markdown is not rendered.",
+      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Pass agent on the first reply to identify yourself in the panel header. Keep replies focused; markdown is not rendered.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
+      agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
     },
   },
-  async (input) => asText(await callBridge("panel.post", input)),
+  async (input) => {
+    if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
+    return asText(await callBridge("panel.post", { text: input.text }));
+  },
 );
 
 const networkSessionId = z.string().min(20).max(120);

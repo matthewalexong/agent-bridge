@@ -31,7 +31,7 @@ async function loadHarness() {
     runtime: {
       id: "hkedmoboloodflgcaidimhddljdnndcd",
       connectNative: () => port,
-      getManifest: () => ({ version: "0.8.0" }),
+      getManifest: () => ({ version: "0.9.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
       onMessage: runtimeMessage,
@@ -125,6 +125,47 @@ test("panel input validation rejects empty, non-string, and oversized text", asy
     // Nothing was recorded.
     const transcript = await harness.dispatch("panel-get-3", "panel.get", {});
     assert.equal(transcript.result.transcript.length, 0);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("panel.identify names the connected agent and broadcasts it", async () => {
+  const harness = await loadHarness();
+  try {
+    // Initially no agent is identified.
+    const before = await harness.dispatch("ident-before", "panel.get", {});
+    assert.equal(before.result.agent, null);
+
+    // Agent identifies itself (e.g. Hermes via browser_panel_identify).
+    const identified = await harness.dispatch("ident", "panel.identify", { agent: "Hermes" });
+    assert.equal(identified.ok, true);
+    assert.equal(identified.result.agent.name, "Hermes");
+    assert.ok(identified.result.agent.since);
+
+    // panel.get now reports the identity.
+    const after = await harness.dispatch("ident-after", "panel.get", {});
+    assert.equal(after.result.agent.name, "Hermes");
+
+    // Broadcast carried the identity so an open panel updates live.
+    const updates = harness.broadcasts.filter((message) => message.type === "panel.update");
+    assert.equal(updates[updates.length - 1].agent.name, "Hermes");
+
+    // A second agent takes over (most recent caller wins).
+    const second = await harness.dispatch("ident-2", "panel.identify", { agent: "OpenClaw" });
+    assert.equal(second.result.agent.name, "OpenClaw");
+    const finalState = await harness.dispatch("ident-final", "panel.get", {});
+    assert.equal(finalState.result.agent.name, "OpenClaw");
+
+    // Validation: empty and oversized names rejected, identity unchanged.
+    const emptyName = await harness.dispatch("ident-empty", "panel.identify", { agent: "   " });
+    assert.equal(emptyName.ok, false);
+    assert.equal(emptyName.error.code, "invalid_request");
+    const bigName = await harness.dispatch("ident-big", "panel.identify", { agent: "x".repeat(81) });
+    assert.equal(bigName.ok, false);
+    assert.equal(bigName.error.code, "too_large");
+    const unchanged = await harness.dispatch("ident-check", "panel.get", {});
+    assert.equal(unchanged.result.agent.name, "OpenClaw");
   } finally {
     harness.restore();
   }
