@@ -31,7 +31,7 @@ const MAX_SEARCH_TURNS = 4;
 
 function loadSkill() {
   const path = process.env.AB_SKILL_FILE
-    || join(__dirname, "../skills/panel-chat-skill-v2.md");
+    || join(__dirname, "../skills/panel-chat-skill-v3.md");
   try {
     return readFileSync(path, "utf8");
   } catch {

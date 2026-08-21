@@ -1,0 +1,16 @@
+{
+  "task_id": "edition-decoy-black-bottle",
+  "notes": "Frozen RSI task for the edition-decoy round. Mirrors the live failure: panel answered 'black bottle Odyssey' with Odyssey Homme Black PLUS unrelated Black Forest Dessert Edition. Correct family = Odyssey Homme Black only (ids 1 and 6 in the fixture). Ids verified against extract-black-bottle-2026-08-21T18-22-30-292Z.json at authoring time.",
+  "fixture": "extract-black-bottle-2026-08-21T18-22-30-292Z.json",
+  "transcript": [
+    { "role": "user", "text": "what's the odyssey cologne in the black bottle?" },
+    { "role": "agent", "text": "The Odyssey cologne in the black bottle is Odyssey Mega Man Edition by Armaf. The 3.4 oz EDP spray is $26.83 [id 49]." },
+    { "role": "user", "text": "mega man is not in a black bottle" }
+  ],
+  "spec": {
+    "allowed_ids": [1, 6],
+    "decoy_ids": [3, 8],
+    "decoy_names": ["black forest"],
+    "must_cite_one_of": [1, 6]
+  }
+}

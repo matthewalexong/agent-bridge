@@ -1,0 +1,342 @@
+{
+  "when": "2026-08-21T18:32:12.724Z",
+  "skill": "panel-chat-skill-v3.md",
+  "temperature": 0,
+  "overall": 0.1431372549019608,
+  "results": [
+    {
+      "task": "brand-rendering-trap",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "brand-variant-twin",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "contradictory-title",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 2,
+        "explanation": "No listing satisfies all 2 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "long-serp-attention",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected K got null",
+        "matched_constraints expected 4 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 4,
+        "explanation": "No listing satisfies all 4 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "mg-protein-distractor",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 2,
+        "explanation": "No listing satisfies all 2 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "missing-fields",
+      "score": 0.8166666666666668,
+      "failures": [
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "mixed-units-size",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 2,
+        "explanation": "No listing satisfies all 2 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "multipack-total",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "multipack-verdict-flip",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "no-match-honest",
+      "score": 0.8166666666666668,
+      "failures": [
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "oos-full-match",
+      "score": 0.8,
+      "failures": [
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "price-tiebreak",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 4 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 4,
+        "explanation": "No listing satisfies all 4 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "price-unknown-later",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "review-count-tiebreak",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "review-evidence-over-position",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "sponsored-twin",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected B got null",
+        "matched_constraints expected 3 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 3,
+        "explanation": "No listing satisfies all 3 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    },
+    {
+      "task": "twin-distractor",
+      "score": 0,
+      "failures": [
+        "action expected stop got reformulate",
+        "selected_listing expected A got null",
+        "matched_constraints expected 2 got 0",
+        "transcription 0% of listing fields correct",
+        "no listings array parsed from model output"
+      ],
+      "verdict": {
+        "action": "reformulate",
+        "selected_listing": null,
+        "matched_constraints": 0,
+        "total_constraints": 2,
+        "explanation": "No listing satisfies all 2 query constraints; reformulate the search."
+      },
+      "transcription": 0,
+      "runs": 3
+    }
+  ]
+}
