@@ -219,6 +219,30 @@ test("panel chat full loop with real watcher and brain (no human)", async (conte
     assert.equal(lastEntry.role, "agent");
     assert.match(lastEntry.text, /\[BrokenBot\] Sorry — I couldn't generate a reply/);
 
+    // ===== Scenario 3: watcher dies with a message unanswered =====
+    // A new watcher startup MUST answer the stranded message instead of
+    // skipping to "current cursor only". Regression for the frozen-panel bug.
+    watcher.kill("SIGTERM");
+    await new Promise((r) => setTimeout(r, 300));
+
+    await userTypes("stranded while watcher was dead");
+    // Confirm it is genuinely stranded: no agent reply after it yet.
+    const stranded = await rpc("panel.get", {});
+    const strayLast = stranded.result.transcript[stranded.result.transcript.length - 1];
+    assert.equal(strayLast.role, "user");
+    assert.equal(strayLast.text, "stranded while watcher was dead");
+
+    watcher = startWatcher("CatchUpBot", `node ${path.join(root, "eval/search/live/fixtures/echo-brain.mjs")}`);
+
+    const caught = await waitForAgentReply(
+      (e) => e.text === "echo: stranded while watcher was dead",
+      "catch-up reply for stranded message",
+    );
+    const caughtLast = caught.transcript[caught.transcript.length - 1];
+    assert.equal(caughtLast.role, "agent");
+    assert.equal(caughtLast.text, "echo: stranded while watcher was dead");
+    assert.equal(caught.agent?.name, "CatchUpBot");
+
     // Panel UI broadcasts carried everything.
     const updates = broadcasts.filter((m) => m.type === "panel.update");
     assert.ok(updates.length >= 2, "expected panel.update broadcasts");

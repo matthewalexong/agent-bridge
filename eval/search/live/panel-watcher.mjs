@@ -100,6 +100,34 @@ async function identify() {
   }
 }
 
+// Answer the stranded message: if the LAST transcript entry is from the user,
+// the watcher was down when it arrived and nobody replied — the user is still
+// waiting. Without this, any watcher downtime permanently freezes the panel.
+async function catchUpStranded() {
+  try {
+    const st = await callBridge("panel.get");
+    const tr = st.transcript ?? [];
+    const last = tr[tr.length - 1];
+    if (last && last.role === "user" && last.text && last.text.trim()) {
+      console.error(`[watcher] catch-up: stranded user message "${last.text.slice(0, 60)}" — answering`);
+      try {
+        const reply = await handleMessage(last.text, { messageId: last.id });
+        await callBridge("panel.post", { text: reply });
+        console.error(`[watcher] catch-up replied (${reply.length} chars)`);
+      } catch (e) {
+        console.error(`[watcher] catch-up reply failed: ${e.message}`);
+        try {
+          await callBridge("panel.post", { text: `[${agentName}] Sorry — I couldn't generate a reply (${e.message}).` });
+        } catch {}
+      }
+    } else {
+      console.error(`[watcher] catch-up: no stranded user message (last=${last ? last.role : "none"})`);
+    }
+  } catch (e) {
+    console.error(`[watcher] catch-up check failed: ${e.message}`);
+  }
+}
+
 async function pollOnce() {
   try {
     if (cursor === null) {
@@ -143,8 +171,8 @@ async function main() {
   console.error(`[watcher] starting as "${agentName}", poll every ${pollMs}ms`);
   await identify();
 
-  // Catch up on any existing unread panel messages.
-  await pollOnce();
+  // Answer any message left hanging while no watcher was running.
+  await catchUpStranded();
 
   while (running) {
     await pollOnce();
