@@ -50,11 +50,15 @@ try {
   const m = out.match(/OVERALL:\s*([\d.]+)%/);
   if (!m) { console.error("could not parse OVERALL from eval output:\n" + out.slice(-800)); process.exit(1); }
   const overall = parseFloat(m[1]) / 100;
-  console.log(out.split("\n").filter((l) => /TOTAL SCORE|OVERALL/.test(l)).join("\n"));
   if (overall >= threshold) {
+    console.log(out.split("\n").filter((l) => /TOTAL SCORE|OVERALL/.test(l)).join("\n"));
     console.log(`PASS: overall ${(overall * 100).toFixed(1)}% >= threshold ${(threshold * 100).toFixed(0)}%`);
   } else {
+    // Surface the FULL per-task failure detail so the model can fix specific
+    // fields. Without this the proposal loop gets identical useless feedback
+    // and thrashes (identical proposals).
     console.error(`FAIL: overall ${(overall * 100).toFixed(1)}% < threshold ${(threshold * 100).toFixed(0)}%`);
+    console.error("\nPER-TASK FAILURES (fix these specific fields):\n" + out.slice(-4000));
     process.exit(1);
   }
 } catch (e) {

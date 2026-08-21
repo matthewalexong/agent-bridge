@@ -1,28 +1,29 @@
 #!/usr/bin/env node
 // eval/search/verify-sentiment-skill.mjs — verifier for the sentiment-routing skill.
-// Runs the sentiment corpus with the candidate skill and gates on a threshold.
-// Mirrors verify-search-skill.mjs shape; the cascade calls this with the
-// candidate skill path and expects "OVERALL: NN.N%" on stdout plus exit 0/1.
+// Same calling convention as verify-search-skill.mjs (the cascade uses
+// `node <verifier> <candidatePath> <threshold>` positionally):
+//   node verify-sentiment-skill.mjs <skill-file> [threshold-fraction]
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const args = process.argv.slice(2);
-const skillIdx = args.indexOf("--skill");
-const skillPath = skillIdx >= 0 ? path.resolve(args[skillIdx + 1]) : null;
-if (!skillPath) {
-  console.error("usage: verify-sentiment-skill.mjs --skill <path-to-skill.md>");
+const skillFile = process.argv[2];
+// Threshold is a fraction (0.98) like the search verifier. The sentiment
+// corpus is small (8 tasks) and the v2 baseline is already 100%, so demand
+// perfection — any regression is a real regression.
+const threshold = parseFloat(process.argv[3] || "1.0");
+if (!skillFile) {
+  console.error("usage: verify-sentiment-skill.mjs <skill-file> [threshold]");
   process.exit(2);
 }
 
 const RUNS = process.env.EVAL_RUNS ?? "3";
-const THRESHOLD = parseFloat(process.env.VERIFY_THRESHOLD ?? "100");
 
 try {
   const out = execFileSync(
     process.execPath,
-    [path.join(__dirname, "run-sentiment-eval.mjs"), "--skill", skillPath],
+    [path.join(__dirname, "run-sentiment-eval.mjs"), "--skill", skillFile],
     {
       encoding: "utf8",
       timeout: 1800000,
@@ -31,22 +32,25 @@ try {
       env: { ...process.env, EVAL_RUNS: RUNS },
     }
   );
-  process.stdout.write(out);
   const m = out.match(/OVERALL:\s*([\d.]+)%/);
   if (!m) {
-    console.error("VERIFY FAIL: could not parse OVERALL from eval output");
+    console.error("VERIFY FAIL: could not parse OVERALL from eval output:\n" + out.slice(-1000));
     process.exit(1);
   }
-  const score = parseFloat(m[1]);
-  if (score >= THRESHOLD) {
-    console.log(`VERIFY PASS: ${score}% >= ${THRESHOLD}%`);
+  const score = parseFloat(m[1]) / 100;
+  if (score >= threshold) {
+    console.log(out.split("\n").filter((l) => /OVERALL/.test(l)).join("\n"));
+    console.log(`PASS: overall ${(score * 100).toFixed(1)}% >= threshold ${(threshold * 100).toFixed(0)}%`);
     process.exit(0);
   }
-  console.log(`VERIFY FAIL: ${score}% < ${THRESHOLD}%`);
+  // Rich feedback on FAIL — the proposal loop needs per-task detail to fix
+  // specific fields. (The thrashing bug in the search verifier taught us this.)
+  console.error(`FAIL: overall ${(score * 100).toFixed(1)}% < threshold ${(threshold * 100).toFixed(0)}%`);
+  console.error("\nPER-TASK FAILURES (fix these specific fields):\n" + out.slice(-4000));
   process.exit(1);
 } catch (e) {
-  if (e.stdout) process.stdout.write(e.stdout);
-  if (e.stderr) process.stderr.write(e.stderr);
+  if (e.stdout) console.error("VERIFIER FAILURE:\n" + e.stdout.slice(-1500));
+  if (e.stderr) console.error(e.stderr.slice(-500));
   console.error(`VERIFY ERROR: ${String(e.message).slice(0, 300)}`);
   process.exit(1);
 }

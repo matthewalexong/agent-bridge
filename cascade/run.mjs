@@ -63,12 +63,12 @@ function makeSkillVerifier(verifierScript, candidatePath, threshold = 0.98) {
       fs.writeFileSync(candidatePath, markdown);
       const out = execSync(
         `node ${JSON.stringify(verifierScript)} ${JSON.stringify(candidatePath)} ${threshold}`,
-        { encoding: "utf8", timeout: 700000, maxBuffer: 8 * 1024 * 1024 }
+        { encoding: "utf8", timeout: 3600000, maxBuffer: 16 * 1024 * 1024 }
       );
       return { pass: true, report: out.trim() };
     } catch (e) {
       const msg = ((e.stdout || "") + (e.stderr || "")) || String(e.message);
-      return { pass: false, report: msg.slice(-1200) };
+      return { pass: false, report: msg.slice(-3000) };
     } finally {
       try { fs.unlinkSync(candidatePath); } catch {}
     }
@@ -193,12 +193,12 @@ const tasks = {
   // judge in lib/sentiment-judge.mjs; corpus in tasks-sentiment/.
   "improve-search-sentiment-skill": makeSkillTask({
     id: "improve-search-sentiment-skill",
-    skillDir: path.join(ROOT, "eval", "search", "skills"),
+    skillDir: ["eval", "search", "skills"],
     skillPattern: /^sentiment-routing-v(\d+)\.md$/,
     versionedName: (v) => `sentiment-routing-v${v}.md`,
-    evalRunner: "eval/search/run-sentiment-eval.mjs",
-    verifierScript: "eval/search/verify-sentiment-skill.mjs",
-    candidateName: "sentiment-routing-candidate.md",
+    evalRunner: path.join(repoRoot, "eval", "search", "run-sentiment-eval.mjs"),
+    verifierScript: path.join(repoRoot, "eval", "search", "verify-sentiment-skill.mjs"),
+    candidateName: ".candidate-sentiment.md",
     kindLabel: "sentiment-routing",
     taskRules: [
       "- Preserve the JSON output format and keys exactly (query_type, verdict, per_candidate, evidence).",
