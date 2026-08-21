@@ -39,8 +39,17 @@ function resolveVerdictAlias(task, verdict) {
   // Deterministically resolve an unambiguous title reference to its id so the
   // grade reflects semantics, not id-literalism. Returns the resolved id, or
   // the original string when no unambiguous match exists.
+  //
+  // GUARD 1: if the verdict is already a valid candidate id, return it AS-IS.
+  // Without this, a single-letter id like "a" substring-matches unrelated
+  // titles ("softhands" contains "a") and flips a correct answer.
+  // GUARD 2: only treat verdicts of >=3 chars as possible title aliases, so
+  // stray single letters can never enter title matching.
   if (typeof verdict !== "string" || !verdict.trim()) return verdict;
   const v = verdict.trim().toLowerCase();
+  const ids = (task.candidates || []).map((c) => String(c.id).toLowerCase());
+  if (ids.includes(v)) return v;
+  if (v.length < 3) return verdict;
   const matches = (task.candidates || []).filter((c) => {
     const t = (c.title || "").toLowerCase();
     return t.includes(v) || v.includes(t);

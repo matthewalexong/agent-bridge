@@ -29,6 +29,37 @@ test("alias resolution is unambiguous-only: overlapping titles do not resolve", 
   assert.equal(g.allOk, false);
 });
 
+test("REGRESSION: single-letter id must not substring-match candidate titles", () => {
+  // Bug: resolveVerdictAlias did t.includes(v), so a correct verdict 'a'
+  // matched 'softhAnds comfort work gloves' and flipped the answer to 'b'.
+  const task = {
+    expected: { query_type: "subjective", verdict: "a", classification: { a: "positive", b: "negative" } },
+    candidates: [
+      { id: "a", title: "IronGrip Pro Work Gloves" },
+      { id: "b", title: "SoftHands Comfort Work Gloves" },
+    ],
+  };
+  const g = gradeTask(task, {
+    query_type: "subjective",
+    verdict: "a",
+    per_candidate: { a: ["positive"], b: ["negative"] },
+    evidence: ["survived two years of welding work"],
+  });
+  assert.equal(g.allOk, true, JSON.stringify(g.checks));
+});
+
+test("REGRESSION: valid id never re-resolved even when title contains it", () => {
+  const task = {
+    expected: { query_type: "objective", verdict: "ab" },
+    candidates: [
+      { id: "ab", title: "Widget One" },
+      { id: "c", title: "abacus deluxe" },
+    ],
+  };
+  const g = gradeTask(task, { query_type: "objective", verdict: "ab", per_candidate: {}, evidence: [] });
+  assert.equal(g.allOk, true, JSON.stringify(g.checks));
+});
+
 test("aggregateCandidate: any-positive wins", () => {
   assert.equal(aggregateCandidate(["none", "positive", "negative"]), "positive");
   assert.equal(aggregateCandidate(["negative", "none"]), "negative");
