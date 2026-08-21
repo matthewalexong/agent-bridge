@@ -130,6 +130,33 @@ test("panel input validation rejects empty, non-string, and oversized text", asy
   }
 });
 
+test("panel.status sets a transient thinking status, broadcasts it, and clears", async () => {
+  const harness = await loadHarness();
+  try {
+    const set = await harness.dispatch("status-set", "panel.status", { text: "Thinking… 2 min elapsed · step 9 · vision_analyze" });
+    assert.equal(set.ok, true);
+    assert.equal(set.result.status.text, "Thinking… 2 min elapsed · step 9 · vision_analyze");
+
+    // Carried in panel.get and in broadcasts.
+    const got = await harness.dispatch("status-get", "panel.get", {});
+    assert.equal(got.result.status.text, "Thinking… 2 min elapsed · step 9 · vision_analyze");
+    const updates = harness.broadcasts.filter((message) => message.type === "panel.update");
+    assert.equal(updates[updates.length - 1].status.text, "Thinking… 2 min elapsed · step 9 · vision_analyze");
+
+    // Status is transient: NOT part of the transcript.
+    assert.equal(got.result.transcript.length, 0);
+
+    // Clearing with empty/null text removes it (reply landed).
+    const cleared = await harness.dispatch("status-clear", "panel.status", { text: "  " });
+    assert.equal(cleared.result.status, null);
+    const after = await harness.dispatch("status-after", "panel.get", {});
+    assert.equal(after.result.status, null);
+    assert.ok(after.result.capabilities.includes("status:v1"));
+  } finally {
+    harness.restore();
+  }
+});
+
 test("panel.identify names the connected agent and broadcasts it", async () => {
   const harness = await loadHarness();
   try {

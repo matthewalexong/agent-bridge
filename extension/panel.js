@@ -90,6 +90,31 @@ function renderAll(doc, transcript, entries) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
+// Live "thinking" bubble. Transient — not part of the transcript; it exists
+// only while the agent is actively working and is removed when it clears.
+// Kept OUTSIDE the transcript rebuild so renderAll() doesn't wipe it mid-turn.
+let thinkingBubble = null;
+function setThinking(doc, transcript, text) {
+  if (text && String(text).trim()) {
+    if (!thinkingBubble || !thinkingBubble.isConnected) {
+      thinkingBubble = doc.createElement("div");
+      thinkingBubble.className = "msg agent thinking";
+      const who = doc.createElement("span");
+      who.className = "who";
+      who.textContent = roleLabel("agent");
+      const body = doc.createElement("span");
+      body.className = "body";
+      thinkingBubble.append(who, body);
+      transcript.append(thinkingBubble);
+    }
+    thinkingBubble.querySelector(".body").textContent = String(text);
+    transcript.scrollTop = transcript.scrollHeight;
+  } else if (thinkingBubble && thinkingBubble.isConnected) {
+    thinkingBubble.remove();
+    thinkingBubble = null;
+  }
+}
+
 export function startPanel(doc = document) {
   const transcript = doc.querySelector("#transcript");
   const status = doc.querySelector("#status");
@@ -119,6 +144,7 @@ export function startPanel(doc = document) {
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "panel.update") {
       renderAll(doc, transcript, message.transcript ?? []);
+      setThinking(doc, transcript, message.status?.text ?? null);
       agentName = message.agent?.name ?? null;
       setStatus();
     }
@@ -170,6 +196,7 @@ export function startPanel(doc = document) {
   send({ type: "panel.get" })
     .then((result) => {
       renderAll(doc, transcript, result.transcript ?? []);
+      setThinking(doc, transcript, result.status?.text ?? null);
       agentName = result.agent?.name ?? null;
       setStatus();
       // Stale service worker detection: a cached SW from an older extension

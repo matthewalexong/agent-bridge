@@ -32,12 +32,26 @@ const PANEL_MAX_ENTRIES = 200;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1", "status:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
+const PANEL_MAX_STATUS_TEXT = 300;
 const panelTranscript = [];
 let nextPanelMessageId = 1;
 let panelAgent = null;
+// Transient "agent is thinking" status. Not part of the transcript: it
+// updates many times per turn and disappears when the reply lands.
+let panelStatus = null;
+
+function setPanelStatus(text) {
+  if (text == null || String(text).trim() === "") {
+    panelStatus = null;
+  } else {
+    panelStatus = { text: String(text).slice(0, PANEL_MAX_STATUS_TEXT), at: new Date().toISOString() };
+  }
+  broadcastPanel();
+  return panelStatus;
+}
 
 function errorPayload(error, fallbackCode = "extension_error") {
   return {
@@ -190,6 +204,7 @@ function broadcastPanel() {
       type: "panel.update",
       transcript: panelTranscript.slice(-100),
       agent: panelAgent,
+      status: panelStatus,
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
@@ -1598,9 +1613,11 @@ async function dispatch(method, params) {
     case "raw.detach":
       return detachRawSession(params);
     case "panel.get":
-      return { transcript: panelTranscript.slice(-100), agent: panelAgent, capabilities: PANEL_CAPABILITIES };
+      return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, capabilities: PANEL_CAPABILITIES };
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
+    case "panel.status":
+      return { status: setPanelStatus(params.text) };
     case "panel.post": {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
@@ -1631,7 +1648,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "panel.get") {
-    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, capabilities: PANEL_CAPABILITIES } });
+    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, capabilities: PANEL_CAPABILITIES } });
     return false;
   }
   if (message?.type === "panel.clear") {

@@ -219,8 +219,9 @@ function recordEvent(event, data) {
 }
 
 // --- Hermes webhook forwarder ---------------------------------------------
-import { readFileSync } from "node:fs";
+import { createReadStream, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { homedir } from "node:os";
 
 const HERMES_WEBHOOK_URL = process.env.AB_HERMES_WEBHOOK_URL || "http://127.0.0.1:8644/webhooks/panel_message";
 const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
@@ -256,17 +257,20 @@ async function forwardPanelMessageToHermes(data) {
       .createHmac("sha256", secret)
       .update(`${timestamp}.${body}`)
       .digest("hex");
+    // Unique delivery id prevents the gateway's idempotency cache from
+    // collapsing distinct messages that land in the same millisecond AND
+    // from deduping early panel_N ids after an extension restart (the
+    // counter resets; HOST_INSTANCE disambiguates per host process).
+    const deliveryId = data.messageId
+      ? `${HOST_INSTANCE}:${data.messageId}`
+      : `${HOST_INSTANCE}:${timestamp}-${Math.random().toString(36).slice(2)}`;
     const response = await fetch(HERMES_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-webhook-signature-v2": signature,
         "x-webhook-timestamp": timestamp,
-        // Unique delivery id prevents the gateway's idempotency cache from
-        // collapsing distinct messages that land in the same millisecond AND
-        // from deduping early panel_N ids after an extension restart (the
-        // counter resets; HOST_INSTANCE disambiguates per host process).
-        "x-request-id": data.messageId ? `${HOST_INSTANCE}:${data.messageId}` : `${HOST_INSTANCE}:${timestamp}-${Math.random().toString(36).slice(2)}`,
+        "x-request-id": deliveryId,
       },
       body,
       signal: AbortSignal.timeout(5_000),
@@ -274,8 +278,105 @@ async function forwardPanelMessageToHermes(data) {
     const status = response.status;
     const text = (await response.text()).slice(0, 200);
     log(`panel→hermes: forwarded (HTTP ${status}) ${text}`);
+    if (status === 200 && text.includes('"accepted"')) {
+      // Turn is running in the gateway: surface live "thinking" progress in
+      // the panel so the user is never staring at a dead screen for minutes.
+      startTurnStatusTail(deliveryId);
+    }
   } catch (error) {
     log(`panel→hermes: forward failed (${error?.message ?? error})`);
+  }
+}
+
+// --- Live "thinking" status in the panel ----------------------------------
+// The gateway logs per-delivery progress ("⏳ Working — 3 min — iteration
+// 14/500, vision_analyze") and a "response ready" line when the turn ends.
+// We tail that log for the delivery we just forwarded and push human-readable
+// updates into the panel as transient status (panel.status), cleared when the
+// turn completes or a safety timeout fires.
+const GATEWAY_LOG_FILE = join(homedir(), ".hermes", "logs", "gateway.log");
+const STATUS_POLL_MS = 3_000;
+const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
+const activeStatusTails = new Map(); // deliveryId -> { timer }
+
+function pushPanelStatus(text) {
+  void forwardToExtension("panel.status", { text }).catch((error) => {
+    log(`panel.status push failed (${error?.message ?? error})`);
+  });
+}
+
+function humanizeProgress(raw) {
+  // raw: "Working — 3 min — iteration 14/500, vision_analyze"
+  const m = raw.match(/^Working — (.+?) — iteration (\d+)\/\d+,?\s*(.*)$/);
+  if (m) {
+    const activity = m[3] && m[3] !== "receiving stream response" ? ` · ${m[3]}` : "";
+    return `Thinking… ${m[1]} elapsed · step ${m[2]}${activity}`;
+  }
+  return `Thinking… ${raw.replace(/^Working — /, "")}`;
+}
+
+function startTurnStatusTail(deliveryId) {
+  if (activeStatusTails.has(deliveryId)) return;
+  const chatMarker = `webhook:panel_message:${deliveryId}`;
+  let offset = 0;
+  try {
+    offset = statSync(GATEWAY_LOG_FILE).size;
+  } catch {
+    /* no gateway log — status updates simply won't appear */
+  }
+  const startedAt = Date.now();
+  let lastPushed = "";
+  pushPanelStatus("Thinking… your message reached Hermes — research in progress");
+  const timer = setInterval(() => {
+    if (Date.now() - startedAt > STATUS_MAX_MS) {
+      stopTurnStatusTail(deliveryId);
+      pushPanelStatus(null);
+      return;
+    }
+    let size;
+    try {
+      size = statSync(GATEWAY_LOG_FILE).size;
+    } catch {
+      return;
+    }
+    if (size < offset) offset = 0; // log rotated
+    if (size === offset) return;
+    const readFrom = offset;
+    offset = size;
+    const stream = createReadStream(GATEWAY_LOG_FILE, { start: readFrom, end: size - 1, encoding: "utf8" });
+    let chunk = "";
+    stream.on("data", (d) => { chunk += d; });
+    stream.on("end", () => {
+      for (const line of chunk.split("\n")) {
+        if (!line.includes(chatMarker)) continue;
+        const workingMatch = line.match(/⏳ (Working — .+)$/);
+        if (workingMatch) {
+          const human = humanizeProgress(workingMatch[1]);
+          if (human !== lastPushed) {
+            lastPushed = human;
+            pushPanelStatus(human);
+          }
+          continue;
+        }
+        if (line.includes("response ready") || (line.includes("Response for ") && !line.includes("⏳"))) {
+          // Turn finished — the agent's panel.post reply lands on its own;
+          // drop the thinking bubble.
+          stopTurnStatusTail(deliveryId);
+          pushPanelStatus(null);
+          return;
+        }
+      }
+    });
+    stream.on("error", () => {});
+  }, STATUS_POLL_MS);
+  activeStatusTails.set(deliveryId, { timer });
+}
+
+function stopTurnStatusTail(deliveryId) {
+  const tail = activeStatusTails.get(deliveryId);
+  if (tail) {
+    clearInterval(tail.timer);
+    activeStatusTails.delete(deliveryId);
   }
 }
 // ---------------------------------------------------------------------------

@@ -108,6 +108,19 @@ h1 {
 }
 .msg.user .who { color: #91f56d; }
 
+/* Live "thinking" bubble: transient, pulses while the agent works. */
+.msg.thinking {
+  border-style: dashed;
+  border-color: rgba(255, 206, 107, 0.55);
+  background: rgba(255, 206, 107, 0.08);
+  animation: thinking-pulse 1.6s ease-in-out infinite;
+}
+.msg.thinking .who { color: #ffce6b; }
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 .cards {
   display: flex;
   flex-direction: column;
