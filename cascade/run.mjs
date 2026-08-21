@@ -78,7 +78,7 @@ function makeSkillVerifier(verifierScript, candidatePath, threshold = 0.98) {
 // Build one recursive skill-improvement task for a domain.
 // All heavy work (baseline eval) is LAZY — computed only when the task is
 // actually selected, so --list and other tasks cost nothing.
-function makeSkillTask({ id, skillDir, skillPattern, versionedName, evalRunner, verifierScript, candidateName, kindLabel }) {
+function makeSkillTask({ id, skillDir, skillPattern, versionedName, evalRunner, verifierScript, candidateName, kindLabel, taskRules }) {
   const dir = path.join(repoRoot, ...skillDir);
   let cached = null;
   const setup = () => {
@@ -114,7 +114,7 @@ MEASURED FAILURES from a live run of the deterministic eval against this exact s
 ${baseline.failures}
 
 TASK: Revise the skill to fix those specific failures. Rules:
-- Preserve the existing output format and keys. Do not rename or drop existing keys.
+${taskRules ?? `- Preserve the existing output format and keys. Do not rename or drop existing keys.
 - You may ADD a new field ONLY when a measured failure names a field that the current skill never asks the model to emit (e.g. a missing "pack_count" or "price_usd"). When adding a field:
   1. Add it to the per-listing field list with an exact transcription instruction (copy verbatim, never infer). CRITICAL: quote the EXACT source-line label as it prints in the snapshot (e.g. "Size:", "Price:", "Reviews:") — the model will not find the value unless the skill names the line it lives on. Field names in feedback (like "review_count") are NOT snapshot labels; map them to the printed line (e.g. review_count ← the "Reviews:" line).
   2. Add it to the Rules section (e.g. "Reviews information must be extracted verbatim if present. If no Reviews line is visible, use null.").
@@ -123,7 +123,7 @@ TASK: Revise the skill to fix those specific failures. Rules:
 - If a failure says a field is WRONG (value differs from expected), fix the transcription instruction for that specific field.
 - If a listing prints a multiplier/bundle note (e.g. "(Pack of N)", "N-pack", "bundle of N"), the skill must instruct the model to transcribe the PER-UNIT size exactly as printed AND report the multiplier as a separate integer field — never multiply, fold, or total the sizes yourself; downstream code does all arithmetic.
 - Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
-- The skill must stay generic: no task-specific numbers, product names, brand names, or listing IDs.
+- The skill must stay generic: no task-specific numbers, product names, brand names, or listing IDs.`}
 
 If verification fails again, the verifier will show you the exact per-task scores AND the exact failing field(s) with got/expected values. Read them and fix the specific field that is wrong.
 
@@ -165,6 +165,27 @@ const tasks = {
     verifierScript: path.join(repoRoot, "eval", "search", "verify-search-skill.mjs"),
     candidateName: ".candidate-task5.md",
     kindLabel: "search-result transcription",
+  }),
+  // TASK 6: recursively improve the clarify-answer skill — the second half of
+  // the clarification conversation. Code (clarify-judge.mjs) decides WHEN to
+  // ask; this skill decides how to MAP the user's free-text reply onto a
+  // candidate listing. Measured gap: model guesses instead of asking again
+  // when the reply still fits two candidates.
+  "improve-clarify-answer-skill": makeSkillTask({
+    id: "improve-clarify-answer-skill",
+    skillDir: ["eval", "search", "skills"],
+    skillPattern: /^clarify-answer-v(\d+)\.md$/,
+    versionedName: (v) => `clarify-answer-v${v}.md`,
+    evalRunner: path.join(repoRoot, "eval", "search", "run-clarify-eval.mjs"),
+    verifierScript: path.join(repoRoot, "eval", "search", "verify-clarify-skill.mjs"),
+    candidateName: ".candidate-clarify.md",
+    kindLabel: "clarify-answer",
+    taskRules: `- Preserve the existing output format and keys. The model must output ONLY one JSON object: {"action": "select", "listing_id": "<id>"} or {"action": "ask_again"}.
+- A failure line names the task and whether the action or listing_id was wrong. Read the failing task's intent from its id (e.g. "ambiguous-must-ask-again" means the reply still fits more than one candidate, so the correct answer is ask_again).
+- Fix the decision RULE that misfires — e.g. strengthen the ambiguity check, tighten substring matching, or clarify relative-reference rules ("bigger", "cheaper", "more reviews").
+- The model must NEVER guess when a reply plausibly applies to more than one candidate. Ask again instead.
+- Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
+- The skill must stay generic: no task-specific flavors, sizes, prices, or listing ids.`,
   }),
   // TASK 1: pure refactor — well within local capability
   "bounded-error-class": {

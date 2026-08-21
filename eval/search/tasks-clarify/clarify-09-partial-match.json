@@ -1,0 +1,11 @@
+{
+  "id": "clarify-09-partial-match",
+  "question": "Which flavor do you want? I found: Strawberries & Cream (a) or Mint Chocolate Chip (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Strawberries & Cream", "size_value": 908, "size_unit": "g", "price_usd": 33, "reviews_raw": "712", "stock": "in stock" },
+    { "id": "b", "flavor": "Mint Chocolate Chip", "size_value": 908, "size_unit": "g", "price_usd": 33, "reviews_raw": "712", "stock": "in stock" }
+  ],
+  "reply": "straw",
+  "expected": { "action": "select", "listing_id": "a" }
+}

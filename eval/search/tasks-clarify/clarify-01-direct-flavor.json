@@ -1,0 +1,11 @@
+{
+  "id": "clarify-01-direct-flavor",
+  "question": "Which flavor do you want? I found: Chocolate (a) or Vanilla (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Chocolate", "size_value": 1000, "size_unit": "g", "price_usd": 40, "reviews_raw": "1,000", "stock": "in stock" },
+    { "id": "b", "flavor": "Vanilla", "size_value": 1000, "size_unit": "g", "price_usd": 40, "reviews_raw": "1,000", "stock": "in stock" }
+  ],
+  "reply": "vanilla",
+  "expected": { "action": "select", "listing_id": "b" }
+}

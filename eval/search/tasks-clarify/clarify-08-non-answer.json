@@ -1,0 +1,11 @@
+{
+  "id": "clarify-08-non-answer",
+  "question": "Which flavor do you want? I found: Chocolate (a) or Vanilla (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Chocolate", "size_value": 1000, "size_unit": "g", "price_usd": 40, "reviews_raw": "1,000", "stock": "in stock" },
+    { "id": "b", "flavor": "Vanilla", "size_value": 1000, "size_unit": "g", "price_usd": 40, "reviews_raw": "1,000", "stock": "in stock" }
+  ],
+  "reply": "is either of them in stock?",
+  "expected": { "action": "ask_again" }
+}

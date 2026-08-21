@@ -1,0 +1,11 @@
+{
+  "id": "clarify-07-ambiguous-must-ask-again",
+  "question": "Which size do you want? I found: 500 g (a) or 1000 g (b).",
+  "distinguishing_attr": "size",
+  "candidates": [
+    { "id": "a", "flavor": "Chocolate", "size_value": 500, "size_unit": "g", "price_usd": 25, "reviews_raw": "500", "stock": "in stock" },
+    { "id": "b", "flavor": "Chocolate", "size_value": 1000, "size_unit": "g", "price_usd": 42, "reviews_raw": "500", "stock": "in stock" }
+  ],
+  "reply": "the chocolate one",
+  "expected": { "action": "ask_again" }
+}

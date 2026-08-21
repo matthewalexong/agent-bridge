@@ -1,0 +1,11 @@
+{
+  "id": "clarify-05-size-smaller",
+  "question": "Which size do you want? I found: 2.2 lb (a) or 5 lb (b).",
+  "distinguishing_attr": "size",
+  "candidates": [
+    { "id": "a", "flavor": "Vanilla", "size_value": 2.2, "size_unit": "lb", "price_usd": 30, "reviews_raw": "4,502", "stock": "in stock" },
+    { "id": "b", "flavor": "Vanilla", "size_value": 5, "size_unit": "lb", "price_usd": 55, "reviews_raw": "4,502", "stock": "in stock" }
+  ],
+  "reply": "go with the smaller",
+  "expected": { "action": "select", "listing_id": "a" }
+}

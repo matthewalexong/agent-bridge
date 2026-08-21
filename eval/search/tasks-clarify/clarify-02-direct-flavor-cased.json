@@ -1,0 +1,11 @@
+{
+  "id": "clarify-02-direct-flavor-cased",
+  "question": "Which flavor do you want? I found: Cookies & Cream (a) or Double Chocolate (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Cookies & Cream", "size_value": 908, "size_unit": "g", "price_usd": 33, "reviews_raw": "2,310", "stock": "in stock" },
+    { "id": "b", "flavor": "Double Chocolate", "size_value": 908, "size_unit": "g", "price_usd": 33, "reviews_raw": "2,310", "stock": "in stock" }
+  ],
+  "reply": "Chocolate",
+  "expected": { "action": "select", "listing_id": "b" }
+}

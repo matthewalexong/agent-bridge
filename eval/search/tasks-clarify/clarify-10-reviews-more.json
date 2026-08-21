@@ -1,0 +1,11 @@
+{
+  "id": "clarify-10-reviews-more",
+  "question": "Which one do you want? I found: Chocolate 1000 g (a) or Vanilla 1000 g (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Chocolate", "size_value": 1000, "size_unit": "g", "price_usd": 38, "reviews_raw": "8,204", "stock": "in stock" },
+    { "id": "b", "flavor": "Vanilla", "size_value": 1000, "size_unit": "g", "price_usd": 38, "reviews_raw": "312", "stock": "in stock" }
+  ],
+  "reply": "whichever has more reviews",
+  "expected": { "action": "select", "listing_id": "a" }
+}

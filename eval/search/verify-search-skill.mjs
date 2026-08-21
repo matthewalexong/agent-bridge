@@ -45,7 +45,7 @@ try {
   // ~30s each, so the budget is generous.
   const out = execSync(
     `EVAL_LLM_TEMPERATURE=0 EVAL_RUNS=3 node ${JSON.stringify(path.join(__dirname, "run-search-eval.mjs"))} --skill ${JSON.stringify(skillFile)}`,
-    { encoding: "utf8", timeout: 600000, maxBuffer: 8 * 1024 * 1024, cwd: path.join(__dirname, "..", "..") }
+    { encoding: "utf8", timeout: 3600000, maxBuffer: 16 * 1024 * 1024, cwd: path.join(__dirname, "..", "..") }
   );
   const m = out.match(/OVERALL:\s*([\d.]+)%/);
   if (!m) { console.error("could not parse OVERALL from eval output:\n" + out.slice(-800)); process.exit(1); }

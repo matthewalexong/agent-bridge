@@ -1,0 +1,11 @@
+{
+  "id": "clarify-03-flavor-with-the",
+  "question": "Which flavor do you want? I found: Strawberry (a) or Banana (b).",
+  "distinguishing_attr": "flavor",
+  "candidates": [
+    { "id": "a", "flavor": "Strawberry", "size_value": 500, "size_unit": "g", "price_usd": 25, "reviews_raw": "890", "stock": "in stock" },
+    { "id": "b", "flavor": "Banana", "size_value": 500, "size_unit": "g", "price_usd": 25, "reviews_raw": "890", "stock": "in stock" }
+  ],
+  "reply": "the strawberry one",
+  "expected": { "action": "select", "listing_id": "a" }
+}
