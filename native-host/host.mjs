@@ -224,6 +224,11 @@ import { join } from "node:path";
 
 const HERMES_WEBHOOK_URL = process.env.AB_HERMES_WEBHOOK_URL || "http://127.0.0.1:8644/webhooks/panel_message";
 const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
+// Per-host-instance nonce. Extension restarts reset the panel message
+// counter to panel_1; without this nonce the gateway's idempotency cache
+// (1h TTL) would silently drop every early-ID message after a restart as
+// a "duplicate delivery".
+const HOST_INSTANCE = crypto.randomBytes(4).toString("hex");
 
 function readWebhookSecret() {
   try {
@@ -258,8 +263,10 @@ async function forwardPanelMessageToHermes(data) {
         "x-webhook-signature-v2": signature,
         "x-webhook-timestamp": timestamp,
         // Unique delivery id prevents the gateway's idempotency cache from
-        // collapsing distinct messages that land in the same millisecond.
-        "x-request-id": data.messageId || `${timestamp}-${Math.random().toString(36).slice(2)}`,
+        // collapsing distinct messages that land in the same millisecond AND
+        // from deduping early panel_N ids after an extension restart (the
+        // counter resets; HOST_INSTANCE disambiguates per host process).
+        "x-request-id": data.messageId ? `${HOST_INSTANCE}:${data.messageId}` : `${HOST_INSTANCE}:${timestamp}-${Math.random().toString(36).slice(2)}`,
       },
       body,
       signal: AbortSignal.timeout(5_000),
