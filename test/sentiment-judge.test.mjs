@@ -2,7 +2,34 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { judgeSentiment, aggregateCandidate, gradeTask } from "../eval/search/lib/sentiment-judge.mjs";
 
-test("aggregateCandidate: any-positive wins, else negative, else none", () => {
+test("alias resolution: model answers with product name, not id", () => {
+  const task = {
+    expected: { query_type: "objective", verdict: "b" },
+    candidates: [
+      { id: "a", title: "Alpha Whey", reviews: [] },
+      { id: "b", title: "IsoPure Ultra", reviews: [] },
+    ],
+  };
+  const out = { query_type: "objective", verdict: "IsoPure Ultra", per_candidate: {} };
+  const g = gradeTask(task, out);
+  assert.equal(g.allOk, true, JSON.stringify(g.checks));
+});
+
+test("alias resolution is unambiguous-only: overlapping titles do not resolve", () => {
+  const task = {
+    expected: { query_type: "objective", verdict: "a" },
+    candidates: [
+      { id: "a", title: "IsoPure 2lb", reviews: [] },
+      { id: "b", title: "IsoPure 5lb", reviews: [] },
+    ],
+  };
+  // "IsoPure" matches both -> must NOT resolve; the bare word is a wrong answer here
+  const out = { query_type: "objective", verdict: "IsoPure", per_candidate: {} };
+  const g = gradeTask(task, out);
+  assert.equal(g.allOk, false);
+});
+
+test("aggregateCandidate: any-positive wins", () => {
   assert.equal(aggregateCandidate(["none", "positive", "negative"]), "positive");
   assert.equal(aggregateCandidate(["negative", "none"]), "negative");
   assert.equal(aggregateCandidate(["none", "none"]), "none");

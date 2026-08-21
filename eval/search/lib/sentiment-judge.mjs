@@ -34,6 +34,20 @@ export function judgeSentiment(perCandidate) {
   return { verdict: "insufficient_evidence", scores };
 }
 
+function resolveVerdictAlias(task, verdict) {
+  // Production answers name products ("IsoPure Ultra"), not harness ids ("b").
+  // Deterministically resolve an unambiguous title reference to its id so the
+  // grade reflects semantics, not id-literalism. Returns the resolved id, or
+  // the original string when no unambiguous match exists.
+  if (typeof verdict !== "string" || !verdict.trim()) return verdict;
+  const v = verdict.trim().toLowerCase();
+  const matches = (task.candidates || []).filter((c) => {
+    const t = (c.title || "").toLowerCase();
+    return t.includes(v) || v.includes(t);
+  });
+  return matches.length === 1 ? matches[0].id : verdict;
+}
+
 export function gradeTask(task, modelOutput) {
   const out = modelOutput || {};
   const checks = [];
@@ -46,7 +60,8 @@ export function gradeTask(task, modelOutput) {
   // 2) Verdict — checked against the model's OWN stated verdict.
   const perCandidate = out.per_candidate || {};
   const expectedVerdict = task.expected.verdict;
-  checks.push({ field: "verdict", expected: expectedVerdict, got: out.verdict, ok: out.verdict === expectedVerdict });
+  const resolvedVerdict = resolveVerdictAlias(task, out.verdict);
+  checks.push({ field: "verdict", expected: expectedVerdict, got: resolvedVerdict, ok: resolvedVerdict === expectedVerdict });
 
   // 3) For subjective tasks: classification must be consistent AND support the verdict.
   if (expectedType === "subjective") {
