@@ -34,6 +34,51 @@ function renderEntry(doc, transcript, entry) {
   body.className = "body";
   body.textContent = entry.text;
   bubble.append(who, body);
+  // Link cards (agent-cited products/pages). URLs are already protocol-
+  // filtered to http(s) by the service worker; we still build everything
+  // with DOM APIs so no markup can be injected.
+  if (Array.isArray(entry.links) && entry.links.length > 0) {
+    const cards = doc.createElement("div");
+    cards.className = "cards";
+    for (const link of entry.links.slice(0, 5)) {
+      if (typeof link !== "object" || link === null || typeof link.url !== "string") continue;
+      let url;
+      try {
+        url = new URL(link.url);
+      } catch {
+        continue;
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+      const card = doc.createElement("a");
+      card.className = "card";
+      card.href = url.href;
+      card.target = "_blank";
+      card.rel = "noopener";
+      if (typeof link.image === "string" && /^https?:\/\//i.test(link.image)) {
+        const img = doc.createElement("img");
+        img.src = link.image;
+        img.alt = "";
+        img.loading = "lazy";
+        img.addEventListener("error", () => img.remove());
+        card.append(img);
+      }
+      const info = doc.createElement("span");
+      info.className = "card-info";
+      const title = doc.createElement("span");
+      title.className = "card-title";
+      title.textContent = link.title || url.hostname;
+      info.append(title);
+      if (typeof link.price === "string" && link.price.trim()) {
+        const price = doc.createElement("span");
+        price.className = "card-price";
+        price.textContent = link.price.trim();
+        info.append(price);
+      }
+      card.append(info);
+      cards.append(card);
+    }
+    if (cards.childElementCount > 0) bubble.append(cards);
+  }
   transcript.append(bubble);
 }
 
@@ -127,6 +172,16 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, result.transcript ?? []);
       agentName = result.agent?.name ?? null;
       setStatus();
+      // Stale service worker detection: a cached SW from an older extension
+      // load won't report capabilities, and newer features (link cards,
+      // identify) would silently degrade. Surface it instead of hiding it.
+      if (!Array.isArray(result.capabilities)) {
+        const stale = doc.createElement("p");
+        stale.className = "empty";
+        stale.textContent =
+          "Note: this extension is running an older cached service worker — new features (like link cards) may be missing. Reload the extension in chrome://extensions to fix.";
+        transcript.append(stale);
+      }
     })
     .catch(() => {});
   send({ type: "auth.get" })

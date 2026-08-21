@@ -170,3 +170,46 @@ test("panel.identify names the connected agent and broadcasts it", async () => {
     harness.restore();
   }
 });
+
+test("panel.post link cards are stored, sanitized, and reported in panel.get", async () => {
+  const harness = await loadHarness();
+  try {
+    const goodLink = {
+      url: "https://www.amazon.com/dp/B0DR8D9H55",
+      title: "Odyssey Homme Black EDP 2.02 oz",
+      image: "https://m.media-amazon.com/images/I/thumb.jpg",
+      price: "$20.72",
+    };
+    const posted = await harness.dispatch("links-post", "panel.post", {
+      text: "Best match below.",
+      links: [
+        goodLink,
+        { url: "javascript:alert(1)", title: "evil scheme" }, // stripped: non-http
+        { url: "https://ok.example.com", title: "t".repeat(500) }, // title truncated
+        { url: "not a url", title: "garbage" }, // stripped: unparseable
+      ],
+    });
+    assert.equal(posted.ok, true);
+    const stored = posted.result.entry.links;
+    assert.equal(stored.length, 2, "only http(s) links survive sanitization");
+    assert.equal(stored[0].url, goodLink.url);
+    assert.equal(stored[0].title, goodLink.title);
+    assert.equal(stored[0].image, goodLink.image);
+    assert.equal(stored[0].price, "$20.72");
+    assert.ok(stored[1].title.length <= 200, "oversized title truncated");
+
+    // panel.get surfaces the links so the panel page can render cards.
+    const got = await harness.dispatch("links-get", "panel.get", {});
+    assert.equal(got.result.transcript[0].links.length, 2);
+
+    // Capabilities probe is present (lets a stale panel detect an old SW).
+    assert.ok(Array.isArray(got.result.capabilities), "panel.get reports capabilities");
+    assert.ok(got.result.capabilities.includes("links:v1"));
+
+    // A post with no links omits the field entirely.
+    const bare = await harness.dispatch("links-bare", "panel.post", { text: "no links" });
+    assert.equal(bare.result.entry.links, undefined);
+  } finally {
+    harness.restore();
+  }
+});

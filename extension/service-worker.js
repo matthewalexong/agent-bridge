@@ -29,6 +29,10 @@ const rawSessionByChildSessionId = new Map();
 const pageSnapshotsByTabId = new Map();
 const pageActionChains = new Map();
 const PANEL_MAX_ENTRIES = 200;
+// Capability probe: bumped whenever panel.post/panel.get gains a field.
+// Old cached service workers lack it, so the panel (or tests) can detect a
+// stale SW and prompt a reload instead of silently dropping new features.
+const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const panelTranscript = [];
@@ -139,18 +143,43 @@ function emitBrowserEvent(event, data) {
   }
 }
 
-function recordPanelEntry(role, text) {
+function recordPanelEntry(role, text, links) {
   const entry = {
     id: `panel_${nextPanelMessageId++}`,
     role,
     text,
     at: new Date().toISOString(),
   };
+  if (Array.isArray(links) && links.length > 0) entry.links = links;
   panelTranscript.push(entry);
   if (panelTranscript.length > PANEL_MAX_ENTRIES) {
     panelTranscript.splice(0, panelTranscript.length - PANEL_MAX_ENTRIES);
   }
   return entry;
+}
+
+// Sanitize link cards so a malicious/buggy agent cannot inject script: URLs
+// or unbounded payloads into the panel transcript.
+function sanitizePanelLinks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const link of raw.slice(0, 5)) {
+    if (typeof link !== "object" || link === null) continue;
+    let url;
+    try {
+      url = new URL(String(link.url ?? ""));
+    } catch {
+      continue;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+    const card = { url: url.href, title: String(link.title ?? url.hostname).slice(0, 200) };
+    if (typeof link.image === "string" && /^https?:\/\//i.test(link.image)) {
+      card.image = link.image.slice(0, 2000);
+    }
+    if (typeof link.price === "string") card.price = link.price.slice(0, 40);
+    out.push(card);
+  }
+  return out;
 }
 
 function broadcastPanel() {
@@ -1569,12 +1598,13 @@ async function dispatch(method, params) {
     case "raw.detach":
       return detachRawSession(params);
     case "panel.get":
-      return { transcript: panelTranscript.slice(-100), agent: panelAgent };
+      return { transcript: panelTranscript.slice(-100), agent: panelAgent, capabilities: PANEL_CAPABILITIES };
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.post": {
       const text = panelText(params.text);
-      const entry = recordPanelEntry("agent", text);
+      const links = sanitizePanelLinks(params.links);
+      const entry = recordPanelEntry("agent", text, links);
       broadcastPanel();
       return { posted: true, entry };
     }
@@ -1601,7 +1631,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "panel.get") {
-    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent } });
+    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, capabilities: PANEL_CAPABILITIES } });
     return false;
   }
   if (message?.type === "panel.clear") {

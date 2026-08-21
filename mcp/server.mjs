@@ -254,15 +254,21 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Pass agent on the first reply to identify yourself in the panel header. Keep replies focused; markdown is not rendered.",
+      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Pass agent on the first reply to identify yourself in the panel header. Keep replies focused; markdown is not rendered. When you recommend or cite a product/page, pass it in `links` so the panel renders a clickable card with thumbnail instead of opening a browser tab: each link is {url, title, image (thumbnail URL), price}. Prefer link cards over browser_open_tab/tabs.create for showing results to the user.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
+      links: z.array(z.object({
+        url: z.string().url(),
+        title: z.string().max(200).optional(),
+        image: z.string().url().optional().describe("Thumbnail image URL shown on the card."),
+        price: z.string().max(40).optional(),
+      })).max(5).optional().describe("Product/page cards rendered under the reply text. Use instead of opening tabs."),
     },
   },
   async (input) => {
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
-    return asText(await callBridge("panel.post", { text: input.text }));
+    return asText(await callBridge("panel.post", { text: input.text, links: input.links ?? [] }));
   },
 );
 
