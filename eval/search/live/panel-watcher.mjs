@@ -57,13 +57,27 @@ async function handleMessage(text, context) {
     return reply.trim();
   }
   if (HANDLER_CMD) {
-    const { execFile } = await import("node:child_process");
-    const { promisify } = await import("node:util");
-    const run = promisify(execFile);
+    const { spawn } = await import("node:child_process");
     const [cmd, ...args] = HANDLER_CMD.split(" ");
-    const { stdout } = await run(cmd, args, { input: text, timeout: 120_000, maxBuffer: 1024 * 1024 });
-    const reply = stdout.trim();
-    if (!reply) throw new Error("handler command produced no output");
+    const reply = await new Promise((resolve, reject) => {
+      const child = spawn(cmd, args, { stdio: ["pipe", "pipe", "pipe"] });
+      let out = "", err = "";
+      const timer = setTimeout(() => {
+        child.kill("SIGKILL");
+        reject(new Error("handler command timed out"));
+      }, 120_000);
+      child.stdout.on("data", (c) => { out += c; });
+      child.stderr.on("data", (c) => { err += c; });
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        if (code === 0 && out.trim()) resolve(out.trim());
+        else reject(new Error(`handler exited ${code}: ${(err || out).trim().slice(0, 200)}`));
+      });
+      // Write the message AND close stdin — EOF is required or the handler
+      // hangs forever waiting for more input.
+      child.stdin.write(text);
+      child.stdin.end();
+    });
     return reply;
   }
   return `[${agentName}] (echo) ${text}`;
