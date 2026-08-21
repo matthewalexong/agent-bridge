@@ -1,0 +1,30 @@
+{
+  "id": "sentiment-04-negation-trap",
+  "query": "most durable water bottle",
+  "attribute": "durability",
+  "candidates": [
+    {
+      "id": "a",
+      "title": "SteelCore Water Bottle",
+      "reviews": [
+        "Doesn't dent even when I drop it on concrete.",
+        "Won't crack in the freezer, I've tried.",
+        "Does not leak after a year of daily use."
+      ]
+    },
+    {
+      "id": "b",
+      "title": "AquaLite Water Bottle",
+      "reviews": [
+        "The cap cracked after two weeks.",
+        "Leaks from the seal already.",
+        "Dented the first time it fell off my desk."
+      ]
+    }
+  ],
+  "expected": {
+    "verdict": "a",
+    "classification": { "a": "positive", "b": "negative" },
+    "trap": "'doesn't dent' / 'won't crack' are POSITIVE despite the negation words"
+  }
+}

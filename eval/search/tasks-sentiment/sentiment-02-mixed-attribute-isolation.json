@@ -1,0 +1,30 @@
+{
+  "id": "sentiment-02-mixed-attribute-isolation",
+  "query": "most durable work gloves",
+  "attribute": "durability",
+  "candidates": [
+    {
+      "id": "a",
+      "title": "IronGrip Pro Work Gloves",
+      "reviews": [
+        "Uncomfortable and stiff, but they have survived two years of welding work.",
+        "Bulky fit, yet the leather has not torn once.",
+        "Hate the sizing, still they outlast everything else I've owned."
+      ]
+    },
+    {
+      "id": "b",
+      "title": "SoftHands Comfort Work Gloves",
+      "reviews": [
+        "So comfortable, like a second skin!",
+        "Great feel and dexterity, very soft.",
+        "The seams ripped within a week though."
+      ]
+    }
+  ],
+  "expected": {
+    "verdict": "a",
+    "classification": { "a": "positive", "b": "negative" },
+    "trap": "overall-sentiment average would pick b; the judge must isolate durability only"
+  }
+}

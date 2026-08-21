@@ -1,0 +1,30 @@
+{
+  "id": "sentiment-06-one-sided-evidence",
+  "query": "most comfortable office chair",
+  "attribute": "comfort",
+  "candidates": [
+    {
+      "id": "a",
+      "title": "ErgoRest Office Chair",
+      "reviews": [
+        "Assembly took a while but the lumbar support is superb.",
+        "I sit 10 hours a day and my back no longer hurts.",
+        "The cushion is like sitting on a cloud."
+      ]
+    },
+    {
+      "id": "b",
+      "title": "BasicSeat Office Chair",
+      "reviews": [
+        "Easy to assemble, arrived in three boxes.",
+        "The color matches my office perfectly.",
+        "Wheels roll smoothly on hardwood."
+      ]
+    }
+  ],
+  "expected": {
+    "verdict": "a",
+    "classification": { "a": "positive", "b": "none" },
+    "trap": "b has zero comfort evidence; must be 'none', not negative; a still wins on positive evidence"
+  }
+}

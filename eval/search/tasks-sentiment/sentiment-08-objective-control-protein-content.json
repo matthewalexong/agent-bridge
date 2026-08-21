@@ -1,0 +1,23 @@
+{
+  "id": "sentiment-08-objective-control-protein-content",
+  "query": "protein powder with the most protein per serving",
+  "expected": {
+    "query_type": "objective",
+    "verdict": "b"
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "title": "FitFuel Isolate",
+      "protein_per_serving_g": 21,
+      "reviews": ["Smooth texture, no clumps."]
+    },
+    {
+      "id": "b",
+      "title": "IsoPure Ultra",
+      "protein_per_serving_g": 27,
+      "reviews": ["A bit chalky but effective."]
+    }
+  ],
+  "note": "objective control: nutrition label decides; reviews irrelevant"
+}

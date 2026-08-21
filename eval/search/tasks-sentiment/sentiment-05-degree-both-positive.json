@@ -1,0 +1,30 @@
+{
+  "id": "sentiment-05-degree-both-positive",
+  "query": "longest lasting running shoes",
+  "attribute": "durability",
+  "candidates": [
+    {
+      "id": "a",
+      "title": "StriderMax Running Shoes",
+      "reviews": [
+        "The foam flattened after 200 miles.",
+        "Sole wore through by month four, decent while it lasted.",
+        "Good shoe but the tread is already smooth after a few months."
+      ]
+    },
+    {
+      "id": "b",
+      "title": "EverRun Pro Running Shoes",
+      "reviews": [
+        "800 miles and the outsole still looks fresh.",
+        "Three years of daily runs, they just keep going.",
+        "Outlasted every shoe I've owned, zero degradation."
+      ]
+    }
+  ],
+  "expected": {
+    "verdict": "b",
+    "classification": { "a": "negative", "b": "positive" },
+    "trap": "a's reviews are polite/mild but still negative on longevity; degree matters"
+  }
+}

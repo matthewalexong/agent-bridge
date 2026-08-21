@@ -187,6 +187,27 @@ const tasks = {
 - Make the SMALLEST targeted change that addresses the measured failures. Do not rewrite the whole document.
 - The skill must stay generic: no task-specific flavors, sizes, prices, or listing ids.`,
   }),
+  // TASK 7: sentiment routing — the model decides whether a query is
+  // objective (labels) or subjective (reviews-only: durability, comfort).
+  // Routing reasoning lives in the skill, NOT a keyword library. Deterministic
+  // judge in lib/sentiment-judge.mjs; corpus in tasks-sentiment/.
+  "improve-search-sentiment-skill": makeSkillTask({
+    id: "improve-search-sentiment-skill",
+    skillDir: path.join(ROOT, "eval", "search", "skills"),
+    skillPattern: /^sentiment-routing-v(\d+)\.md$/,
+    versionedName: (v) => `sentiment-routing-v${v}.md`,
+    evalRunner: "eval/search/run-sentiment-eval.mjs",
+    verifierScript: "eval/search/verify-sentiment-skill.mjs",
+    candidateName: "sentiment-routing-candidate.md",
+    kindLabel: "sentiment-routing",
+    taskRules: [
+      "- Preserve the JSON output format and keys exactly (query_type, verdict, per_candidate, evidence).",
+      "- The verdict must remain the bracketed candidate id (a/b/c) or \"insufficient_evidence\".",
+      "- Routing (objective vs subjective) is REASONING — never a keyword list. You may add examples and heuristics to the reasoning text, but never a fixed lexicon.",
+      "- Do not weaken the honest-insufficient-evidence behavior: when reviews say nothing about the asked attribute, the answer is insufficient_evidence.",
+    ].join("\n"),
+  }),
+
   // TASK 1: pure refactor — well within local capability
   "bounded-error-class": {
     id: "bounded-error-class",

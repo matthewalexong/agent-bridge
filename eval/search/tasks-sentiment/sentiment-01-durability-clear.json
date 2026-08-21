@@ -1,0 +1,29 @@
+{
+  "id": "sentiment-01-durability-clear",
+  "query": "most durable hiking boots",
+  "attribute": "durability",
+  "candidates": [
+    {
+      "id": "a",
+      "title": "TrailForge Ridge Hiking Boots",
+      "reviews": [
+        "Two years of daily trail use and the stitching is still perfect.",
+        "Held up through rocks, mud and snow. Built like a tank.",
+        "Wore them 500+ miles, zero wear on the sole."
+      ]
+    },
+    {
+      "id": "b",
+      "title": "PeakStep Lite Hiking Boots",
+      "reviews": [
+        "The sole started peeling off after three weeks.",
+        "Cheap glue, the toe cap split on my first hike.",
+        "Looks nice but fell apart fast."
+      ]
+    }
+  ],
+  "expected": {
+    "verdict": "a",
+    "classification": { "a": "positive", "b": "negative" }
+  }
+}
