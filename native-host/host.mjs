@@ -209,7 +209,69 @@ function recordEvent(event, data) {
     clearTimeout(waiter.timeout);
     waiter.resolve(result);
   }
+  // Direct panel → Hermes wiring: user messages typed in the side panel are
+  // forwarded to the Hermes webhook so a real agent turn handles them
+  // (replacing the standalone panel-watcher daemon). Fire-and-forget: a
+  // webhook failure must never break the event loop.
+  if (event === "panel.message" && data?.role === "user") {
+    void forwardPanelMessageToHermes(data);
+  }
 }
+
+// --- Hermes webhook forwarder ---------------------------------------------
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const HERMES_WEBHOOK_URL = process.env.AB_HERMES_WEBHOOK_URL || "http://127.0.0.1:8644/webhooks/panel_message";
+const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
+
+function readWebhookSecret() {
+  try {
+    return readFileSync(HERMES_WEBHOOK_SECRET_FILE, "utf8").trim();
+  } catch {
+    return "";
+  }
+}
+
+async function forwardPanelMessageToHermes(data) {
+  try {
+    const secret = readWebhookSecret();
+    if (!secret) {
+      log("panel→hermes: webhook secret missing — skipping forward");
+      return;
+    }
+    const body = JSON.stringify({
+      event_type: "panel.message",
+      text: typeof data.text === "string" ? data.text : "",
+      messageId: data.messageId ?? null,
+      observedAt: new Date().toISOString(),
+    });
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const signature = crypto
+      .createHmac("sha256", secret)
+      .update(`${timestamp}.${body}`)
+      .digest("hex");
+    const response = await fetch(HERMES_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-webhook-signature-v2": signature,
+        "x-webhook-timestamp": timestamp,
+        // Unique delivery id prevents the gateway's idempotency cache from
+        // collapsing distinct messages that land in the same millisecond.
+        "x-request-id": data.messageId || `${timestamp}-${Math.random().toString(36).slice(2)}`,
+      },
+      body,
+      signal: AbortSignal.timeout(5_000),
+    });
+    const status = response.status;
+    const text = (await response.text()).slice(0, 200);
+    log(`panel→hermes: forwarded (HTTP ${status}) ${text}`);
+  } catch (error) {
+    log(`panel→hermes: forward failed (${error?.message ?? error})`);
+  }
+}
+// ---------------------------------------------------------------------------
 
 function handleExtensionMessage(message) {
   if (message?.type === "auth.request") {
