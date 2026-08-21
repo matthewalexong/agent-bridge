@@ -90,7 +90,7 @@ export function makeSearchBackend(opts = {}) {
     return async function liveSearch(query) {
       const { extractSerp } = await import(join(__dirname, "extract-serp.mjs"));
       const url = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
-      const res = await extractSerp({ url }); // tab always closed inside
+      const res = await extractSerp(url); // tab always closed inside
       return renderFixtureSerp(res, query, { maxListings: 15 });
     };
   }
