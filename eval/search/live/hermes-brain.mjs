@@ -16,8 +16,11 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 
 // --- Read the model block from Hermes config (no yaml dependency) ---
+// HERMES_BRAIN_CONFIG_FILE overrides the config path for tests, so a mock
+// endpoint can be exercised without touching the real Hermes config.
 function readHermesModel() {
-  const cfgPath = join(homedir(), ".hermes", "config.yaml");
+  const cfgPath = process.env.HERMES_BRAIN_CONFIG_FILE
+    || join(homedir(), ".hermes", "config.yaml");
   const lines = readFileSync(cfgPath, "utf8").split("\n");
   const model = {};
   let inBlock = false;
@@ -45,27 +48,53 @@ async function main() {
   const system = "You are Hermes, the agent connected to the user's Chrome via Agent Bridge. You are chatting in the browser's side panel. Answer concisely and helpfully in plain text (markdown is not rendered). Keep replies short unless asked for detail.";
 
   if ((cfg.api_mode || "").includes("anthropic")) {
-    const res = await fetch(cfg.base_url.replace(/\/+$/, "") + "/v1/messages", {
+    const body = {
+      model: cfg.default,
+      // Generous budget: on reasoning models the "thinking" block can
+      // consume most of max_tokens, leaving NO text block at all. 600 was
+      // too small and caused real "model returned no text" failures on
+      // longer queries.
+      max_tokens: 4096,
+      // This panel brain is a fast chat relay, not a reasoning task.
+      // Reasoning blocks add seconds of latency and burn the token budget;
+      // disable them if the endpoint supports it (ignored otherwise).
+      thinking: { type: "disabled" },
+      system,
+      messages: [{ role: "user", content: text }],
+    };
+    let res = await fetch(cfg.base_url.replace(/\/+$/, "") + "/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-api-key": cfg.api_key,
         "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify({
-        model: cfg.default,
-        max_tokens: 600,
-        system,
-        messages: [{ role: "user", content: text }],
-      }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(45_000),
     });
+    // Fallback: some endpoints reject the thinking param with 400 — retry bare.
+    if (res.status === 400 && body.thinking) {
+      delete body.thinking;
+      res = await fetch(cfg.base_url.replace(/\/+$/, "") + "/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": cfg.api_key,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(45_000),
+      });
+    }
     if (!res.ok) throw new Error(`model endpoint ${res.status}`);
     const data = await res.json();
     const reply = (data.content || [])
       .filter((b) => b.type === "text")
       .map((b) => b.text).join("\n").trim();
-    if (!reply) throw new Error("model returned no text");
+    if (!reply) {
+      const kinds = (data.content || []).map((b) => b.type).join(",") || "empty";
+      throw new Error(`model returned no text (blocks: ${kinds})`);
+    }
     process.stdout.write(reply);
   } else {
     // OpenAI-compatible mode
