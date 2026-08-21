@@ -1,0 +1,61 @@
+{
+  "_comment": "Correction corpus for the panel-chat brain. Each task is a frozen multi-turn conversation: transcript = what the panel shows BEFORE the current message (roles: user/agent), current = the user message the brain must answer now. fixture = captured SERP the search tool sees. Ground truth verified against the fixture files on 2026-08-21.",
+  "tasks": [
+    {
+      "id": "odyssey-correction",
+      "fixture": "extract-2026-08-21T16-02-38-384Z.json",
+      "transcript": [
+        { "role": "user", "text": "help me find the cheapest odyssey cologne the one in the black bottle" },
+        { "role": "agent", "text": "I found the Odyssey Mega Man cologne in a black bottle. It is listed at $26.97 for 3.4 oz and it has great reviews." }
+      ],
+      "current": "mega man is not in a black bottle",
+      "expects_correction": true,
+      "refuted_terms": ["mega man"],
+      "requires_search": true,
+      "required_ids": [49],
+      "ground_truth": "There is no product named 'Mega Man'. The black-bottle Odyssey is 'Odyssey - Homme Black': id 49 EDP 2.02 oz $20.72 (the cologne), id 40 body spray 6.8 oz $8.00 (not a cologne). Decoys: id 45 ($7.19 Mandarin Sky body spray) is the cheapest overall but neither black nor a cologne; id 12 Mega Limited Edition $26.83 exists but is not black. Bottle color is not in listing data — the answer must not assert colors, only product names from the page."
+    },
+    {
+      "id": "odyssey-followup-no-correction",
+      "fixture": "extract-2026-08-21T16-02-38-384Z.json",
+      "transcript": [
+        { "role": "user", "text": "what's the cheapest odyssey edp spray?" },
+        { "role": "agent", "text": "The cheapest Odyssey EDP spray is Odyssey - Tyrant Special Edition, 2.02 oz, at $16.18 (id 33)." }
+      ],
+      "current": "and what does the mega limited edition 3.4 oz cost?",
+      "expects_correction": false,
+      "refuted_terms": [],
+      "requires_search": true,
+      "required_ids": [12],
+      "ground_truth": "Not a correction — a factual follow-up. Odyssey - Mega Limited Edition 3.4 oz EDP = id 12, $26.83 (id 32 is the 6.8 oz at $36.50). The brain must not claim a correction happened, and must still search rather than answer from memory."
+    },
+    {
+      "id": "montblanc-price-correction",
+      "fixture": "extract-2026-08-21T16-12-17-875Z.json",
+      "transcript": [
+        { "role": "user", "text": "is montblanc explorer platinum under $30?" },
+        { "role": "agent", "text": "Yes — Mont Blanc Explorer Platinum is $28 for the 1.0 oz travel spray, so it is under $30." }
+      ],
+      "current": "no it's not $28, check again",
+      "expects_correction": true,
+      "refuted_terms": ["$28"],
+      "requires_search": true,
+      "required_ids": [8],
+      "ground_truth": "The actual price on the page for Mont Blanc Explorer Platinum 1.0 Edp Travel Spray (id 8) is $31.92 — OVER $30, so the honest corrected answer is 'no, it is $31.92'. The brain must acknowledge the wrong price, re-check, cite id 8 at $31.92, and reverse its earlier verdict."
+    },
+    {
+      "id": "montblanc-confirm-no-correction",
+      "fixture": "extract-2026-08-21T16-12-17-875Z.json",
+      "transcript": [
+        { "role": "user", "text": "price of mont blanc explorer platinum 3.4 oz set with shower gel?" },
+        { "role": "agent", "text": "Mont Blanc Explorer Platinum 3.4 oz EDP + 3.4 oz shower gel + 7.5 mini is $75.11 (id 26)." }
+      ],
+      "current": "ok thanks, that's what i wanted",
+      "expects_correction": false,
+      "refuted_terms": [],
+      "requires_search": false,
+      "required_ids": [],
+      "ground_truth": "A plain thank-you — no correction, no search needed. The brain should not invent a problem, not search, and reply briefly. Tests that correction_detected is not triggered by every user turn."
+    }
+  ]
+}

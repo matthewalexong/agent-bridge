@@ -44,11 +44,12 @@ const HANDLER_CMD = arg("handler-cmd", process.env.CHROME_AGENT_BRIDGE_HANDLER_C
 const HANDLER_URL = arg("handler-url", process.env.CHROME_AGENT_BRIDGE_HANDLER_URL || null);
 
 async function handleMessage(text, context) {
+  const transcriptJson = context.transcript ? JSON.stringify(context.transcript) : "";
   if (HANDLER_URL) {
     const res = await fetch(HANDLER_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text, messageId: context.messageId }),
+      body: JSON.stringify({ text, messageId: context.messageId, transcript: context.transcript ?? [] }),
       signal: AbortSignal.timeout(120_000),
     });
     const data = await res.json();
@@ -60,7 +61,10 @@ async function handleMessage(text, context) {
     const { spawn } = await import("node:child_process");
     const [cmd, ...args] = HANDLER_CMD.split(" ");
     const reply = await new Promise((resolve, reject) => {
-      const child = spawn(cmd, args, { stdio: ["pipe", "pipe", "pipe"] });
+      const child = spawn(cmd, args, {
+        stdio: ["pipe", "pipe", "pipe"],
+        env: { ...process.env, ...(transcriptJson ? { AB_TRANSCRIPT_JSON: transcriptJson } : {}) },
+      });
       let out = "", err = "";
       const timer = setTimeout(() => {
         child.kill("SIGKILL");
@@ -111,7 +115,7 @@ async function catchUpStranded() {
     if (last && last.role === "user" && last.text && last.text.trim()) {
       console.error(`[watcher] catch-up: stranded user message "${last.text.slice(0, 60)}" — answering`);
       try {
-        const reply = await handleMessage(last.text, { messageId: last.id });
+        const reply = await handleMessage(last.text, { messageId: last.id, transcript: tr });
         await callBridge("panel.post", { text: reply });
         console.error(`[watcher] catch-up replied (${reply.length} chars)`);
       } catch (e) {
@@ -144,7 +148,14 @@ async function pollOnce() {
       const { text, messageId } = msg.data;
       console.error(`[watcher] panel.message: "${text.slice(0, 80)}"`);
       try {
-        const reply = await handleMessage(text, { messageId, cursor });
+        // Fetch the transcript so the brain can see what it previously said
+        // (needed to detect corrections / wrong answers and re-research).
+        let transcript = [];
+        try {
+          const st = await callBridge("panel.get");
+          transcript = st.transcript ?? [];
+        } catch {}
+        const reply = await handleMessage(text, { messageId, cursor, transcript });
         await callBridge("panel.post", { text: reply });
         console.error(`[watcher] replied (${reply.length} chars)`);
       } catch (e) {
