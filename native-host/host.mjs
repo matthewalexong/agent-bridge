@@ -22,8 +22,20 @@ let previousTabs = null;
 let cleanedUp = false;
 let runtimeIdentity = null;
 
+// The launcher runs the host with stderr unattached, so also persist a
+// bounded log file — otherwise forward/status failures are invisible.
+// (fs helpers come from the hoisted imports in the webhook section below.)
+const HOST_LOG_FILE = join(bridgeDirectory(), "host.log");
 function log(message) {
-  process.stderr.write(`[chrome-agent-bridge] ${message}\n`);
+  const line = `[chrome-agent-bridge] ${message}\n`;
+  process.stderr.write(line);
+  try {
+    appendFileSync(HOST_LOG_FILE, new Date().toISOString() + " " + line);
+    if (statSync(HOST_LOG_FILE).size > 512 * 1024) {
+      // Trim to the last 256KB by rewriting once (rare).
+      writeFileSync(HOST_LOG_FILE, readFileSync(HOST_LOG_FILE, "utf8").slice(-256 * 1024));
+    }
+  } catch { /* logging must never break the bridge */ }
 }
 
 function sendNative(value) {
@@ -219,7 +231,7 @@ function recordEvent(event, data) {
 }
 
 // --- Hermes webhook forwarder ---------------------------------------------
-import { createReadStream, readFileSync, statSync } from "node:fs";
+import { appendFileSync, createReadStream, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -294,15 +306,17 @@ async function forwardPanelMessageToHermes(data) {
 // We tail that log for the delivery we just forwarded and push human-readable
 // updates into the panel as transient status (panel.status), cleared when the
 // turn completes or a safety timeout fires.
-const GATEWAY_LOG_FILE = join(homedir(), ".hermes", "logs", "gateway.log");
+const GATEWAY_LOG_FILE = process.env.AB_GATEWAY_LOG_FILE || join(homedir(), ".hermes", "logs", "gateway.log");
 const STATUS_POLL_MS = 3_000;
 const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
 const activeStatusTails = new Map(); // deliveryId -> { timer }
 
 function pushPanelStatus(text) {
-  void forwardToExtension("panel.status", { text }).catch((error) => {
-    log(`panel.status push failed (${error?.message ?? error})`);
-  });
+  void forwardToExtension("panel.status", { text })
+    .then(() => log(`panel.status pushed: ${text == null ? "(cleared)" : String(text).slice(0, 80)}`))
+    .catch((error) => {
+      log(`panel.status push failed (${error?.message ?? error})`);
+    });
 }
 
 function humanizeProgress(raw) {
@@ -317,6 +331,7 @@ function humanizeProgress(raw) {
 
 function startTurnStatusTail(deliveryId) {
   if (activeStatusTails.has(deliveryId)) return;
+  log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
   const chatMarker = `webhook:panel_message:${deliveryId}`;
   let offset = 0;
   try {
