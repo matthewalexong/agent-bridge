@@ -9,6 +9,13 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BRAIN = path.join(root, "eval/search/live/hermes-brain.mjs");
+const PANEL_SKILL = path.join(root, "eval/search/skills/panel-chat-skill-v3.md");
+
+test("panel skill uses live progress instead of a final Why block", async () => {
+  const skill = await fs.readFile(PANEL_SKILL, "utf8");
+  assert.match(skill, /panel shows live progress/i);
+  assert.doesNotMatch(skill, /add a short reasoning summary/i);
+});
 
 // Run hermes-brain against a config file we control (HERMES_BRAIN_CONFIG_FILE),
 // pointed at a local mock endpoint. Returns {code, stdout, stderr}.
