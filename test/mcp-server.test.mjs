@@ -65,6 +65,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
       "browser_panel_identify",
       "browser_panel_post",
       "browser_panel_read",
+      "browser_panel_status",
       "browser_screenshot",
       "browser_snapshot",
       "browser_status",
@@ -145,6 +146,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const pageAct = tools.find((tool) => tool.name === "browser_act");
   assert.deepEqual(pageAct.inputSchema.properties.kind.enum, ["click", "fill", "press", "select"]);
   assert.equal(pageAct.inputSchema.properties.ref.pattern, "^e\\d+$");
+
+  const panelStatus = tools.find((tool) => tool.name === "browser_panel_status");
+  assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 300);
 
   const collectCode = tools.find((tool) => tool.name === "collect_code");
   assert.equal(collectCode.inputSchema.required.includes("sessionId"), true);

@@ -303,11 +303,9 @@ async function forwardPanelMessageToHermes(data) {
 }
 
 // --- Live "thinking" status in the panel ----------------------------------
-// The gateway logs per-delivery progress ("⏳ Working — 3 min — iteration
-// 14/500, vision_analyze") and a "response ready" line when the turn ends.
-// We tail that log for the delivery we just forwarded and push human-readable
-// updates into the panel as transient status (panel.status), cleared when the
-// turn completes or a safety timeout fires.
+// The agent publishes meaningful progress through browser_panel_status. The
+// gateway log is tailed only to clear that transient status when the turn ends;
+// its generic heartbeats must never overwrite the agent's concrete summary.
 const GATEWAY_LOG_FILE = process.env.AB_GATEWAY_LOG_FILE || join(homedir(), ".hermes", "logs", "gateway.log");
 const STATUS_POLL_MS = 3_000;
 const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
@@ -321,16 +319,6 @@ function pushPanelStatus(text) {
     });
 }
 
-function humanizeProgress(raw) {
-  // raw: "Working — 3 min — iteration 14/500, vision_analyze"
-  const m = raw.match(/^Working — (.+?) — iteration (\d+)\/\d+,?\s*(.*)$/);
-  if (m) {
-    const activity = m[3] && m[3] !== "receiving stream response" ? ` · ${m[3]}` : "";
-    return `Thinking… ${m[1]} elapsed · step ${m[2]}${activity}`;
-  }
-  return `Thinking… ${raw.replace(/^Working — /, "")}`;
-}
-
 function startTurnStatusTail(deliveryId) {
   if (activeStatusTails.has(deliveryId)) return;
   log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
@@ -342,8 +330,7 @@ function startTurnStatusTail(deliveryId) {
     /* no gateway log — status updates simply won't appear */
   }
   const startedAt = Date.now();
-  let lastPushed = "";
-  pushPanelStatus("Thinking… your message reached Hermes — research in progress");
+  pushPanelStatus("Planning the approach…");
   const timer = setInterval(() => {
     if (Date.now() - startedAt > STATUS_MAX_MS) {
       stopTurnStatusTail(deliveryId);
@@ -366,15 +353,6 @@ function startTurnStatusTail(deliveryId) {
     stream.on("end", () => {
       for (const line of chunk.split("\n")) {
         if (!line.includes(chatMarker)) continue;
-        const workingMatch = line.match(/⏳ (Working — .+)$/);
-        if (workingMatch) {
-          const human = humanizeProgress(workingMatch[1]);
-          if (human !== lastPushed) {
-            lastPushed = human;
-            pushPanelStatus(human);
-          }
-          continue;
-        }
         if (line.includes("response ready") || (line.includes("Response for ") && !line.includes("⏳"))) {
           // Turn finished — the agent's panel.post reply lands on its own;
           // drop the thinking bubble.

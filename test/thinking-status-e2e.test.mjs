@@ -158,18 +158,24 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     const updates = broadcasts.filter((m) => m.type === "panel.update" && m.status?.text);
     return updates.length > 0 ? updates[updates.length - 1] : null;
   }, 15_000, `initial thinking status broadcast (host stderr: ${hostStderr.slice(-300)})`);
-  assert.match(statusInBroadcast.status.text, /Thinking/);
+  assert.equal(statusInBroadcast.status.text, "Planning the approach…");
 
-  // --- 3. Write a progress line to the fake gateway log; host must humanize and push it. ---
+  // --- 3. A concrete agent-authored summary must survive a generic gateway
+  // heartbeat. Heartbeats contain no useful reasoning and must not overwrite it. ---
+  const concreteSummary = "Doing: comparing three listings. Found: two match the requested size. Next: verify stock.";
+  await nativeMessage.listener({
+    type: "request",
+    id: "agent-progress-summary",
+    method: "panel.status",
+    params: { text: concreteSummary },
+  }, port);
+  await flush();
   const marker = `webhook:panel_message:${deliveryId}`;
   await fs.appendFile(fakeGatewayLog,
     `2026-08-21 17:00:01,000 INFO gateway.platforms.webhook: [webhook] Response for ${marker}: ⏳ Working — 3 min — iteration 14/500, vision_analyze\n`);
-  const progressStatus = await waitFor(async () => {
-    const updates = broadcasts.filter((m) => m.type === "panel.update" && m.status?.text);
-    const hit = updates.find((u) => u.status.text.includes("step 14") && u.status.text.includes("vision_analyze"));
-    return hit ?? null;
-  }, 20_000, `humanized progress status (log tail). host stderr: ${hostStderr.slice(-300)}`);
-  assert.match(progressStatus.status.text, /Thinking… 3 min elapsed · step 14 · vision_analyze/);
+  await new Promise((resolve) => setTimeout(resolve, 3_500));
+  const afterHeartbeat = broadcasts.filter((m) => m.type === "panel.update").at(-1);
+  assert.equal(afterHeartbeat.status.text, concreteSummary);
 
   // --- 4. Write the completion line; status must clear. ---
   await fs.appendFile(fakeGatewayLog,

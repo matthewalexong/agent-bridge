@@ -250,6 +250,21 @@ tool(
 );
 
 tool(
+  "browser_panel_status",
+  {
+    title: "Update live side panel progress",
+    description:
+      "Replace the transient thinking bubble with a concise, user-facing summary of the work so far. For non-trivial panel requests, call early with your plan and again after meaningful evidence or decisions. Summarize actions, evidence checked, conclusions, and the next step; do not expose hidden chain-of-thought or merely say that you are thinking. This status disappears when the final reply lands.",
+    inputSchema: {
+      summary: z.string().min(1).max(300).describe(
+        "Cumulative progress summary, ideally using short 'Doing / Found / Next' phrases. Include concrete sources, counts, constraints, or decisions when known.",
+      ),
+    },
+  },
+  async (input) => asText(await callBridge("panel.status", { text: input.summary })),
+);
+
+tool(
   "browser_panel_post",
   {
     title: "Post a reply to the side panel",
