@@ -53,6 +53,9 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     req.on("end", () => {
       received = { headers: req.headers, body: JSON.parse(body) };
       res.setHeader("content-type", "application/json");
+      // Real gateway returns HTTP 202 on accept (aiohttp async handling) —
+      // mirror it exactly, or the test proves a code path production skips.
+      res.statusCode = 202;
       res.end(JSON.stringify({ status: "accepted", route: "panel_message", delivery_id: received.headers["x-request-id"] }));
     });
   });

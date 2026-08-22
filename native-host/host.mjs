@@ -290,7 +290,9 @@ async function forwardPanelMessageToHermes(data) {
     const status = response.status;
     const text = (await response.text()).slice(0, 200);
     log(`panel→hermes: forwarded (HTTP ${status}) ${text}`);
-    if (status === 200 && text.includes('"accepted"')) {
+    // Gateway accepts with HTTP 202 (aiohttp async handling). Accept any 2xx —
+    // checking === 200 meant the thinking-status tail silently never started.
+    if (status >= 200 && status < 300 && text.includes('"accepted"')) {
       // Turn is running in the gateway: surface live "thinking" progress in
       // the panel so the user is never staring at a dead screen for minutes.
       startTurnStatusTail(deliveryId);
