@@ -120,6 +120,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     env: {
       PATH: process.env.PATH || "",
       CHROME_AGENT_BRIDGE_DIR: bridgeDir,
+      AB_MCP_SURFACE: "full",
     },
     stderr: "pipe",
   });

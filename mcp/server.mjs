@@ -7,16 +7,18 @@ import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cd
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
+import { resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
   version: "0.9.0",
 });
 const browserEvidenceRegistry = createBrowserEvidenceRegistry();
+const mcpSurface = resolveMcpSurface();
 
 function asText(value) {
   return {
-    content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
+    content: [{ type: "text", text: serializeToolPayload(value) }],
     structuredContent: value,
   };
 }
@@ -46,6 +48,7 @@ function asError(error) {
 }
 
 function tool(name, config, handler) {
+  if (!shouldRegisterMcpTool(name, mcpSurface)) return;
   server.registerTool(name, config, async (input) => {
     try {
       return await handler(input);
@@ -129,7 +132,7 @@ tool(
       "Read visible page text plus semantic interactive elements with short-lived refs. Use a ref with browser_act, then take a fresh snapshot after every action.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
-      maxChars: z.number().int().min(1_000).max(50_000).optional().default(30_000),
+      maxChars: z.number().int().min(1_000).max(50_000).optional().default(8_000),
     },
   },
   async (input) => {
@@ -152,7 +155,7 @@ tool(
     inputSchema: {
       pages: z.array(z.object({
         tabId: z.number().int().nonnegative(),
-        maxChars: z.number().int().min(1_000).max(30_000).optional().default(15_000),
+        maxChars: z.number().int().min(1_000).max(30_000).optional().default(6_000),
       })).min(1).max(8),
     },
   },
