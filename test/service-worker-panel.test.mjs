@@ -80,7 +80,10 @@ test("panel messages reach the agent event stream and replies land in the transc
     assert.equal(panelEvent.data.role, "user");
     assert.equal(panelEvent.data.text, "find me the cheapest whey");
     assert.equal(panelEvent.data.messageId, sent.result.entry.id);
-    assert.deepEqual(panelEvent.data.history, []);
+    assert.equal(sent.result.resume, false);
+    assert.match(sent.result.conversationId, /^c[a-f0-9]{32}$/);
+    assert.equal(panelEvent.data.conversationId, sent.result.conversationId);
+    assert.equal(panelEvent.data.resume, false);
 
     // 2. The agent replies through panel.post: transcript grows + broadcast.
     const posted = await harness.dispatch("panel-post", "panel.post", { text: "NOW Foods, $0.044/g" });
@@ -105,6 +108,9 @@ test("panel messages reach the agent event stream and replies land in the transc
 
     const cleared = await harness.sendRuntime({ type: "panel.clear" });
     assert.equal(cleared.ok, true);
+    const closeEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.close");
+    assert.ok(closeEvent, "clear must end the Hermes conversation");
+    assert.equal(closeEvent.data.conversationId, sent.result.conversationId);
     const after = await harness.dispatch("panel-get-2", "panel.get", {});
     assert.equal(after.result.transcript.length, 0);
   } finally {
@@ -198,8 +204,8 @@ test("structured progress is bounded, deduplicated, and attached to the final an
     const nextTurn = await harness.dispatch("progress-next-turn", "panel.get", {});
     assert.equal(nextTurn.result.progress.length, 0, "research never leaks into the next user turn");
     const followUp = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
-    assert.ok(followUp.data.history.some((entry) => entry.role === "user" && /laptops/.test(entry.text)));
-    assert.ok(followUp.data.history.some((entry) => entry.role === "agent"));
+    assert.equal(followUp.data.resume, true);
+    assert.ok(followUp.data.conversationId);
   } finally {
     harness.restore();
   }

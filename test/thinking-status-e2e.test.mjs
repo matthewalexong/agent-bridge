@@ -150,7 +150,8 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
   await waitFor(() => received, 10_000, `webhook to receive forwarded message (host stderr: ${hostStderr.slice(-400)})`);
   assert.equal(received.body.event_type, "panel.message");
   assert.equal(received.body.text, "find the cheapest whey");
-  assert.equal(received.body.conversation, "(none)");
+  assert.ok(received.body.conversation_id);
+  assert.equal(received.body.resume, false);
   const deliveryId = received.headers["x-request-id"];
   assert.ok(deliveryId && deliveryId.includes(":"), "delivery id carries host-instance nonce");
 
@@ -171,7 +172,7 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     params: { text: concreteSummary, phase: "compare", evidence: ["2 of 3 listings match the requested size"], next: "Verify stock", persist: true },
   }, port);
   await flush();
-  const marker = `webhook:panel_message:${deliveryId}`;
+  const marker = `webhook:panel_message:${received.body.conversation_id}`;
   await fs.appendFile(fakeGatewayLog,
     `2026-08-21 17:00:01,000 INFO gateway.platforms.webhook: [webhook] Response for ${marker}: ⏳ Working — 3 min — iteration 14/500, vision_analyze\n`);
   await new Promise((resolve) => setTimeout(resolve, 3_500));

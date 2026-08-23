@@ -187,17 +187,51 @@ function emitBrowserEvent(event, data) {
   }
 }
 
-function panelHistoryPayload(currentId) {
-  return panelTranscript
-    .filter((entry) => entry.id !== currentId)
-    .slice(-8)
-    .map((entry) => ({
-      role: entry.role,
-      text: String(entry.text ?? "").slice(0, 240),
-      titles: Array.isArray(entry.links)
-        ? entry.links.map((link) => link?.title).filter((title) => typeof title === "string" && title.trim()).slice(0, 3)
-        : [],
-    }));
+const conversationMemory = { id: null, started: false };
+
+async function readStoredConversation() {
+  try {
+    const data = await chrome.storage?.session?.get?.(["panelConversationId", "panelConversationStarted"]);
+    if (data?.panelConversationId) {
+      return { id: data.panelConversationId, started: Boolean(data.panelConversationStarted) };
+    }
+  } catch {
+    // session storage is optional; in-memory is enough for one SW lifetime
+  }
+  return { id: conversationMemory.id, started: conversationMemory.started };
+}
+
+async function writeStoredConversation(id, started) {
+  conversationMemory.id = id;
+  conversationMemory.started = started;
+  try {
+    await chrome.storage?.session?.set?.({ panelConversationId: id, panelConversationStarted: started });
+  } catch {
+    // ignore
+  }
+}
+
+async function resetPanelConversation() {
+  const previousId = conversationMemory.id || (await readStoredConversation()).id;
+  conversationMemory.id = null;
+  conversationMemory.started = false;
+  try {
+    await chrome.storage?.session?.remove?.(["panelConversationId", "panelConversationStarted"]);
+  } catch {
+    // ignore
+  }
+  if (previousId) emitBrowserEvent("panel.close", { conversationId: previousId });
+}
+
+async function nextConversationTurn() {
+  let { id, started } = await readStoredConversation();
+  if (!id) {
+    id = `c${crypto.randomUUID().replaceAll("-", "")}`;
+    started = false;
+  }
+  const resume = started;
+  await writeStoredConversation(id, true);
+  return { conversationId: id, resume };
 }
 
 function recordPanelEntry(role, text, links, research) {
@@ -1699,33 +1733,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
   if (message?.type === "panel.clear") {
-    panelTranscript.length = 0;
-    panelProgress = [];
-    panelStatus = null;
-    broadcastPanel();
-    sendResponse({ ok: true, result: { cleared: true } });
-    return false;
+    void (async () => {
+      panelTranscript.length = 0;
+      panelProgress = [];
+      panelStatus = null;
+      await resetPanelConversation();
+      broadcastPanel();
+      sendResponse({ ok: true, result: { cleared: true } });
+    })();
+    return true;
+  }
+  if (message?.type === "panel.close") {
+    void (async () => {
+      await resetPanelConversation();
+      sendResponse({ ok: true, result: { closed: true } });
+    })();
+    return true;
   }
   if (message?.type === "panel.send") {
-    try {
-      const text = panelText(message.text);
-      panelProgress = [];
-      setPanelStatus({ text: "Working…", phase: "working", persist: false });
-      const entry = recordPanelEntry("user", text);
-      // Surface the user's message to whichever agent is attached via the
-      // bridge event stream (agents poll it with browser_watch_events).
-      emitBrowserEvent("panel.message", {
-        role: "user",
-        text,
-        messageId: entry.id,
-        history: panelHistoryPayload(entry.id),
-      });
-      broadcastPanel();
-      sendResponse({ ok: true, result: { entry } });
-    } catch (error) {
-      sendResponse({ ok: false, error: errorPayload(error) });
-    }
-    return false;
+    void (async () => {
+      try {
+        const text = panelText(message.text);
+        panelProgress = [];
+        setPanelStatus({ text: "Working…", phase: "working", persist: false });
+        const entry = recordPanelEntry("user", text);
+        const turn = await nextConversationTurn();
+        emitBrowserEvent("panel.message", {
+          role: "user",
+          text,
+          messageId: entry.id,
+          conversationId: turn.conversationId,
+          resume: turn.resume,
+        });
+        broadcastPanel();
+        sendResponse({ ok: true, result: { entry, conversationId: turn.conversationId, resume: turn.resume } });
+      } catch (error) {
+        sendResponse({ ok: false, error: errorPayload(error) });
+      }
+    })();
+    return true;
   }
   return false;
 });

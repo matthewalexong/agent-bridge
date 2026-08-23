@@ -251,6 +251,9 @@ export function startPanel(doc = document) {
       // Clearing is best-effort; the transcript broadcast keeps the UI honest.
     }
   });
+  doc.defaultView?.addEventListener("pagehide", () => {
+    void send({ type: "panel.close" }).catch(() => {});
+  });
 
   // Hydrate: existing transcript, agent identity, and bridge connectivity.
   send({ type: "panel.get" })

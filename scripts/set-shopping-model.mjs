@@ -35,6 +35,7 @@ ${names.join("\n")}
 
 function hardenShoppingProfile(profile) {
   hermes(profile, ["config", "set", "onboarding.profile_build", "off"]);
+  hermes(profile, ["config", "set", "display.busy_input_mode", "queue"]);
   const home = join(homedir(), ".hermes", "profiles", profile);
   writeFileSync(join(home, "SOUL.md"), [
     "You are a silent shopper in a Chrome side panel.",

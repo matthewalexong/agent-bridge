@@ -10,7 +10,7 @@ import {
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
 import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
-import { formatPanelConversation } from "../lib/panel-conversation.mjs";
+import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 
 let authState = await loadOrCreateAuthState();
@@ -230,6 +230,9 @@ function recordEvent(event, data) {
   if (event === "panel.message" && data?.role === "user") {
     void forwardPanelMessageToHermes(data);
   }
+  if (event === "panel.close" && data?.conversationId) {
+    void endPanelConversation(data.conversationId);
+  }
 }
 
 // --- Hermes webhook forwarder ---------------------------------------------
@@ -255,56 +258,72 @@ function readWebhookSecret() {
   }
 }
 
+async function postToHermesWebhook(payload, deliveryId) {
+  const secret = readWebhookSecret();
+  if (!secret) {
+    log("panel→hermes: webhook secret missing — skipping forward");
+    return null;
+  }
+  const body = JSON.stringify(payload);
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${body}`)
+    .digest("hex");
+  const response = await fetch(panelWebhookUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-webhook-signature-v2": signature,
+      "x-webhook-timestamp": timestamp,
+      "x-request-id": deliveryId,
+    },
+    body,
+    signal: AbortSignal.timeout(5_000),
+  });
+  const status = response.status;
+  const text = (await response.text()).slice(0, 200);
+  return { status, text };
+}
+
 async function forwardPanelMessageToHermes(data) {
   try {
-    const secret = readWebhookSecret();
-    if (!secret) {
-      log("panel→hermes: webhook secret missing — skipping forward");
-      return;
-    }
-    const conversation = formatPanelConversation(data.history);
-    const body = JSON.stringify({
+    const conversationId = sanitizeConversationId(data.conversationId);
+    const deliveryId = data.messageId
+      ? `${HOST_INSTANCE}:${data.messageId}`
+      : `${HOST_INSTANCE}:${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const result = await postToHermesWebhook({
       event_type: "panel.message",
       text: typeof data.text === "string" ? data.text : "",
       messageId: data.messageId ?? null,
-      conversation,
+      conversation_id: conversationId,
+      resume: Boolean(data.resume && conversationId),
       observedAt: new Date().toISOString(),
-    });
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const signature = crypto
-      .createHmac("sha256", secret)
-      .update(`${timestamp}.${body}`)
-      .digest("hex");
-    // Unique delivery id prevents the gateway's idempotency cache from
-    // collapsing distinct messages that land in the same millisecond AND
-    // from deduping early panel_N ids after an extension restart (the
-    // counter resets; HOST_INSTANCE disambiguates per host process).
-    const deliveryId = data.messageId
-      ? `${HOST_INSTANCE}:${data.messageId}`
-      : `${HOST_INSTANCE}:${timestamp}-${Math.random().toString(36).slice(2)}`;
-    const response = await fetch(panelWebhookUrl(), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-webhook-signature-v2": signature,
-        "x-webhook-timestamp": timestamp,
-        "x-request-id": deliveryId,
-      },
-      body,
-      signal: AbortSignal.timeout(5_000),
-    });
-    const status = response.status;
-    const text = (await response.text()).slice(0, 200);
-    log(`panel→hermes: forwarded (HTTP ${status}) ${text}`);
-    // Gateway accepts with HTTP 202 (aiohttp async handling). Accept any 2xx —
-    // checking === 200 meant the thinking-status tail silently never started.
-    if (status >= 200 && status < 300 && text.includes('"accepted"')) {
-      // Turn is running in the gateway: surface live "thinking" progress in
-      // the panel so the user is never staring at a dead screen for minutes.
-      startTurnStatusTail(deliveryId);
+    }, deliveryId);
+    if (!result) return;
+    log(`panel→hermes: forwarded (HTTP ${result.status}) ${result.text}`);
+    if (result.status >= 200 && result.status < 300 && result.text.includes('"accepted"')) {
+      startTurnStatusTail(deliveryId, conversationId);
     }
   } catch (error) {
     log(`panel→hermes: forward failed (${error?.message ?? error})`);
+  }
+}
+
+async function endPanelConversation(conversationId) {
+  const id = sanitizeConversationId(conversationId);
+  if (!id) return;
+  try {
+    const deliveryId = `${HOST_INSTANCE}:end-${id}-${Date.now()}`;
+    const result = await postToHermesWebhook({
+      event_type: "panel.message",
+      conversation_id: id,
+      end: true,
+      observedAt: new Date().toISOString(),
+    }, deliveryId);
+    if (result) log(`panel→hermes: ended ${id} (HTTP ${result.status}) ${result.text}`);
+  } catch (error) {
+    log(`panel→hermes: end failed (${error?.message ?? error})`);
   }
 }
 
@@ -325,10 +344,10 @@ function pushPanelStatus(text, options = {}) {
     });
 }
 
-function startTurnStatusTail(deliveryId) {
+function startTurnStatusTail(deliveryId, conversationId) {
   if (activeStatusTails.has(deliveryId)) return;
   log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
-  const chatMarker = `webhook:panel_message:${deliveryId}`;
+  const chatMarker = `webhook:panel_message:${conversationId || deliveryId}`;
   let offset = 0;
   try {
     offset = statSync(GATEWAY_LOG_FILE).size;
