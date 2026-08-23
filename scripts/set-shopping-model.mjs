@@ -3,9 +3,10 @@
 // Desktop chat stays on grok-4.6. Panel traffic moves to the shopping profile
 // webhook (default port 8645) only after this script writes the selection.
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import {
   loadShoppingModelCatalog,
@@ -30,6 +31,32 @@ function usage() {
 Presets:
 ${names.join("\n")}
 `);
+}
+
+function hardenShoppingProfile(profile) {
+  hermes(profile, ["config", "set", "onboarding.profile_build", "off"]);
+  const home = join(homedir(), ".hermes", "profiles", profile);
+  writeFileSync(join(home, "SOUL.md"), [
+    "You are a silent shopper in a Chrome side panel.",
+    "Never introduce yourself. Never mention Hermes, /help, skills, tools, or a profile.",
+    "If they want a product, price, build, or recommendation, research live listings now.",
+    "Ask at most one product-specific question, and only if it would change what to buy.",
+    "Then post the answer. Do not explain how you work.",
+    "",
+  ].join("\n"));
+  const skillsRoot = join(home, "skills");
+  const keep = join(skillsRoot, "agent-bridge-panel");
+  try {
+    for (const entry of readdirSync(skillsRoot, { withFileTypes: true })) {
+      const target = join(skillsRoot, entry.name);
+      if (target !== keep) rmSync(target, { recursive: true, force: true });
+    }
+  } catch {
+    mkdirSync(skillsRoot, { recursive: true });
+  }
+  const src = join(dirname(fileURLToPath(import.meta.url)), "..", "eval", "search", "skills", "agent-bridge-panel.md");
+  mkdirSync(join(keep), { recursive: true });
+  cpSync(src, join(keep, "SKILL.md"));
 }
 
 function hermes(profile, argv, { allowFail = false } = {}) {
@@ -96,6 +123,7 @@ hermes(preset.profile, ["config", "set", "memory.user_profile_enabled", "false"]
 hermes(preset.profile, ["config", "set", "platforms.webhook.enabled", "true"]);
 hermes(preset.profile, ["config", "set", "platforms.webhook.extra.port", String(preset.webhook_port)]);
 hermes(preset.profile, ["config", "set", "platforms.webhook.extra.host", "127.0.0.1"]);
+hardenShoppingProfile(preset.profile);
 
 const defaultSubs = join(homedir(), ".hermes", "webhook_subscriptions.json");
 const profileSubs = join(homedir(), ".hermes", "profiles", preset.profile, "webhook_subscriptions.json");

@@ -26,6 +26,7 @@ test("panel surface keeps hubs and hides analysis/checkout tools", () => {
   assert.equal(shouldRegisterMcpTool("debugger_pause", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("shopping_checkout_terms_accept", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("shopping_merchant_trust", MCP_SURFACE_PANEL), false);
+  assert.equal(shouldRegisterMcpTool("shopping_profile_remember", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("collect_code", MCP_SURFACE_FULL), true);
   assert.ok(PANEL_TOOL_NAMES.length <= 32);
   assert.ok(PANEL_TOOL_NAMES.includes("shopping_evaluator_batch"));

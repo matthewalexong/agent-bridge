@@ -32,11 +32,6 @@ export const PANEL_TOOL_NAMES = Object.freeze([
   "shopping_product_evidence",
   "shopping_candidate_coverage",
   "shopping_offer_analyze",
-  "shopping_profile_resolve",
-  "shopping_profile_list",
-  "shopping_profile_remember",
-  "shopping_profile_update",
-  "shopping_profile_forget",
 ]);
 
 const PANEL_TOOL_SET = new Set(PANEL_TOOL_NAMES);
