@@ -70,3 +70,11 @@ export function advertisedDescription(description, surface = resolveMcpSurface()
 export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
+
+export function validatePanelPost({ kind, links } = {}) {
+  const cards = Array.isArray(links) ? links : [];
+  if (kind === "products" && cards.length === 0) {
+    return "kind=products requires links[]. Copy url, title, image, and price from a live listing. Do not name a product without a card.";
+  }
+  return null;
+}

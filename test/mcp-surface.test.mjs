@@ -10,6 +10,7 @@ import {
   serializeToolPayload,
   shouldRegisterMcpTool,
   shouldSlimPanelSchema,
+  validatePanelPost,
 } from "../mcp/surface.mjs";
 
 test("live MCP surface defaults to panel", () => {
@@ -43,6 +44,13 @@ test("panel slims fat shopping schemas and descriptions", () => {
   assert.equal(advertisedDescription(long, MCP_SURFACE_FULL), long);
   assert.equal(defaultEvaluatorResultChars(MCP_SURFACE_PANEL), 20_000);
   assert.equal(defaultEvaluatorResultChars(MCP_SURFACE_FULL), 120_000);
+});
+
+test("product posts without link cards are rejected", () => {
+  assert.equal(validatePanelPost({ kind: "question" }), null);
+  assert.equal(validatePanelPost({ kind: "none" }), null);
+  assert.match(validatePanelPost({ kind: "products" }), /requires links/);
+  assert.equal(validatePanelPost({ kind: "products", links: [{ url: "https://www.amazon.com/dp/B0EXAMPLE" }] }), null);
 });
 
 test("tool payloads are compact JSON", () => {

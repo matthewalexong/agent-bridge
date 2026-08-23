@@ -7,7 +7,7 @@ import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cd
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
-import { advertisedDescription, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema } from "./surface.mjs";
+import { advertisedDescription, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
@@ -313,19 +313,22 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat, visible to the user. The bounded browser_panel_status updates for the current turn are attached automatically as a collapsible research trail. Pass agent on the first reply to identify yourself. Keep replies focused; markdown is not rendered. When recommending a product/page, pass it in `links` for a clickable card instead of opening a tab.",
+      "Post a reply into the extension's side panel chat, visible to the user. The bounded browser_panel_status updates for the current turn are attached automatically as a collapsible research trail. Keep replies focused; markdown is not rendered. For product or build recommendations set kind=products and pass live listing cards in links (url, title, image, price). Posts that name a product without cards are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
+      kind: z.enum(["products", "question", "none"]).describe("products = recommendations (links required). question = one product-specific ask. none = no listing to show."),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
       links: z.array(z.object({
         url: z.string().url(),
         title: z.string().max(200).optional(),
         image: z.string().url().optional().describe("Thumbnail image URL shown on the card."),
         price: z.string().max(40).optional(),
-      })).max(5).optional().describe("Product/page cards rendered under the reply text. Use instead of opening tabs."),
+      })).max(5).optional().describe("Product/page cards rendered under the reply text. Required when kind=products."),
     },
   },
   async (input) => {
+    const rejected = validatePanelPost(input);
+    if (rejected) return asText({ posted: false, error: rejected });
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
     return asText(await callBridge("panel.post", { text: input.text, links: input.links ?? [] }));
   },

@@ -50,5 +50,6 @@ test("live panel skill stays small and does not replace judgment with keywords",
   assert.match(skill, /Do not invent a keyword table/);
   assert.match(skill, /Never introduce yourself/);
   assert.match(skill, /research now/);
+  assert.match(skill, /kind=products/);
   assert.doesNotMatch(skill, /if query includes/i);
 });
