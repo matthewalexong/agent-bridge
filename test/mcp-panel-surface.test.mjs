@@ -34,6 +34,11 @@ test("default MCP server advertises the compact panel surface only", async (cont
   await client.connect(transport);
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((tool) => tool.name).sort(), [...PANEL_TOOL_NAMES].sort());
+  const advertised = JSON.stringify(tools);
+  assert.ok(advertised.length < 25_000, `advertised catalog is ${advertised.length} chars`);
+  const dossier = tools.find((tool) => tool.name === "shopping_decision_dossier");
+  assert.ok(dossier, "dossier stays on the panel surface");
+  assert.ok(JSON.stringify(dossier.inputSchema || {}).length < 2_000, "dossier schema must stay slim");
 });
 
 test("live panel skill stays small and does not replace judgment with keywords", async () => {

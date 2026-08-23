@@ -41,6 +41,7 @@ import { shoppingDossierStagesSchema } from "../lib/shopping-dossier-stage-schem
 import { createShoppingDecisionContext } from "../lib/shopping-decision-context.mjs";
 import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema, shoppingDecisionContextInputSchema } from "../lib/shopping-decision-context-schema.mjs";
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
+import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
 const money = z.number().finite().nonnegative().max(10_000_000).nullable().optional();
@@ -893,7 +894,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     inputSchema: {
       decision_context: shoppingDecisionContextInputSchema,
       max_concurrency: z.number().int().min(1).max(8).optional().default(4),
-      max_result_chars: z.number().int().min(10_000).max(500_000).optional().default(120_000),
+      max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
       jobs: z.array(z.object({ job_id: id, tool: z.enum(Object.keys(SHOPPING_EVALUATOR_STAGES)), subject: z.object({ product_id: id, offer_id: id.optional() }), constraint_ids: z.array(id).max(1_000).optional().default([]), arguments: z.record(z.any()) })).min(1).max(24),
     },
   }, async (input) => {
@@ -904,7 +905,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     return asText(await runShoppingEvaluatorBatch({
       jobs: input.jobs,
       max_concurrency: input.max_concurrency,
-      max_result_chars: input.max_result_chars,
+      max_result_chars: input.max_result_chars ?? defaultEvaluatorResultChars(),
       evaluated_at: decisionContext.evaluated_at,
       decision_context: decisionContext,
       required_stages: requiredShoppingDossierStages({ phase: decisionContext.phase, applicability: decisionContext.applicability, stages: {}, decision_context: decisionContext }),

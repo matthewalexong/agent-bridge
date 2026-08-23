@@ -7,7 +7,7 @@ import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cd
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
-import { resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool } from "./surface.mjs";
+import { advertisedDescription, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
@@ -47,9 +47,17 @@ function asError(error) {
   };
 }
 
+function advertisedToolConfig(name, config) {
+  const next = { ...config, description: advertisedDescription(config.description, mcpSurface) };
+  if (shouldSlimPanelSchema(name, mcpSurface) && config.inputSchema && typeof config.inputSchema === "object") {
+    next.inputSchema = Object.fromEntries(Object.keys(config.inputSchema).map((key) => [key, z.any()]));
+  }
+  return next;
+}
+
 function tool(name, config, handler) {
   if (!shouldRegisterMcpTool(name, mcpSurface)) return;
-  server.registerTool(name, config, async (input) => {
+  server.registerTool(name, advertisedToolConfig(name, config), async (input) => {
     try {
       return await handler(input);
     } catch (error) {

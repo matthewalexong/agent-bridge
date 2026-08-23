@@ -54,3 +54,24 @@ export function shouldRegisterMcpTool(name, surface = resolveMcpSurface()) {
 export function serializeToolPayload(value) {
   return JSON.stringify(value);
 }
+
+const KEEP_FULL_PANEL_SCHEMA = new Set([
+  "shopping_request_intake",
+  "shopping_page_evidence",
+  "shopping_page_evidence_batch",
+]);
+
+export function shouldSlimPanelSchema(name, surface = resolveMcpSurface()) {
+  return surface === MCP_SURFACE_PANEL && String(name).startsWith("shopping_") && !KEEP_FULL_PANEL_SCHEMA.has(name);
+}
+
+export function advertisedDescription(description, surface = resolveMcpSurface()) {
+  const text = String(description || "");
+  if (surface !== MCP_SURFACE_PANEL || text.length <= 280) return text;
+  const sentence = text.split(/(?<=\.)\s/)[0] || text.slice(0, 240);
+  return `${sentence} Full contract is enforced in process; do not tool_describe.`;
+}
+
+export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
+  return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
+}
