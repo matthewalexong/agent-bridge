@@ -10,6 +10,7 @@
       "max_turns": 24,
       "tier": "accuracy",
       "needs_env": "XAI_API_KEY",
+      "vision": true,
       "approx_usd_per_million": { "input": 2.0, "cached": 0.5, "output": 6.0 },
       "notes": "Current desktop flagship. Use only if cheaper presets fail identity/edition matching."
     },
@@ -20,6 +21,7 @@
       "max_turns": 24,
       "tier": "balanced",
       "needs_env": "XAI_API_KEY",
+      "vision": true,
       "approx_usd_per_million": { "input": 1.25, "cached": 0.2, "output": 2.5 },
       "notes": "Best accuracy/cost on a key already present. Official replacement for retired Grok 4.1 Fast. Same tool-calling family, about half the output price of 4.6, no high-reasoning tax."
     },
@@ -30,6 +32,7 @@
       "max_turns": 24,
       "tier": "cheap-capable",
       "needs_env": "DASHSCOPE_API_KEY",
+      "vision": false,
       "approx_usd_per_million": { "input": 0.4, "output": 1.2 },
       "notes": "DashScope key already present. Strong Chinese tool-calling midtier. Verify edition/variant matching on one live query before trusting it."
     },
@@ -40,6 +43,7 @@
       "max_turns": 20,
       "tier": "cheapest-available",
       "needs_env": "DASHSCOPE_API_KEY",
+      "vision": false,
       "approx_usd_per_million": { "input": 0.05, "output": 0.4 },
       "notes": "Cheapest model on a key you already have. Highest risk of listing mixups. Code still grades; the model still judges matches."
     },
@@ -50,8 +54,9 @@
       "max_turns": 24,
       "tier": "cheap-capable",
       "needs_env": "DEEPSEEK_API_KEY",
+      "vision": false,
       "approx_usd_per_million": { "input": 0.66, "output": 1.98 },
-      "notes": "Best cheap Chinese agent model (official off-peak). Needs a DeepSeek key you do not have yet. Tool calls are documented."
+      "notes": "Best cheap Chinese *text* agent model (official off-peak). Text-only — it rejects images. Needs DEEPSEEK_API_KEY. Do not use if the turn must see a screenshot; label OCR stays local/zero-LLM."
     },
     "deepseek-v4-flash": {
       "provider": "deepseek",
@@ -60,8 +65,20 @@
       "max_turns": 20,
       "tier": "cheapest",
       "needs_env": "DEEPSEEK_API_KEY",
+      "vision": false,
       "approx_usd_per_million": { "input": 0.22, "output": 0.66 },
-      "notes": "Official DeepSeek cheap tier, 1M context, tool calls supported. Off-peak list price. Needs DEEPSEEK_API_KEY."
+      "notes": "Official DeepSeek cheap *text* tier. Tool calls yes, images no. Off-peak list price. Needs DEEPSEEK_API_KEY."
+    },
+    "deepseek-v4-flash-vision": {
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash-vision-exp",
+      "reasoning_effort": "none",
+      "max_turns": 20,
+      "tier": "cheap-vision",
+      "needs_env": "DEEPSEEK_API_KEY",
+      "vision": true,
+      "approx_usd_per_million": { "input": 0.22, "output": 0.66 },
+      "notes": "Experimental DeepSeek vision model (Aug 2026). Same Flash price; accepts images + tool calls. Text V4 Flash/Pro cannot see images. Needs DEEPSEEK_API_KEY."
     }
   }
 }
