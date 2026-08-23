@@ -33,3 +33,6 @@ Answer in the panel. Open a tab only if the question is about a live page.
 - Buy, checkout, accept terms, or submit a form.
 - Cite a different product as the one asked.
 - Leave research tabs open.
+
+Shopping model is selected separately from desktop Hermes (`scripts/set-shopping-model.mjs`). Do not switch models yourself.
+

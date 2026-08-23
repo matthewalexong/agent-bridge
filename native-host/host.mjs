@@ -9,6 +9,7 @@ import {
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
+import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 
 let authState = await loadOrCreateAuthState();
@@ -235,7 +236,9 @@ import { appendFileSync, createReadStream, readFileSync, statSync, writeFileSync
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const HERMES_WEBHOOK_URL = process.env.AB_HERMES_WEBHOOK_URL || "http://127.0.0.1:8644/webhooks/panel_message";
+function panelWebhookUrl() {
+  return resolvePanelWebhookUrl(process.env);
+}
 const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
 // Per-host-instance nonce. Extension restarts reset the panel message
 // counter to panel_1; without this nonce the gateway's idempotency cache
@@ -276,7 +279,7 @@ async function forwardPanelMessageToHermes(data) {
     const deliveryId = data.messageId
       ? `${HOST_INSTANCE}:${data.messageId}`
       : `${HOST_INSTANCE}:${timestamp}-${Math.random().toString(36).slice(2)}`;
-    const response = await fetch(HERMES_WEBHOOK_URL, {
+    const response = await fetch(panelWebhookUrl(), {
       method: "POST",
       headers: {
         "content-type": "application/json",
