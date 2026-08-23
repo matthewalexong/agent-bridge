@@ -22,4 +22,7 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(styles, /\.research-trail/);
   assert.match(styles, /\.research-evidence/);
   assert.match(styles, /\.research-next/);
+  assert.match(styles, /thinking-spinner/);
+  assert.match(styles, /thinking-flash/);
+  assert.match(script, /thinking-spinner/);
 });

@@ -70,6 +70,9 @@ test("panel messages reach the agent event stream and replies land in the transc
     const sent = await harness.sendRuntime({ type: "panel.send", text: "find me the cheapest whey" });
     assert.equal(sent.ok, true);
     assert.equal(sent.result.entry.role, "user");
+    const afterSend = await harness.dispatch("after-send", "panel.get", {});
+    assert.equal(afterSend.result.status?.text, "Working…");
+    assert.equal(afterSend.result.status?.phase, "working");
 
     const panelEvent = harness.nativeMessages.find((message) =>
       message.type === "event" && message.event === "panel.message");
@@ -88,6 +91,7 @@ test("panel messages reach the agent event stream and replies land in the transc
     assert.equal(transcript.ok, true);
     assert.deepEqual(transcript.result.transcript.map((entry) => entry.role), ["user", "agent"]);
     assert.equal(transcript.result.transcript[1].text, "NOW Foods, $0.044/g");
+    assert.equal(transcript.result.status, null);
 
     const updates = harness.broadcasts.filter((message) => message.type === "panel.update");
     assert.ok(updates.length >= 2, "expected panel.update broadcasts after send and post");

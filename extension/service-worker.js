@@ -1697,7 +1697,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const text = panelText(message.text);
       panelProgress = [];
-      panelStatus = null;
+      setPanelStatus({ text: "Working…", phase: "working", persist: false });
       const entry = recordPanelEntry("user", text);
       // Surface the user's message to whichever agent is attached via the
       // bridge event stream (agents poll it with browser_watch_events).

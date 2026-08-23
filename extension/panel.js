@@ -147,12 +147,21 @@ function setThinking(doc, transcript, status, progress = []) {
     if (!thinkingBubble || !thinkingBubble.isConnected) {
       thinkingBubble = doc.createElement("div");
       thinkingBubble.className = "msg agent thinking";
+      thinkingBubble.setAttribute("aria-busy", "true");
+      thinkingBubble.setAttribute("aria-live", "polite");
+      const head = doc.createElement("div");
+      head.className = "thinking-head";
       const who = doc.createElement("span");
       who.className = "who";
       who.textContent = roleLabel("agent");
+      const spinner = doc.createElement("span");
+      spinner.className = "thinking-spinner";
+      spinner.setAttribute("aria-hidden", "true");
+      for (let i = 0; i < 3; i += 1) spinner.append(doc.createElement("i"));
+      head.append(who, spinner);
       const body = doc.createElement("span");
       body.className = "body";
-      thinkingBubble.append(who, body);
+      thinkingBubble.append(head, body);
       transcript.append(thinkingBubble);
     }
     const body = thinkingBubble.querySelector(".body");
