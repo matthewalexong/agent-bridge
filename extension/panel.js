@@ -24,6 +24,52 @@ function roleLabel(role) {
   return "System";
 }
 
+function appendResearchItems(doc, container, items) {
+  const list = doc.createElement("ol");
+  list.className = "research-list";
+  for (const item of items) {
+    const row = doc.createElement("li");
+    const heading = doc.createElement("div");
+    heading.className = "research-heading";
+    const phase = doc.createElement("span");
+    phase.className = "research-phase";
+    phase.textContent = String(item.phase || "working").replace(/_/g, " ");
+    const summary = doc.createElement("span");
+    summary.textContent = item.summary || item.text || "Progress update";
+    heading.append(phase, summary);
+    row.append(heading);
+    if (Array.isArray(item.evidence) && item.evidence.length > 0) {
+      const evidence = doc.createElement("ul");
+      evidence.className = "research-evidence";
+      for (const fact of item.evidence) {
+        const factRow = doc.createElement("li");
+        factRow.textContent = fact;
+        evidence.append(factRow);
+      }
+      row.append(evidence);
+    }
+    if (item.next) {
+      const next = doc.createElement("div");
+      next.className = "research-next";
+      next.textContent = `Next: ${item.next}`;
+      row.append(next);
+    }
+    list.append(row);
+  }
+  container.append(list);
+}
+
+function appendResearchTrail(doc, bubble, research) {
+  if (!Array.isArray(research) || research.length === 0) return;
+  const details = doc.createElement("details");
+  details.className = "research-trail";
+  const summary = doc.createElement("summary");
+  summary.textContent = `Research trail · ${research.length} update${research.length === 1 ? "" : "s"}`;
+  details.append(summary);
+  appendResearchItems(doc, details, research);
+  bubble.append(details);
+}
+
 function renderEntry(doc, transcript, entry) {
   const bubble = doc.createElement("div");
   bubble.className = `msg ${entry.role}`;
@@ -34,6 +80,7 @@ function renderEntry(doc, transcript, entry) {
   body.className = "body";
   body.textContent = entry.text;
   bubble.append(who, body);
+  appendResearchTrail(doc, bubble, entry.research);
   // Link cards (agent-cited products/pages). URLs are already protocol-
   // filtered to http(s) by the service worker; we still build everything
   // with DOM APIs so no markup can be injected.
@@ -94,7 +141,8 @@ function renderAll(doc, transcript, entries) {
 // only while the agent is actively working and is removed when it clears.
 // Kept OUTSIDE the transcript rebuild so renderAll() doesn't wipe it mid-turn.
 let thinkingBubble = null;
-function setThinking(doc, transcript, text) {
+function setThinking(doc, transcript, status, progress = []) {
+  const text = status?.text ?? status;
   if (text && String(text).trim()) {
     if (!thinkingBubble || !thinkingBubble.isConnected) {
       thinkingBubble = doc.createElement("div");
@@ -107,7 +155,10 @@ function setThinking(doc, transcript, text) {
       thinkingBubble.append(who, body);
       transcript.append(thinkingBubble);
     }
-    thinkingBubble.querySelector(".body").textContent = String(text);
+    const body = thinkingBubble.querySelector(".body");
+    body.replaceChildren();
+    if (Array.isArray(progress) && progress.length > 0) appendResearchItems(doc, body, progress);
+    else body.textContent = String(text);
     transcript.scrollTop = transcript.scrollHeight;
   } else if (thinkingBubble && thinkingBubble.isConnected) {
     thinkingBubble.remove();
@@ -144,7 +195,7 @@ export function startPanel(doc = document) {
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "panel.update") {
       renderAll(doc, transcript, message.transcript ?? []);
-      setThinking(doc, transcript, message.status?.text ?? null);
+      setThinking(doc, transcript, message.status ?? null, message.progress ?? []);
       agentName = message.agent?.name ?? null;
       setStatus();
     }
@@ -196,17 +247,17 @@ export function startPanel(doc = document) {
   send({ type: "panel.get" })
     .then((result) => {
       renderAll(doc, transcript, result.transcript ?? []);
-      setThinking(doc, transcript, result.status?.text ?? null);
+      setThinking(doc, transcript, result.status ?? null, result.progress ?? []);
       agentName = result.agent?.name ?? null;
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,
       // identify) would silently degrade. Surface it instead of hiding it.
-      if (!Array.isArray(result.capabilities)) {
+      if (!Array.isArray(result.capabilities) || !result.capabilities.includes("research-trail:v1")) {
         const stale = doc.createElement("p");
         stale.className = "empty";
         stale.textContent =
-          "Note: this extension is running an older cached service worker — new features (like link cards) may be missing. Reload the extension in chrome://extensions to fix.";
+          "Note: this extension is running an older cached service worker — research trails or link cards may be missing. Reload the extension in chrome://extensions to fix.";
         transcript.append(stale);
       }
     })

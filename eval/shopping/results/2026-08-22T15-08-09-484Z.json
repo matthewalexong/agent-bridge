@@ -1,0 +1,93 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v3.md",
+    "model_tier": "local",
+    "runs": 1,
+    "tasks": 3,
+    "action": 1,
+    "selection": 1,
+    "landed": 1,
+    "evidence": 0.3333333333333333,
+    "gate_pass": true
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B has the lowest landed total ($98.00) compared to Offer A ($104.00).",
+          "Offer B has the lowest unit cost ($98.00) compared to Offer A ($104.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "All offers met requirements: product key, condition, and minimum quantity.",
+          "Offer B has the smallest unit cost ($16.00) compared to Offer A's unit cost ($17.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Offer A failed verification requirement.",
+          "Offer B has the lowest landed total ($46.00) compared to Offer A's null total."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    }
+  ]
+}

@@ -5,11 +5,14 @@ import { z } from "zod";
 import { BridgeOfflineError, callBridge } from "../lib/bridge-client.mjs";
 import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cdp-analysis-tools.mjs";
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
+import { registerShoppingTools } from "./register-shopping-tools.mjs";
+import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
   version: "0.9.0",
 });
+const browserEvidenceRegistry = createBrowserEvidenceRegistry();
 
 function asText(value) {
   return {
@@ -129,7 +132,34 @@ tool(
       maxChars: z.number().int().min(1_000).max(50_000).optional().default(30_000),
     },
   },
-  async (input) => asText(await callBridge("page.snapshot", input)),
+  async (input) => {
+    const result = await callBridge("page.snapshot", input);
+    const evidence_receipt = browserEvidenceRegistry.capture({
+      tab_id: input.tabId,
+      snapshot: result,
+      captured_at: result.captured_at || result.capturedAt || null,
+    });
+    return asText({ ...result, evidence_receipt });
+  },
+);
+
+tool(
+  "browser_snapshot_batch",
+  {
+    title: "Snapshot several independent pages concurrently",
+    description:
+      "Capture 1-8 distinct Chrome tabs concurrently and issue a signed browser evidence receipt for each successful snapshot. Use after opening independent evidence-domain pages; failures remain per-tab and do not discard successful captures. The total visible-text budget is bounded.",
+    inputSchema: {
+      pages: z.array(z.object({
+        tabId: z.number().int().nonnegative(),
+        maxChars: z.number().int().min(1_000).max(30_000).optional().default(15_000),
+      })).min(1).max(8),
+    },
+  },
+  async (input) => asText({ results: await captureBrowserSnapshotsBatch(input.pages, {
+    snapshot: (page) => callBridge("page.snapshot", page),
+    capture: (entry) => browserEvidenceRegistry.capture(entry),
+  }) }),
 );
 
 tool(
@@ -254,14 +284,17 @@ tool(
   {
     title: "Update live side panel progress",
     description:
-      "Replace the transient thinking bubble with a concise, user-facing summary of the work so far. For non-trivial panel requests, call early with your plan and again after meaningful evidence or decisions. Summarize actions, evidence checked, conclusions, and the next step; do not expose hidden chain-of-thought or merely say that you are thinking. This status disappears when the final reply lands.",
+      "Publish a bounded user-visible research update. For non-trivial panel requests, call early with the plan and again after meaningful evidence or decisions. State actions, concrete evidence, conclusions, and the next step—never hidden chain-of-thought, private scratch work, or generic 'thinking'. Updates appear live and are attached to the final answer as a collapsible research trail.",
     inputSchema: {
       summary: z.string().min(1).max(300).describe(
         "Cumulative progress summary, ideally using short 'Doing / Found / Next' phrases. Include concrete sources, counts, constraints, or decisions when known.",
       ),
+      phase: z.enum(["plan", "search", "inspect", "verify", "compare", "decision", "working"]).optional().default("working"),
+      evidence: z.array(z.string().min(1).max(160)).max(5).optional().default([]).describe("Short externally supportable facts, source names, counts, prices, or gate results; no hidden reasoning."),
+      next: z.string().min(1).max(200).optional().describe("The next concrete action or unresolved question."),
     },
   },
-  async (input) => asText(await callBridge("panel.status", { text: input.summary })),
+  async (input) => asText(await callBridge("panel.status", { text: input.summary, phase: input.phase, evidence: input.evidence, next: input.next, persist: true })),
 );
 
 tool(
@@ -269,7 +302,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat, visible to the user. Use this to answer panel.message events from browser_watch_events. Pass agent on the first reply to identify yourself in the panel header. Keep replies focused; markdown is not rendered. When you recommend or cite a product/page, pass it in `links` so the panel renders a clickable card with thumbnail instead of opening a browser tab: each link is {url, title, image (thumbnail URL), price}. Prefer link cards over browser_open_tab/tabs.create for showing results to the user.",
+      "Post a reply into the extension's side panel chat, visible to the user. The bounded browser_panel_status updates for the current turn are attached automatically as a collapsible research trail. Pass agent on the first reply to identify yourself. Keep replies focused; markdown is not rendered. When recommending a product/page, pass it in `links` for a clickable card instead of opening a tab.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
@@ -417,5 +450,16 @@ tool(
 
 registerLocalAnalysisTools({ tool, asText });
 registerCdpAnalysisTools({ tool, asText });
+registerShoppingTools({
+  tool,
+  asText,
+  resolveBrowserSnapshot: (snapshotId, options) => browserEvidenceRegistry.resolve(snapshotId, options),
+  resolvePanelRequest: async (requestId) => {
+    const panel = await callBridge("panel.get");
+    const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);
+    if (matches.length !== 1) throw Object.assign(new Error("User request ID does not resolve to exactly one current panel message"), { code: "shopping_request_not_found" });
+    return { request_id: requestId, request_revision: 1, text: matches[0].text, captured_at: matches[0].at };
+  },
+});
 
 await server.connect(new StdioServerTransport());

@@ -1,0 +1,525 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v3.md",
+    "model_tier": "local",
+    "runs": 2,
+    "tasks": 10,
+    "action": 0.9,
+    "selection": 0.9,
+    "landed": 0.9,
+    "evidence": 0.55,
+    "gate_pass": false
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B has the lowest landed total ($98.00) compared to Offer A ($104.00).",
+          "Offer B has the lowest unit cost ($98.00) compared to Offer A ($104.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "shipping-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B has the lowest landed total ($98.00) compared to Offer A ($104.00).",
+          "Offer B has the lowest unit cost ($98.00) compared to Offer A ($104.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "edition-decoy",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Offer A failed product key requirement.",
+          "Offer B has the lowest landed total ($31.00) compared to Offer A's total ($24.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "edition-decoy",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Offer A failed product key requirement.",
+          "Offer B has the lowest landed total ($31.00) compared to Offer A's total ($24.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "All offers met requirements: product key, condition, and minimum quantity.",
+          "Offer B has the smallest unit cost ($16.00) compared to Offer A's unit cost ($17.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "All offers met requirements: product key, condition, and minimum quantity.",
+          "Offer B has the smallest unit cost ($16.00) compared to Offer A's unit cost ($17.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Offer B was selected because it had the smallest landed_total_usd (65.00) compared to Offer A (72.00).",
+          "Both offers met all requirements: product key, condition, and minimum quantity."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Offer B was selected because it had the smallest landed_total_usd (65.00) compared to Offer A (72.00).",
+          "Both offers met all requirements: product key, condition, and minimum quantity."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "authorized-seller",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "All offers passed requirements: product key, condition, min quantity, and authorized seller status.",
+          "Offer B ($199.00) has the lowest landed total compared to Offer A ($179.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "authorized-seller",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "All offers passed requirements: product key, condition, min quantity, and authorized seller status.",
+          "Offer B ($199.00) has the lowest landed total compared to Offer A ($179.00)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "condition-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149,
+        "evidence": [
+          "Offer A failed the 'condition' requirement (refurbished vs new).",
+          "Offer B was selected because its landed total ($149.00) is smaller than Offer A's ($119.00) based on the objective (landed_total), but Offer A was removed due to condition mismatch. Re-evaluating based on remaining offers: Offer B ($149.00) is the only remaining valid offer."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "condition-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149,
+        "evidence": [
+          "Offer A failed the 'condition' requirement (refurbished vs new).",
+          "Offer B was selected because its landed total ($149.00) is smaller than Offer A's ($119.00) based on the objective (landed_total), but Offer A was removed due to condition mismatch. Re-evaluating based on remaining offers: Offer B ($149.00) is the only remaining valid offer."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Offer A failed verification requirement.",
+          "Offer B has the lowest landed total ($46.00) compared to Offer A's null total."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Offer A failed verification requirement.",
+          "Offer B has the lowest landed total ($46.00) compared to Offer A's null total."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "stock-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699,
+        "evidence": [
+          "Offer A failed the 'stock == \"in_stock\"' requirement.",
+          "Offer B was selected because its landed total ($699.00) is the smallest among the remaining offers (only B remained)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "stock-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699,
+        "evidence": [
+          "Offer A failed the 'stock == \"in_stock\"' requirement.",
+          "Offer B was selected because its landed total ($699.00) is the smallest among the remaining offers (only B remained)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "no-match",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "A",
+        "landed_total_usd": 99,
+        "evidence": [
+          "Offer A was selected because it had the smallest landed total ($99.00) compared to Offer B ($125.00).",
+          "Offer A met all requirements: product key 'wavekey-75', variant 'iso-uk' (Wait, Offer A is 'ansi-us'. Re-evaluating based on strict requirements."
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": false,
+      "selectionOk": false,
+      "landedOk": false,
+      "evidenceScore": 0,
+      "pass": false,
+      "failures": [
+        "action: expected research_more, got select",
+        "selected_offer: expected null, got A",
+        "landed_total_usd: expected null, got 99",
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "no-match",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "A",
+        "landed_total_usd": 99,
+        "evidence": [
+          "Offer A was selected because it had the smallest landed total ($99.00) compared to Offer B ($125.00).",
+          "Offer A met all requirements: product key 'wavekey-75', variant 'iso-uk' (Wait, Offer A is 'ansi-us'. Re-evaluating based on strict requirements."
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": false,
+      "selectionOk": false,
+      "landedOk": false,
+      "evidenceScore": 0,
+      "pass": false,
+      "failures": [
+        "action: expected research_more, got select",
+        "selected_offer: expected null, got A",
+        "landed_total_usd: expected null, got 99",
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "clarify",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "required_preference_missing: true",
+          "Missing required preference: size"
+        ]
+      },
+      "want": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "clarify",
+      "run": 2,
+      "answer": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "required_preference_missing: true",
+          "Missing required preference: size"
+        ]
+      },
+      "want": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    }
+  ]
+}

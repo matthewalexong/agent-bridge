@@ -1,0 +1,160 @@
+{
+  "summary": {
+    "tier": "local",
+    "runs": 1,
+    "action": 0.8,
+    "target": 0.5
+  },
+  "results": [
+    {
+      "task": "one-source-only",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "Fewer than the minimum required independent sources (2) have been checked."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "enough-to-select",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Enough independent retailer coverage exists and the winner's exact identity, stock, landed total, and required seller status are verified."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "shipping",
+        "reason": "A likely winner exists but the shipping cost is unknown and needs verification."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "edition-decoys",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "The provided offers do not match the requested product, 'Base Odyssey Homme Black EDP, not an edition'."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "exact_product"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "missing-size",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "target": "size",
+        "reason": "The user has not provided a size, which is a missing preference that could change the product."
+      },
+      "expected": {
+        "action": "clarify",
+        "target": "size"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "seller-unverified",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "B",
+        "reason": "A likely winner exists with all required fields verified, and one offer meets the authorized seller requirement."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "all-out-of-stock",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "Both checked independent retailers are out of stock, so more sources are needed to find a product."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "quantity-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "B pack quantity",
+        "reason": "The quantity for offer B is unknown, which is a purchase-critical field."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "B"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "stock-conflict",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "Stock verification is missing for the identified offer, and there is conflicting information regarding availability."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "verified-winner",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Enough independent retailer coverage exists and the winner's exact identity, stock, landed total, and required seller status are verified."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    }
+  ]
+}

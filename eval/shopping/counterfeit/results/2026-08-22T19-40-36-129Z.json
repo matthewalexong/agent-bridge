@@ -1,0 +1,463 @@
+{
+  "summary": {
+    "tier": "aux",
+    "brain_role": "auxiliary_only",
+    "assessment": 0.8333333333333334,
+    "action": 0.5,
+    "target": 0.5,
+    "false_safe_rate": 0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+  },
+  "results": [
+    {
+      "task": "fragrance-cheap-marketplace",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "price_anomaly",
+              "no_manufacturer_warranty",
+              "repeated_authenticity_complaints",
+              "packaging_mismatch",
+              "third_party_seller_platform_fulfilled"
+            ]
+          },
+          {
+            "offer_id": "B",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "B",
+        "summary": "Offer B is the safest choice due to being from an authorized seller with a manufacturer warranty."
+      },
+      "expected": {
+        "risks": {
+          "A": "high",
+          "B": "low"
+        },
+        "recommended_action": "select",
+        "target": "B",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "unknown-marketplace-seller",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "medium",
+            "signal_codes": [
+              "authorization_unknown",
+              "third_party_seller_platform_fulfilled"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer lacks seller authorization and platform fulfillment, suggesting a medium risk that warrants searching for an authorized source."
+      },
+      "expected": {
+        "risks": {
+          "A": "unknown"
+        },
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": false,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "disclosed-gray-market",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "medium",
+            "signal_codes": [
+              "unauthorized_seller",
+              "price_anomaly",
+              "no_manufacturer_warranty",
+              "gray_market_disclosed"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer presents a significant price anomaly and lacks manufacturer warranty, suggesting a medium risk due to the gray-market nature."
+      },
+      "expected": {
+        "risks": {
+          "A": "medium"
+        },
+        "recommended_action": "select",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "open-box-not-counterfeit",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty",
+              "condition_open_box"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "A",
+        "summary": "The offer is low risk due to being from an authorized seller with a manufacturer warranty."
+      },
+      "expected": {
+        "risks": {
+          "A": "low"
+        },
+        "recommended_action": "select",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "wrong-edition-not-counterfeit",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty",
+              "identity_mismatch"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "A",
+        "summary": "The offer has low risk due to being from an authorized seller with a manufacturer warranty, despite an identity mismatch."
+      },
+      "expected": {
+        "risks": {
+          "A": "low"
+        },
+        "recommended_action": "search_exact_product",
+        "target": "exact_product",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "memory-card-capacity-complaints",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "no_manufacturer_warranty",
+              "identifier_conflict",
+              "repeated_authenticity_complaints",
+              "third_party_seller_platform_fulfilled"
+            ]
+          },
+          {
+            "offer_id": "B",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "B",
+        "summary": "Offer B presents a low-risk option due to being from an authorized seller with a manufacturer warranty."
+      },
+      "expected": {
+        "risks": {
+          "A": "high",
+          "B": "low"
+        },
+        "recommended_action": "select",
+        "target": "B",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "charger-identifier-conflict",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "identifier_conflict",
+              "packaging_mismatch",
+              "not_returnable"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer presents multiple strong signals of inauthenticity, warranting a search for an authorized retailer."
+      },
+      "expected": {
+        "risks": {
+          "A": "high"
+        },
+        "recommended_action": "avoid",
+        "target": "A",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "supplement-broken-seals",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "no_manufacturer_warranty",
+              "repeated_authenticity_complaints",
+              "seal_issues",
+              "not_returnable"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer presents multiple strong signals of risk, including seal issues and numerous authenticity complaints, warranting a search for an authorized seller."
+      },
+      "expected": {
+        "risks": {
+          "A": "high"
+        },
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "price-anomaly-alone",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "medium",
+            "signal_codes": [
+              "authorization_unknown",
+              "price_anomaly"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The significant price anomaly combined with unknown seller authorization raises a meaningful concern regarding authenticity."
+      },
+      "expected": {
+        "risks": {
+          "A": "unknown"
+        },
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": false,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "established-authorized-retailer",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "A",
+        "summary": "The offer is low risk due to being from an authorized seller with a manufacturer warranty."
+      },
+      "expected": {
+        "risks": {
+          "A": "low"
+        },
+        "recommended_action": "select",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "fulfilled-not-sold-by-platform",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "price_anomaly",
+              "no_manufacturer_warranty",
+              "repeated_authenticity_complaints",
+              "third_party_seller_platform_fulfilled"
+            ]
+          },
+          {
+            "offer_id": "B",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "B",
+        "summary": "Offer B is low risk due to being from an authorized seller with a manufacturer warranty, making it the preferred choice."
+      },
+      "expected": {
+        "risks": {
+          "A": "high",
+          "B": "low"
+        },
+        "recommended_action": "select",
+        "target": "B",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "conflicting-upc-packaging",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "no_manufacturer_warranty",
+              "identifier_conflict",
+              "repeated_authenticity_complaints",
+              "packaging_mismatch"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "This offer presents multiple strong signals of inauthenticity, warranting a search for an authorized seller."
+      },
+      "expected": {
+        "risks": {
+          "A": "high"
+        },
+        "recommended_action": "avoid",
+        "target": "A",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    }
+  ]
+}

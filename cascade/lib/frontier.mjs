@@ -1,16 +1,35 @@
 // Frontier client: escalates to the user's Hermes main model via its configured endpoint.
 // Reads endpoint/key/model through `hermes config get` — no hardcoded secrets.
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 let cached = null;
 function loadConfig() {
   if (cached) return cached;
-  const get = (key) => execSync(`hermes config get ${key} 2>/dev/null`, { encoding: "utf8" }).trim();
+  const get = (key, optional = false) => {
+    try { return execSync(`hermes config get ${key} 2>/dev/null`, { encoding: "utf8" }).trim(); }
+    catch (error) { if (optional) return ""; throw error; }
+  };
+  const provider = get("model.provider", true);
+  let apiKey = get("model.api_key", true);
+  // Hermes keeps provider credentials in ~/.hermes/.env rather than config.
+  // Resolve the current provider's key without printing or persisting it.
+  if (!apiKey && provider) {
+    try {
+      const env = readFileSync(join(homedir(), ".hermes", ".env"), "utf8");
+      const keyName = `${provider.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`;
+      const line = env.split(/\r?\n/).find((entry) => entry.startsWith(`${keyName}=`));
+      if (line) apiKey = line.slice(keyName.length + 1).trim().replace(/^['"]|['"]$/g, "");
+    } catch {}
+  }
   const cfg = {
     baseUrl: get("model.base_url"),
-    apiKey: get("model.api_key"),
-    apiMode: get("model.api_mode"),
+    apiKey,
+    apiMode: get("model.api_mode", true) || (provider === "xai" ? "openai_chat_completions" : "anthropic_messages"),
     model: get("model.default"),
+    provider,
   };
   if (!cfg.baseUrl || !cfg.apiKey) throw new Error("frontier endpoint not configured in hermes config");
   cached = cfg;
@@ -33,6 +52,27 @@ export async function frontierCall(messages, { maxTokens = 4000, retries = 2 } =
 async function frontierCallOnce(messages, maxTokens) {
   const cfg = loadConfig();
   const t0 = Date.now();
+  if (cfg.apiMode.includes("openai")) {
+    const base = cfg.baseUrl.replace(/\/$/, "");
+    const url = base.endsWith("/chat/completions") ? base : `${base}/chat/completions`;
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify({ model: cfg.model, max_tokens: maxTokens, temperature: 0, messages }),
+    });
+    if (!resp.ok) throw new Error(`frontier HTTP ${resp.status} @ ${url}: ${(await resp.text()).slice(0, 200)}`);
+    const data = await resp.json();
+    const text = (data.choices?.[0]?.message?.content || "").trim();
+    if (!text) throw new Error("frontier returned no text from OpenAI-compatible endpoint");
+    return {
+      text,
+      promptTokens: data.usage?.prompt_tokens || 0,
+      completionTokens: data.usage?.completion_tokens || 0,
+      ms: Date.now() - t0,
+      model: cfg.model,
+      tier: "frontier",
+    };
+  }
   // Anthropic Messages API shape (config's api_mode=anthropic_messages)
   const system = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n");
   const rest = messages.filter((m) => m.role !== "system");

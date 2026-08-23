@@ -1,0 +1,219 @@
+{
+  "summary": {
+    "tier": "aux",
+    "brain_role": "auxiliary_only",
+    "assessment": 1,
+    "action": 0.8333333333333334,
+    "target": 0.8333333333333334,
+    "false_safe_rate": 0,
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+  },
+  "results": [
+    {
+      "task": "unknown-marketplace-seller",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "unknown",
+            "signal_codes": [
+              "authorization_unknown",
+              "third_party_seller_platform_fulfilled"
+            ]
+          }
+        ],
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "summary": "The offer carries an unknown seller authorization and is fulfilled by a third-party platform, requiring seller verification."
+      },
+      "expected": {
+        "risks": {
+          "A": "unknown"
+        },
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "disclosed-gray-market",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "medium",
+            "signal_codes": [
+              "unauthorized_seller",
+              "price_anomaly",
+              "gray_market_disclosed"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "A",
+        "summary": "The offer is medium risk due to being a disclosed gray-market item, which the user has explicitly accepted as returnable."
+      },
+      "expected": {
+        "risks": {
+          "A": "medium"
+        },
+        "recommended_action": "select",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "wrong-edition-not-counterfeit",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "low",
+            "signal_codes": [
+              "authorized_seller",
+              "manufacturer_warranty",
+              "identity_mismatch"
+            ]
+          }
+        ],
+        "recommended_action": "select",
+        "target": "A",
+        "summary": "Offer A is low risk as it has an authorized seller and manufacturer warranty, despite being the wrong edition."
+      },
+      "expected": {
+        "risks": {
+          "A": "low"
+        },
+        "recommended_action": "search_exact_product",
+        "target": "exact_product",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": false,
+      "target_ok": false,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "charger-identifier-conflict",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "identifier_conflict",
+              "packaging_mismatch",
+              "not_returnable"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer presents multiple strong adverse signals including identifier conflict and unauthorized seller, necessitating a search for an authorized retailer."
+      },
+      "expected": {
+        "risks": {
+          "A": "high"
+        },
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "price-anomaly-alone",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "unknown",
+            "signal_codes": [
+              "authorization_unknown",
+              "price_anomaly"
+            ]
+          }
+        ],
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "summary": "The risk is unknown due to the price anomaly and lack of seller authorization, requiring seller verification."
+      },
+      "expected": {
+        "risks": {
+          "A": "unknown"
+        },
+        "recommended_action": "verify_seller",
+        "target": "A",
+        "high_risk_offer_ids": []
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    },
+    {
+      "task": "conflicting-upc-packaging",
+      "answer": {
+        "assessments": [
+          {
+            "offer_id": "A",
+            "risk_level": "high",
+            "signal_codes": [
+              "unauthorized_seller",
+              "extreme_price_anomaly",
+              "no_manufacturer_warranty",
+              "identifier_conflict",
+              "repeated_authenticity_complaints",
+              "packaging_mismatch"
+            ]
+          }
+        ],
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "summary": "The offer presents multiple strong adverse signals including identifier conflicts and repeated authenticity complaints, necessitating a search for an authorized retailer."
+      },
+      "expected": {
+        "risks": {
+          "A": "high"
+        },
+        "recommended_action": "search_authorized_retailer",
+        "target": "authorized_retailer",
+        "high_risk_offer_ids": [
+          "A"
+        ]
+      },
+      "assessment_ok": true,
+      "false_safe_ids": [],
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 0,
+      "completion_tokens": 0
+    }
+  ]
+}

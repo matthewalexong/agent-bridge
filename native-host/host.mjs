@@ -311,8 +311,8 @@ const STATUS_POLL_MS = 3_000;
 const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
 const activeStatusTails = new Map(); // deliveryId -> { timer }
 
-function pushPanelStatus(text) {
-  void forwardToExtension("panel.status", { text })
+function pushPanelStatus(text, options = {}) {
+  void forwardToExtension("panel.status", { text, ...options })
     .then(() => log(`panel.status pushed: ${text == null ? "(cleared)" : String(text).slice(0, 80)}`))
     .catch((error) => {
       log(`panel.status push failed (${error?.message ?? error})`);
@@ -330,11 +330,11 @@ function startTurnStatusTail(deliveryId) {
     /* no gateway log — status updates simply won't appear */
   }
   const startedAt = Date.now();
-  pushPanelStatus("Planning the approach…");
+  pushPanelStatus("Planning the approach…", { phase: "plan", persist: false });
   const timer = setInterval(() => {
     if (Date.now() - startedAt > STATUS_MAX_MS) {
       stopTurnStatusTail(deliveryId);
-      pushPanelStatus(null);
+      pushPanelStatus(null, { persist: false });
       return;
     }
     let size;
@@ -357,7 +357,7 @@ function startTurnStatusTail(deliveryId) {
           // Turn finished — the agent's panel.post reply lands on its own;
           // drop the thinking bubble.
           stopTurnStatusTail(deliveryId);
-          pushPanelStatus(null);
+          pushPanelStatus(null, { persist: false });
           return;
         }
       }

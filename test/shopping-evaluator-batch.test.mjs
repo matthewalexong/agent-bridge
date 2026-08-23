@@ -1,0 +1,173 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { z } from "zod";
+import { runShoppingEvaluatorBatch, SHOPPING_EVALUATOR_STAGES } from "../lib/shopping-evaluator-batch.mjs";
+import { validateShoppingConstraintJob } from "../lib/shopping-constraint-routing.mjs";
+
+function definition(stage, schema, handler) {
+  return { stage, schema, handler };
+}
+
+test("evaluator batch starts independent jobs concurrently and preserves input order", async () => {
+  const started = [];
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const registry = new Map([
+    ["shopping_compatibility_assess", definition("compatibility", z.object({ value: z.number().int() }), async (input) => { started.push(input.value); await gate; return { structuredContent: { value: input.value } }; })],
+    ["shopping_value_assess", definition("value", z.object({ value: z.number().int() }), async (input) => { started.push(input.value); await gate; return { structuredContent: { value: input.value } }; })],
+    ["shopping_safety_assess", definition("safety", z.object({ value: z.number().int() }), async (input) => { started.push(input.value); await gate; return { structuredContent: { value: input.value } }; })],
+  ]);
+  const running = runShoppingEvaluatorBatch({
+    max_concurrency: 3,
+    required_stages: ["product_evidence", "safety", "compatibility", "value"],
+    jobs: [
+      { job_id: "compat", tool: "shopping_compatibility_assess", arguments: { value: 1 } },
+      { job_id: "value", tool: "shopping_value_assess", arguments: { value: 2 } },
+      { job_id: "safety", tool: "shopping_safety_assess", arguments: { value: 3 } },
+    ],
+  }, registry);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(started, [1, 2, 3]);
+  release();
+  const result = await running;
+  assert.deepEqual(result.results.map((item) => item.job_id), ["compat", "value", "safety"]);
+  assert.equal(result.wave.evaluation_wave_complete, true);
+  assert.deepEqual(result.dossier_requirements.completed_in_this_wave, ["safety", "compatibility", "value"]);
+  assert.deepEqual(result.dossier_requirements.not_in_this_wave, ["product_evidence"]);
+  assert.equal(result.readiness.recommendation_ready, false);
+  assert.equal(result.readiness.dossier_composition_required, true);
+});
+
+test("evaluator batch never starts more jobs than its concurrency bound", async () => {
+  const started = [];
+  const releases = [];
+  const registry = new Map([["shopping_value_assess", definition("value", z.object({ value: z.number().int() }), async (input) => {
+    started.push(input.value);
+    await new Promise((resolve) => releases.push(resolve));
+    return { structuredContent: input };
+  })]]);
+  const running = runShoppingEvaluatorBatch({ max_concurrency: 2, jobs: [1, 2, 3].map((value) => ({ job_id: `job-${value}`, tool: "shopping_value_assess", arguments: { value } })) }, registry);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(started, [1, 2]);
+  releases.splice(0).forEach((release) => release());
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(started, [1, 2, 3]);
+  releases.splice(0).forEach((release) => release());
+  const result = await running;
+  assert.equal(result.wave.completed_jobs, 3);
+  assert.equal(result.wave.max_concurrency, 2);
+});
+
+test("evaluator batch isolates validation, execution, and allowlist failures", async () => {
+  const registry = new Map([
+    ["shopping_compatibility_assess", definition("compatibility", z.object({ value: z.number().int() }), async (input) => ({ structuredContent: input }))],
+    ["shopping_value_assess", definition("value", z.object({ value: z.number().int() }), async () => { throw Object.assign(new Error("private failure detail"), { code: "value_failed" }); })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({
+    required_stages: ["compatibility", "value"],
+    jobs: [
+      { job_id: "invalid-input", tool: "shopping_compatibility_assess", arguments: { value: "not-a-number" } },
+      { job_id: "throws", tool: "shopping_value_assess", arguments: { value: 2 } },
+      { job_id: "not-registered", tool: "shopping_safety_assess", arguments: { value: 3 } },
+    ],
+  }, registry);
+  assert.deepEqual(result.results.map((item) => item.status), ["failed", "failed", "failed"]);
+  assert.equal(result.results[1].error.code, "value_failed");
+  assert.equal(result.results[2].error.code, "shopping_evaluator_not_allowed");
+  assert.deepEqual(result.dossier_requirements.failed_in_this_wave, ["compatibility", "value"]);
+  assert.equal(result.wave.evaluation_wave_complete, false);
+  assert.equal(result.readiness.purchase_allowed, false);
+});
+
+test("evaluator batch rejects duplicate job IDs and invalid bounds", async () => {
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [
+    { job_id: "same", tool: "shopping_value_assess", arguments: {} },
+    { job_id: "same", tool: "shopping_value_assess", arguments: {} },
+  ] }, new Map()), { code: "shopping_evaluator_batch_invalid" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [{ job_id: "one", tool: "shopping_value_assess", arguments: {} }], max_concurrency: 9 }, new Map()), { code: "shopping_evaluator_batch_invalid" });
+});
+
+test("evaluator allowlist excludes state mutation, evidence capture, and final authority", () => {
+  for (const name of [
+    "shopping_decision_dossier", "shopping_profile_remember", "shopping_watch_create",
+    "shopping_case_create", "shopping_page_evidence", "shopping_checkout_evidence", "shopping_request_intake",
+  ]) assert.equal(name in SHOPPING_EVALUATOR_STAGES, false);
+  assert.equal(SHOPPING_EVALUATOR_STAGES.shopping_safety_assess, "safety");
+  assert.equal(SHOPPING_EVALUATOR_STAGES.shopping_offer_analyze, "offer");
+});
+
+test("evaluator batch fails oversized output closed without returning a partial artifact", async () => {
+  const registry = new Map([["shopping_value_assess", definition("value", z.object({}), async () => ({ structuredContent: { payload: "x".repeat(2_000), gate: "eligible" } }))]]);
+  const result = await runShoppingEvaluatorBatch({
+    max_result_chars: 1_000,
+    required_stages: ["value"],
+    stage_adapter: () => ({ stage: "value", should_not_escape: true }),
+    jobs: [{ job_id: "large", tool: "shopping_value_assess", arguments: {} }],
+  }, registry);
+  assert.equal(result.results[0].status, "failed");
+  assert.equal(result.results[0].error.code, "shopping_evaluator_result_too_large");
+  assert.equal("result" in result.results[0], false);
+  assert.equal("dossier_stage" in result.results[0], false);
+  assert.equal(result.wave.output_chars, 0);
+  assert.equal(result.wave.evaluation_wave_complete, false);
+});
+
+test("evaluator batch rejects a claimed domain constraint when the actual evaluator requirement was substituted", async () => {
+  const context = {
+    constraints: [{ id: "material", kind: "composition", hard_gate: true, source_clause_ids: ["clause_a"], literal_bindings: [{ kind: "negation", operator: "not_allowed", value: false }], evaluator_bindings: [{ stage: "composition", rule: "excluded_material", value: "leather", source_clause_id: "clause_a", source_quote: "No leather" }] }],
+    constraint_routes: [{ constraint_id: "material", kind: "composition", status: "active", stages: ["composition"], deferred_until: null }],
+  };
+  let executions = 0;
+  const registry = new Map([["shopping_composition_assess", definition("composition", z.object({ requirements: z.object({ excluded_materials: z.array(z.object({ name: z.string() })) }) }), async () => { executions++; return { structuredContent: { assessments: [] } }; })]]);
+  const stage_adapter = ({ constraint_ids }) => ({ stage: "composition", consumed_constraint_ids: constraint_ids });
+  const run = (name) => runShoppingEvaluatorBatch({ decision_context: context, constraint_validator: validateShoppingConstraintJob, stage_adapter, jobs: [{ job_id: name, tool: "shopping_composition_assess", subject: { product_id: "camera-x" }, constraint_ids: ["material"], arguments: { requirements: { excluded_materials: [{ name }] } } }] }, registry);
+  const valid = await run("leather");
+  assert.equal(valid.results[0].status, "complete");
+  assert.deepEqual(valid.results[0].dossier_stage.consumed_constraint_ids, ["material"]);
+  const substituted = await run("wool");
+  assert.equal(substituted.results[0].status, "failed");
+  assert.equal(substituted.results[0].error.code, "shopping_constraint_input_mismatch");
+  assert.equal(executions, 1);
+});
+
+test("decision waves reject irrelevant, duplicate, and wrong-subject jobs before execution", async () => {
+  let executions = 0;
+  const registry = new Map([
+    ["shopping_safety_assess", definition("safety", z.object({}), async () => { executions++; return { structuredContent: {} }; })],
+    ["shopping_compatibility_assess", definition("compatibility", z.object({}), async () => { executions++; return { structuredContent: {} }; })],
+    ["shopping_counterfeit_assess", definition("counterfeit", z.object({}), async () => { executions++; return { structuredContent: {} }; })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({
+    decision_context: { product_id: "camera-x", offer_id: null },
+    required_stages: ["safety"],
+    jobs: [
+      { job_id: "safety-a", tool: "shopping_safety_assess", subject: { product_id: "camera-x" }, arguments: {} },
+      { job_id: "safety-b", tool: "shopping_safety_assess", subject: { product_id: "camera-x" }, arguments: {} },
+      { job_id: "skipped", tool: "shopping_compatibility_assess", subject: { product_id: "camera-x" }, arguments: {} },
+      { job_id: "wrong", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-y", offer_id: "offer-y" }, arguments: {} },
+    ],
+  }, registry);
+  assert.equal(executions, 0);
+  assert.deepEqual(result.results.map((item) => item.error.code), [
+    "shopping_evaluator_stage_duplicate",
+    "shopping_evaluator_stage_duplicate",
+    "shopping_evaluator_stage_not_applicable",
+    "shopping_evaluator_stage_not_applicable",
+  ]);
+  assert.equal(result.wave.avoided_executions, 4);
+  assert.equal(Number.isFinite(result.wave.wall_time_ms), true);
+  assert.ok(result.results.every((item) => item.duration_ms === 0));
+});
+
+test("offer-scoped wave jobs must bind the exact context offer before execution", async () => {
+  let executions = 0;
+  const registry = new Map([["shopping_counterfeit_assess", definition("counterfeit", z.object({}), async () => { executions++; return { structuredContent: {} }; })]]);
+  const result = await runShoppingEvaluatorBatch({
+    decision_context: { product_id: "camera-x", offer_id: "offer-a" },
+    required_stages: ["counterfeit"],
+    jobs: [{ job_id: "wrong-offer", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: "offer-b" }, arguments: {} }],
+  }, registry);
+  assert.equal(executions, 0);
+  assert.equal(result.results[0].error.code, "shopping_evaluator_subject_mismatch");
+  assert.equal(result.wave.avoided_executions, 1);
+});

@@ -1,0 +1,183 @@
+{
+  "summary": {
+    "tier": "main",
+    "brain_role": "harness_main",
+    "runs": 1,
+    "action": 1,
+    "target": 1,
+    "prompt_tokens": 7961,
+    "completion_tokens": 410
+  },
+  "results": [
+    {
+      "task": "one-source-only",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "Independent-retailer coverage is 1 of the required 2, so another retailer must be found before selecting the verified $49 offer."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 745,
+      "completion_tokens": 48
+    },
+    {
+      "task": "enough-to-select",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "A and B are exact, verified, in-stock offers from enough independent retailers, and A has the lower landed total."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 809,
+      "completion_tokens": 40
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "Offer A is cheaper-looking but has unknown shipping that could change the landed winner versus verified B at $46."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 824,
+      "completion_tokens": 40
+    },
+    {
+      "task": "edition-decoys",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "No offer is the requested base Odyssey Homme Black EDP; both current listings are editions."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "exact_product"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 758,
+      "completion_tokens": 38
+    },
+    {
+      "task": "missing-size",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "target": "size",
+        "reason": "Size is a missing preference that changes which AlpineShell jacket can be purchased."
+      },
+      "expected": {
+        "action": "clarify",
+        "target": "size"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 692,
+      "completion_tokens": 30
+    },
+    {
+      "task": "seller-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "Cheaper exact offer A is unresolved on required authorized-seller status, which could change the winner versus verified offer B."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 848,
+      "completion_tokens": 41
+    },
+    {
+      "task": "all-out-of-stock",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "All exact-product offers are verified out of stock, so search independent retailers rather than re-targeting the already-proven product."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 781,
+      "completion_tokens": 46
+    },
+    {
+      "task": "quantity-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "B",
+        "reason": "Offer B is an exact in-stock candidate whose unknown pack quantity could beat A's verified $17 per-filter landed cost."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "B"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 851,
+      "completion_tokens": 42
+    },
+    {
+      "task": "stock-conflict",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "Offer A is the only exact match but has conflicting snippet-vs-page stock, so availability must be resolved before purchase or further search."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 782,
+      "completion_tokens": 45
+    },
+    {
+      "task": "verified-winner",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "A is the cheapest exact new in-stock offer with a verified landed total and independent-retailer coverage already meets policy."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 871,
+      "completion_tokens": 40
+    }
+  ]
+}

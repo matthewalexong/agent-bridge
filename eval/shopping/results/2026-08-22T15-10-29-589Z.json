@@ -1,0 +1,173 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v4.md",
+    "model_tier": "local",
+    "runs": 2,
+    "tasks": 3,
+    "action": 0.6666666666666666,
+    "selection": 1,
+    "landed": 1,
+    "evidence": 0,
+    "gate_pass": false
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "hard requirement met: product_key=ardent-trailcam-x2, variant=black, condition=new",
+          "landed_total_usd:98.00 is smaller than A's 104.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "shipping-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "hard requirement met: product_key=ardent-trailcam-x2, variant=black, condition=new",
+          "landed_total_usd:98.00 is smaller than A's 104.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 1,
+      "answer": {
+        "action": "B",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "hard_requirements_met: true",
+          "computed_unit_cost_usd: 16 vs 17 for offer A"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": false,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": false,
+      "failures": [
+        "action: expected select, got B",
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 2,
+      "answer": {
+        "action": "B",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "hard_requirements_met: true",
+          "computed_unit_cost_usd: 16 vs 17 for offer A"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": false,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": false,
+      "failures": [
+        "action: expected select, got B",
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "no-match",
+      "run": 1,
+      "answer": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "No offer met all hard requirements",
+          "Offer A failed hard requirement: variant must be iso-uk"
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "no-match",
+      "run": 2,
+      "answer": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "No offer met all hard requirements",
+          "Offer A failed hard requirement: variant must be iso-uk"
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    }
+  ]
+}

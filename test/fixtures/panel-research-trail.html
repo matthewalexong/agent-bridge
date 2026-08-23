@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent Bridge research trail fixture</title>
+    <link rel="stylesheet" href="../../extension/panel.css">
+  </head>
+  <body>
+    <header>
+      <img src="../../extension/icons/icon32.png" width="26" height="26" alt="">
+      <div class="head-text"><h1>Agent Bridge</h1><p id="status" class="status pending">Connecting…</p></div>
+      <button id="clear" class="text-button" type="button">Clear</button>
+    </header>
+    <main id="transcript" aria-live="polite" aria-label="Conversation"><p id="empty" class="empty">Empty</p></main>
+    <form id="composer"><textarea id="input" rows="2" aria-label="Message the connected agent"></textarea><button id="send" class="primary" type="submit" disabled>Send</button></form>
+    <script>
+      const trail = [
+        { phase: "search", summary: "Searched current listings for the exact requested model.", evidence: ["6 candidate listings from 4 independent sellers"], next: "Verify seller and landed price", at: "2026-08-22T20:00:00.000Z" },
+        { phase: "verify", summary: "Checked identity, seller, promotion, and fulfillment evidence.", evidence: ["2 exact matches remain", "Offer B is manufacturer-authorized", "Offer B: $106 fully landed"], next: "Compare protection and final cost", at: "2026-08-22T20:01:00.000Z" },
+        { phase: "decision", summary: "Offer B is the only fully verified value winner.", evidence: ["Offer A: $112 landed", "Offer B: $106 landed"], next: null, at: "2026-08-22T20:02:00.000Z" },
+      ];
+      const state = {
+        transcript: [
+          { id: "u1", role: "user", text: "Find the best verified price for this camera.", at: "2026-08-22T19:59:00.000Z" },
+          { id: "a1", role: "agent", text: "Offer B is the best verified option at $106 fully landed. It is the exact model, in stock, and sold by an authorized seller.", research: trail, at: "2026-08-22T20:02:00.000Z" },
+        ],
+        agent: { name: "Hermes", since: "2026-08-22T19:58:00.000Z" },
+        status: { text: "Checking return protection before final confirmation.", phase: "verify", evidence: ["30-day verified return window", "No restocking fee"], next: "Reconcile checkout total", at: "2026-08-22T20:03:00.000Z" },
+        progress: trail.slice(0, 2),
+        capabilities: ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"],
+      };
+      window.chrome = { runtime: { lastError: null, onMessage: { addListener() {} }, sendMessage(message, callback) { callback({ ok: true, result: message.type === "panel.get" ? state : message.type === "auth.get" ? {} : { cleared: true } }); } } };
+    </script>
+    <script type="module" src="../../extension/panel.js"></script>
+  </body>
+</html>

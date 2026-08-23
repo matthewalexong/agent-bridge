@@ -1,0 +1,147 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v2.md",
+    "model_tier": "local",
+    "runs": 1,
+    "tasks": 5,
+    "action": 1,
+    "selection": 0.8,
+    "landed": 0.6,
+    "evidence": 0.2,
+    "gate_pass": false
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "A",
+        "landed_total_usd": 104,
+        "evidence": [
+          "Offer A meets all requirements.",
+          "Landed total for A: 89 + 15 - 0 = 104.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": false,
+      "landedOk": false,
+      "evidenceScore": 0,
+      "pass": false,
+      "failures": [
+        "selected_offer: expected B, got A",
+        "landed_total_usd: expected 98, got 104",
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 42.5,
+        "evidence": [
+          "Offer A failed minimum quantity requirement (quantity=2, required_preference_missing=false, but requirement is min_quantity=2, and offer A has quantity=2, so it passes quantity check).",
+          "Offer A landed total: 34 + 0 - 0 = 34.00. Offer B landed total: 45 + 3 - 0 = 48.00. Wait, re-evaluating based on objective unit_cost."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": false,
+      "evidenceScore": 0.5,
+      "pass": false,
+      "failures": [
+        "landed_total_usd: expected 48, got 42.5",
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Offer A excluded because shipping_usd is null.",
+          "Offer B landed total: 46 + 0 - 0 = 46.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "no-match",
+      "run": 1,
+      "answer": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "Offer A failed requirement: variant must be iso-uk (found ansi-us).",
+          "Offer B failed requirement: max landed cost ($120) exceeded (landed total is $125)."
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "clarify",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "required_preference_missing is true"
+        ]
+      },
+      "want": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    }
+  ]
+}

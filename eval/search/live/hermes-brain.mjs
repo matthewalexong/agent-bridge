@@ -25,9 +25,20 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ask } from "./model-client.mjs";
 import { makeSearchBackend } from "./search-backend.mjs";
+import { executeSearchBatch, formatSearchBatchResults, parseSearchBatchDirective } from "./research-lanes.mjs";
+import { callBridge } from "../../../lib/bridge-client.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MAX_SEARCH_TURNS = 4;
+const MAX_SEARCH_QUERIES = 8;
+
+async function publishProgress({ phase, summary, evidence = [], next = null }) {
+  try {
+    await callBridge("panel.status", { text: summary, phase, evidence, next, persist: true }, { timeoutMs: 1_000 });
+  } catch {
+    // The brain is also usable without a running panel bridge.
+  }
+}
 
 function loadSkill() {
   const path = process.env.AB_SKILL_FILE
@@ -51,6 +62,8 @@ function parseTranscript() {
 
 // Parse model response: either a SEARCH directive or a JSON envelope.
 function parseModelResponse(text) {
+  const batch = parseSearchBatchDirective(text);
+  if (batch) return batch.error ? { type: "search_batch_invalid", error: batch.error } : { type: "search_batch", items: batch.items };
   // Check for SEARCH: directive (case-insensitive, may have surrounding text)
   const searchMatch = text.match(/^\s*SEARCH:\s*(.+)$/im);
   if (searchMatch) {
@@ -77,7 +90,10 @@ async function main() {
 
   const skill = loadSkill();
   const transcript = parseTranscript();
+  const messageId = String(process.env.AB_MESSAGE_ID || "").trim();
+  const messageRevision = String(process.env.AB_MESSAGE_REVISION || "1").trim();
   const searches = []; // log of {query, results}
+  const evidenceCache = new Map();
 
   // Build search backend
   const backendOpts = {};
@@ -94,10 +110,15 @@ async function main() {
   // System prompt: skill + tool protocol
   const system = [
     skill || "You are a helpful shopping assistant.",
+    ...(messageId ? ["", "## TRUSTED CURRENT REQUEST IDENTITY", `request_id: ${messageId}`, `request_revision: ${messageRevision}`, "Use these runtime-provided values for any shopping decision context; never invent replacements."] : []),
     "",
     "## OUTPUT PROTOCOL",
     "You have a search tool. To use it, reply with EXACTLY:",
     "SEARCH: <your query>",
+    "For 2-4 independent evidence lanes, prefer one concurrent batch on a single line:",
+    'SEARCH_BATCH: [{"lane":"discovery","query":"..."},{"lane":"safety","query":"..."}]',
+    "Allowed lanes: discovery, product_evidence, safety, offer_risk, price_logistics.",
+    "Use the smallest useful batch. The main brain chooses lanes; do not delegate judgment.",
     "The system will return search results, then you reply again.",
     "When you have enough information (or don't need to search), reply with a JSON envelope:",
     "```json",
@@ -143,6 +164,36 @@ async function main() {
 
     const parsed = parseModelResponse(reply);
 
+    if (parsed.type === "search_batch_invalid") {
+      messages.push({ role: "assistant", content: reply });
+      messages.push({ role: "user", content: `SEARCH BATCH REJECTED: ${parsed.error}. Use valid one-line JSON with 1-4 allowed lane/query objects.` });
+      continue;
+    }
+
+    if (parsed.type === "search_batch") {
+      if (!search) {
+        messages.push({ role: "assistant", content: reply });
+        messages.push({ role: "user", content: "SEARCH UNAVAILABLE — no search backend configured. Answer with what you have, or say you cannot verify." });
+        continue;
+      }
+      const remaining = Math.max(0, MAX_SEARCH_QUERIES - searches.length);
+      if (!remaining) {
+        messages.push({ role: "assistant", content: reply });
+        messages.push({ role: "user", content: "SEARCH BUDGET EXHAUSTED — answer from the evidence already collected." });
+        continue;
+      }
+      const batch = parsed.items.slice(0, Math.min(4, remaining));
+      await publishProgress({ phase: "search", summary: `Searching ${batch.length} evidence lane${batch.length === 1 ? "" : "s"} in parallel.`, evidence: batch.map((item) => `${item.lane}: ${item.query}`).slice(0, 5), next: "Merge duplicate evidence and inspect viable candidates" });
+      const entries = await executeSearchBatch(batch, search, { cache: evidenceCache, max_items: remaining });
+      for (const entry of entries) searches.push({ query: entry.query, lanes: entry.lanes, status: entry.status, cached: entry.cached });
+      const listingCount = new Set(entries.flatMap((entry) => [...String(entry.results || "").matchAll(/\[id\s+(\d+)\]/gi)].map((match) => match[1]))).size;
+      const completed = entries.filter((entry) => entry.status === "complete").length;
+      await publishProgress({ phase: "inspect", summary: `Completed ${completed}/${entries.length} parallel evidence searches.`, evidence: [`${listingCount} unique listing IDs surfaced`, `${entries.filter((entry) => entry.cached).length} duplicate queries reused from cache`], next: "Evaluate hard gates and narrow the contenders" });
+      messages.push({ role: "assistant", content: reply });
+      messages.push({ role: "user", content: `SEARCH BATCH RESULTS:\n${formatSearchBatchResults(entries)}\n\nNow respond with your final JSON envelope, another SEARCH_BATCH, or one SEARCH if a targeted gap remains.` });
+      continue;
+    }
+
     if (parsed.type === "search") {
       if (!search) {
         // No backend — tell model search is unavailable
@@ -150,13 +201,26 @@ async function main() {
         messages.push({ role: "user", content: "SEARCH UNAVAILABLE — no search backend configured. Answer with what you have, or say you cannot verify." });
         continue;
       }
-      searches.push({ query: parsed.query });
+      if (searches.length >= MAX_SEARCH_QUERIES) {
+        messages.push({ role: "assistant", content: reply });
+        messages.push({ role: "user", content: "SEARCH BUDGET EXHAUSTED — answer from the evidence already collected." });
+        continue;
+      }
+      await publishProgress({ phase: "search", summary: "Searching current listings for the exact requested product.", evidence: [`Search pass ${searches.length + 1}`], next: "Inspect candidate identity, price, and availability" });
+      searches.push({ query: parsed.query, lanes: ["discovery"], status: "complete", cached: false });
       let results;
       try {
         results = await search(parsed.query);
       } catch (e) {
         results = `SEARCH ERROR: ${e.message}`;
       }
+      const listingCount = new Set([...String(results).matchAll(/\[id\s+(\d+)\]/gi)].map((match) => match[1])).size;
+      await publishProgress({
+        phase: "inspect",
+        summary: listingCount ? `Search returned ${listingCount} candidate listing${listingCount === 1 ? "" : "s"}.` : "The search returned no structured candidate listings.",
+        evidence: listingCount ? [`${listingCount} listing IDs available for verification`] : [String(results).startsWith("SEARCH ERROR:") ? "Search backend reported an error" : "No listing IDs were returned"],
+        next: "Verify exact matches and produce a sourced answer",
+      });
       messages.push({ role: "assistant", content: reply });
       messages.push({ role: "user", content: `SEARCH RESULTS:\n${results}\n\nNow respond with your final JSON envelope (or another SEARCH: if you need different results).` });
       continue;
@@ -193,6 +257,11 @@ async function main() {
       citations: [],
       answer: "I searched but couldn't complete the answer. Please try rephrasing.",
     };
+  }
+
+  if (searches.length > 0) {
+    const citations = Array.isArray(envelope.citations) ? envelope.citations.length : 0;
+    await publishProgress({ phase: "decision", summary: "Finished the bounded search and prepared the answer.", evidence: [`${searches.length} search pass${searches.length === 1 ? "" : "es"} completed`, `${citations} cited listing${citations === 1 ? "" : "s"}`], next: null });
   }
 
   if (process.env.AB_EMIT_ENVELOPE === "1") {

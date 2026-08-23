@@ -1,0 +1,310 @@
+{
+  "summary": {
+    "tier": "local",
+    "runs": 2,
+    "action": 0.8,
+    "target": 0.7
+  },
+  "results": [
+    {
+      "task": "one-source-only",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "one-source-only",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "enough-to-select",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "enough-to-select",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "The offer A has a lower headline price but unknown shipping, which could change the winner."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 2,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "The offer A has a lower headline price but unknown shipping, which could change the winner."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "edition-decoys",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "No exact product was found, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "exact_product"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "edition-decoys",
+      "run": 2,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "No exact product was found, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "exact_product"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "missing-size",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "target": "size",
+        "reason": "The user has not provided the required size for the jacket."
+      },
+      "expected": {
+        "action": "clarify",
+        "target": "size"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "missing-size",
+      "run": 2,
+      "answer": {
+        "action": "clarify",
+        "target": "size",
+        "reason": "The user has not provided the required size for the jacket."
+      },
+      "expected": {
+        "action": "clarify",
+        "target": "size"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "seller-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "The authorized seller status for offer A is unknown and could change the winner."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "seller-unverified",
+      "run": 2,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "The authorized seller status for offer A is unknown and could change the winner."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "all-out-of-stock",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "All exact product offers are out of stock, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "all-out-of-stock",
+      "run": 2,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "All exact product offers are out of stock, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "quantity-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "B",
+        "reason": "The quantity for offer B is unknown, which could change the unit cost calculation."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "B"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "quantity-unverified",
+      "run": 2,
+      "answer": {
+        "action": "verify_offer",
+        "target": "B",
+        "reason": "The quantity for offer B is unknown, which could change the unit cost calculation."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "B"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "stock-conflict",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "No exact product was found with verified stock, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "stock-conflict",
+      "run": 2,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "No exact product was found with verified stock, so searching for independent retailers is the next step."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": false,
+      "target_ok": false
+    },
+    {
+      "task": "verified-winner",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "verified-winner",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact product with verified stock and landed total."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    }
+  ]
+}

@@ -30,28 +30,31 @@ async function waitFor(fn, timeoutMs, label) {
 // → panel.post wire. The model endpoint is a local mock so the test is
 // deterministic and offline, but every production component in between is real.
 //
-// Scenario: user asks a product question → brain issues SEARCH: → mock serves
-// results → brain emits a JSON envelope with the answer → watcher posts it.
-// This exercises the tool-loop, envelope parsing, and delivery path end-to-end.
+// Scenario: user asks a product question → brain issues one parallel
+// SEARCH_BATCH → mock serves both evidence lanes → brain emits a JSON envelope
+// with the answer → watcher posts it. This exercises concurrent search,
+// progressive status, envelope parsing, and delivery end-to-end.
 test("hermes-brain answers on the real panel wire (no human)", async (context) => {
   const bridgeDir = await fs.mkdtemp(path.join(os.tmpdir(), "chrome-brain-e2e-"));
 
   // --- Mock model endpoint (anthropic /v1/messages). ---
   // Turn 1: model asks to search. Turn 2: model returns a JSON envelope.
   let callCount = 0;
+  const modelRequests = [];
   const mock = http.createServer((req, res) => {
     let body = "";
     req.on("data", (c) => { body += c; });
     req.on("end", () => {
       callCount++;
+      modelRequests.push(JSON.parse(body));
       let text;
       if (callCount === 1) {
-        text = "SEARCH: odyssey black bottle cologne";
+        text = 'SEARCH_BATCH: [{"lane":"discovery","query":"odyssey black bottle cologne"},{"lane":"price_logistics","query":"odyssey homme black current price"}]';
       } else {
         text = "```json\n" + JSON.stringify({
           correction_detected: false,
           prior_claim: null,
-          searches: [{ query: "odyssey black bottle cologne" }],
+          searches: [],
           products_found: ["Odyssey - Homme Black"],
           citations: [{ id: 49, price_usd: 20.72 }],
           answer: "The black-bottle Odyssey is Odyssey - Homme Black at $20.72.",
@@ -202,8 +205,16 @@ test("hermes-brain answers on the real panel wire (no human)", async (context) =
     assert.equal(agentReply.role, "agent");
     assert.match(agentReply.text, /Odyssey - Homme Black/, `reply should name the product, got: ${agentReply.text}`);
     assert.match(agentReply.text, /\$20\.72/, "reply should cite the price");
+    assert.deepEqual(agentReply.research.map((item) => item.phase), ["search", "inspect", "decision"]);
+    assert.match(agentReply.research[0].summary, /2 evidence lanes in parallel/i);
+    assert.match(agentReply.research[1].summary, /Completed 2\/2 parallel evidence searches/i);
+    assert.ok(agentReply.research[1].evidence.some((item) => /unique listing IDs surfaced/i.test(item)));
+    assert.ok(agentReply.research[2].evidence.some((item) => /cited listing/i.test(item)));
+    assert.equal(result.progress.length, 0, "final post consumes the live progress trail");
     // The mock must have been called twice (search turn + final envelope).
     assert.ok(callCount >= 2, `expected >=2 model calls (search + envelope), got ${callCount}`);
+    assert.match(String(modelRequests[0]?.system || ""), new RegExp(`request_id: ${sent.result.entry.id}`));
+    assert.match(String(modelRequests[0]?.system || ""), /request_revision: 1/);
   } finally {
     globalThis.chrome = previousChrome;
     child.stdin.end();

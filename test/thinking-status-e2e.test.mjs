@@ -162,12 +162,12 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
 
   // --- 3. A concrete agent-authored summary must survive a generic gateway
   // heartbeat. Heartbeats contain no useful reasoning and must not overwrite it. ---
-  const concreteSummary = "Doing: comparing three listings. Found: two match the requested size. Next: verify stock.";
+  const concreteSummary = "Comparing three listings; two match the requested size.";
   await nativeMessage.listener({
     type: "request",
     id: "agent-progress-summary",
     method: "panel.status",
-    params: { text: concreteSummary },
+    params: { text: concreteSummary, phase: "compare", evidence: ["2 of 3 listings match the requested size"], next: "Verify stock", persist: true },
   }, port);
   await flush();
   const marker = `webhook:panel_message:${deliveryId}`;
@@ -192,4 +192,17 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
   assert.equal(clearedUpdate.transcript.length, 1);
   assert.equal(clearedUpdate.transcript[0].role, "user");
   assert.equal(clearedUpdate.transcript[0].text, "find the cheapest whey");
+  assert.equal(clearedUpdate.progress.length, 1, "agent-authored progress survives transient-status clearing");
+  assert.equal(clearedUpdate.progress[0].phase, "compare");
+
+  // --- 6. The final reply consumes that bounded progress and stores it as a
+  // collapsible research trail on the answer; the next turn starts clean. ---
+  await nativeMessage.listener({ type: "request", id: "agent-final", method: "panel.post", params: { text: "Offer B is the cheapest verified match." } }, port);
+  await flush();
+  const finalUpdate = broadcasts.filter((message) => message.type === "panel.update").at(-1);
+  assert.equal(finalUpdate.transcript.length, 2);
+  assert.equal(finalUpdate.transcript[1].role, "agent");
+  assert.equal(finalUpdate.transcript[1].research.length, 1);
+  assert.equal(finalUpdate.transcript[1].research[0].evidence[0], "2 of 3 listings match the requested size");
+  assert.equal(finalUpdate.progress.length, 0);
 });

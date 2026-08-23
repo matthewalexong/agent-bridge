@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "tier": "main",
+    "brain_role": "harness_main",
+    "runs": 1,
+    "action": 1,
+    "target": 1,
+    "prompt_tokens": 781,
+    "completion_tokens": 47
+  },
+  "results": [
+    {
+      "task": "all-out-of-stock",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "Both exact WaveKey 75 ISO-UK offers are verified out of stock, so look for other independent retailers that may have it."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true,
+      "prompt_tokens": 781,
+      "completion_tokens": 47
+    }
+  ]
+}

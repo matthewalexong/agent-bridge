@@ -8,6 +8,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 export function readHermesModel() {
   const cfgPath = process.env.HERMES_BRAIN_CONFIG_FILE
@@ -23,10 +27,31 @@ export function readHermesModel() {
       if (m) model[m[1]] = m[2].trim().replace(/^["']|["']$/g, "");
     }
   }
-  if (!model.base_url || !model.api_key) {
+  if (!model.default) {
     throw new Error("could not read model block from ~/.hermes/config.yaml");
   }
   return model;
+}
+
+async function askThroughHermesCli(messages, { system, maxTokens, cfg }) {
+  const prompt = [
+    system ? `SYSTEM INSTRUCTIONS:\n${system}` : "",
+    ...messages.map((message) => `${String(message.role || "user").toUpperCase()}:\n${String(message.content || "")}`),
+    `ASSISTANT:\nReturn only the response to the final user message. Keep the response within approximately ${maxTokens} tokens.`,
+  ].filter(Boolean).join("\n\n");
+  const args = ["--oneshot", prompt, "--in", process.cwd(), "--reasoning", "low"];
+  if (cfg.provider) args.push("--provider", cfg.provider);
+  if (cfg.default) args.push("--model", cfg.default);
+  let result;
+  try {
+    result = await execFileAsync(process.env.HERMES_BRAIN_CLI || "hermes", args, { timeout: 120_000, maxBuffer: 2_000_000, env: process.env });
+  } catch (error) {
+    const diagnostic = String(error.stderr || error.message || "unknown CLI failure").replace(/\s+/g, " ").slice(0, 300);
+    throw new Error(`Hermes credential-pool fallback failed: ${diagnostic}`);
+  }
+  const reply = String(result.stdout || "").trim();
+  if (!reply) throw new Error("Hermes credential-pool fallback returned no text");
+  return reply;
 }
 
 // ask(messages, { system, maxTokens }) -> string reply text.
@@ -36,6 +61,8 @@ export function readHermesModel() {
 // fallback for endpoints that reject the param.
 export async function ask(messages, { system = "", maxTokens = 4096, cfg = null } = {}) {
   const m = cfg ?? readHermesModel();
+  if (!m.api_key) return askThroughHermesCli(messages, { system, maxTokens, cfg: m });
+  if (!m.base_url) throw new Error("Hermes direct model endpoint is missing base_url");
   if ((m.api_mode || "").includes("anthropic")) {
     const body = {
       model: m.default,

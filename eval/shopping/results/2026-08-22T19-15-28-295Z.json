@@ -1,0 +1,245 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v7.md",
+    "model_tier": "local",
+    "runs": 2,
+    "tasks": 5,
+    "action": 1,
+    "selection": 1,
+    "landed": 1,
+    "evidence": 1,
+    "gate_pass": true
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B won with a landed total of $98, which is cheaper than Offer A's $104 due to Offer B having $0 shipping while meeting all requirements."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "shipping-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B won with a landed total of $98, which is cheaper than Offer A's $104 due to Offer B having $0 shipping while meeting all requirements."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "edition-decoy",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Winner is offer B with a landed total of 31. Offer A was rejected because it had a wrong product identity."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "edition-decoy",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Winner is offer B with a landed total of 31. Offer A was rejected because it had a wrong product identity."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Winner: Offer B with landed total $65.00, which is cheaper than Offer A's $72.00. Offer A was rejected because it had a coupon that was ineligible."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Winner: Offer B with landed total $65.00, which is cheaper than Offer A's $72.00. Offer A was rejected because it had a coupon that was ineligible."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "authorized-seller",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "Winner is offer B with a landed total of 199. Offer B is higher than offer A (179) because offer A failed the requirement that the seller must be authorized."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "authorized-seller",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "Winner is offer B with a landed total of 199. Offer B is higher than offer A (179) because offer A failed the requirement that the seller must be authorized."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Winner is Offer B with a landed total of 46. Offer B's total is higher than Offer A's potential total because Offer A had unknown shipping."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Winner is Offer B with a landed total of 46. Offer B's total is higher than Offer A's potential total because Offer A had unknown shipping."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    }
+  ]
+}

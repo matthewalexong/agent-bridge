@@ -145,6 +145,7 @@ test("panel.status sets a transient thinking status, broadcasts it, and clears",
 
     // Status is transient: NOT part of the transcript.
     assert.equal(got.result.transcript.length, 0);
+    assert.equal(got.result.progress.length, 1);
 
     // Clearing with empty/null text removes it (reply landed).
     const cleared = await harness.dispatch("status-clear", "panel.status", { text: "  " });
@@ -152,6 +153,45 @@ test("panel.status sets a transient thinking status, broadcasts it, and clears",
     const after = await harness.dispatch("status-after", "panel.get", {});
     assert.equal(after.result.status, null);
     assert.ok(after.result.capabilities.includes("status:v1"));
+    assert.ok(after.result.capabilities.includes("research-trail:v1"));
+  } finally {
+    harness.restore();
+  }
+});
+
+test("structured progress is bounded, deduplicated, and attached to the final answer", async () => {
+  const harness = await loadHarness();
+  try {
+    await harness.sendRuntime({ type: "panel.send", text: "compare these two laptops" });
+    const generic = await harness.dispatch("generic", "panel.status", { text: "Planning the approach…", phase: "plan", persist: false });
+    assert.equal(generic.result.progress.length, 0, "host placeholder must not become research evidence");
+
+    const plan = { text: "Checking exact models and final prices.", phase: "plan", evidence: ["Two candidate listings supplied"], next: "Verify identity and fulfillment", persist: true };
+    await harness.dispatch("progress-plan", "panel.status", plan);
+    await harness.dispatch("progress-plan-duplicate", "panel.status", plan);
+    await harness.dispatch("progress-verify", "panel.status", {
+      text: "Both models match; one total includes an estimated tax range.", phase: "verify",
+      evidence: ["Offer A: $1,020–$1,080 landed", `Credential ${"xai-" + "A".repeat(24)}`, ...Array(10).fill("extra evidence")],
+      next: "Compare ranges without assuming the expected value", persist: true,
+    });
+    let state = await harness.dispatch("progress-get", "panel.get", {});
+    assert.equal(state.result.progress.length, 2, "identical status updates are deduplicated");
+    assert.equal(state.result.progress[1].evidence.length, 5, "evidence is bounded");
+    assert.equal(state.result.progress[1].evidence[1], "[Sensitive detail omitted]", "credentials are never retained in a trail");
+    assert.equal(state.result.status.phase, "verify");
+
+    const posted = await harness.dispatch("progress-post", "panel.post", { text: "The totals overlap, so I need your preference on uncertainty." });
+    assert.equal(posted.result.entry.research.length, 2);
+    assert.equal(posted.result.entry.research[0].phase, "plan");
+    assert.equal(posted.result.entry.research[1].next, "Compare ranges without assuming the expected value");
+    state = await harness.dispatch("progress-after", "panel.get", {});
+    assert.equal(state.result.progress.length, 0);
+    assert.equal(state.result.status, null);
+    assert.equal(state.result.transcript[1].research.length, 2, "trail survives as part of the answer entry");
+
+    await harness.sendRuntime({ type: "panel.send", text: "now compare phones" });
+    const nextTurn = await harness.dispatch("progress-next-turn", "panel.get", {});
+    assert.equal(nextTurn.result.progress.length, 0, "research never leaks into the next user turn");
   } finally {
     harness.restore();
   }

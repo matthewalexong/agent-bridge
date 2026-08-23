@@ -1,0 +1,161 @@
+{
+  "summary": {
+    "tier": "main",
+    "brain_role": "harness_main",
+    "runs": 1,
+    "action": 1,
+    "target": 0.9
+  },
+  "results": [
+    {
+      "task": "one-source-only",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "independent_retailer",
+        "reason": "Only one independent retailer was found and policy requires at least two."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "enough-to-select",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Exact Orbit Mouse M2 offers from two independent retailers are in stock with verified landed totals, and A is the cheapest purchasable winner."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "A cheaper-looking exact offer has unknown shipping that could change the delivered winner versus the verified $46 offer."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "edition-decoys",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "No exact base Odyssey Homme Black EDP was found; both current offers are editions the user excluded."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "exact_product"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "missing-size",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "target": "size",
+        "reason": "Size is unspecified and will change which AlpineShell jacket and offers are valid to buy."
+      },
+      "expected": {
+        "action": "clarify",
+        "target": "size"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "seller-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "A is cheaper than authorized offer B, so confirming A's unknown authorized-seller status could change the winner."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "all-out-of-stock",
+      "run": 1,
+      "answer": {
+        "action": "search_more",
+        "target": "exact_product",
+        "reason": "Both exact WaveKey 75 ISO-UK offers are verified out of stock, so more listings are needed to find a purchasable unit."
+      },
+      "expected": {
+        "action": "search_more",
+        "target": "independent_retailer"
+      },
+      "action_ok": true,
+      "target_ok": false
+    },
+    {
+      "task": "quantity-unverified",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "B",
+        "reason": "B’s unknown pack quantity could make its cost per filter beat A’s verified $17, so it must be resolved before selecting."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "B"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "stock-conflict",
+      "run": 1,
+      "answer": {
+        "action": "verify_offer",
+        "target": "A",
+        "reason": "Offer A is the only exact match but stock is unverified with conflicting in-stock vs unavailable claims, so resolving stock could change whether it is purchasable now."
+      },
+      "expected": {
+        "action": "verify_offer",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    },
+    {
+      "task": "verified-winner",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "target": "A",
+        "reason": "Offer A is the cheapest exact new Sequoia Mini Projector with verified stock and landed total, and source coverage is sufficient."
+      },
+      "expected": {
+        "action": "select",
+        "target": "A"
+      },
+      "action_ok": true,
+      "target_ok": true
+    }
+  ]
+}

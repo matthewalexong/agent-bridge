@@ -32,22 +32,52 @@ const PANEL_MAX_ENTRIES = 200;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1", "status:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
+const PANEL_MAX_PROGRESS_ITEMS = 12;
+const PANEL_MAX_PROGRESS_EVIDENCE = 5;
+const PANEL_MAX_PROGRESS_EVIDENCE_TEXT = 160;
+const PANEL_MAX_PROGRESS_NEXT_TEXT = 200;
+const PANEL_PROGRESS_PHASES = new Set(["plan", "search", "inspect", "verify", "compare", "decision", "working"]);
+const PANEL_PROGRESS_SENSITIVE = /(?:xai-|sk-)[A-Za-z0-9_-]{16,}|\bbearer\s+[A-Za-z0-9._~+\/-]{16,}|(?:\d[ -]?){13,19}/i;
 const panelTranscript = [];
 let nextPanelMessageId = 1;
 let panelAgent = null;
-// Transient "agent is thinking" status. Not part of the transcript: it
-// updates many times per turn and disappears when the reply lands.
+// Current status is transient. Agent-authored, bounded progress milestones are
+// kept separately for the active turn and attached to the final answer as an
+// audit summary; host placeholders opt out with persist:false.
 let panelStatus = null;
+let panelProgress = [];
 
-function setPanelStatus(text) {
+function progressText(value, max) {
+  const text = String(value ?? "").trim().slice(0, max);
+  return PANEL_PROGRESS_SENSITIVE.test(text) ? "[Sensitive detail omitted]" : text;
+}
+
+function setPanelStatus(input) {
+  const params = input && typeof input === "object" ? input : { text: input };
+  const text = params.text;
   if (text == null || String(text).trim() === "") {
     panelStatus = null;
   } else {
-    panelStatus = { text: String(text).slice(0, PANEL_MAX_STATUS_TEXT), at: new Date().toISOString() };
+    const at = new Date().toISOString();
+    const summary = progressText(text, PANEL_MAX_STATUS_TEXT);
+    const phase = PANEL_PROGRESS_PHASES.has(params.phase) ? params.phase : "working";
+    const evidence = Array.isArray(params.evidence)
+      ? params.evidence.filter((item) => typeof item === "string" && item.trim()).slice(0, PANEL_MAX_PROGRESS_EVIDENCE).map((item) => progressText(item, PANEL_MAX_PROGRESS_EVIDENCE_TEXT))
+      : [];
+    const next = typeof params.next === "string" && params.next.trim() ? progressText(params.next, PANEL_MAX_PROGRESS_NEXT_TEXT) : null;
+    panelStatus = { text: summary, phase, evidence, next, at };
+    if (params.persist !== false) {
+      const progress = { phase, summary, evidence, next, at };
+      const previous = panelProgress[panelProgress.length - 1];
+      if (!previous || previous.phase !== progress.phase || previous.summary !== progress.summary || previous.next !== progress.next || JSON.stringify(previous.evidence) !== JSON.stringify(progress.evidence)) {
+        panelProgress.push(progress);
+        if (panelProgress.length > PANEL_MAX_PROGRESS_ITEMS) panelProgress = panelProgress.slice(-PANEL_MAX_PROGRESS_ITEMS);
+      }
+    }
   }
   broadcastPanel();
   return panelStatus;
@@ -157,7 +187,7 @@ function emitBrowserEvent(event, data) {
   }
 }
 
-function recordPanelEntry(role, text, links) {
+function recordPanelEntry(role, text, links, research) {
   const entry = {
     id: `panel_${nextPanelMessageId++}`,
     role,
@@ -165,6 +195,7 @@ function recordPanelEntry(role, text, links) {
     at: new Date().toISOString(),
   };
   if (Array.isArray(links) && links.length > 0) entry.links = links;
+  if (Array.isArray(research) && research.length > 0) entry.research = research.map((item) => ({ ...item, evidence: [...item.evidence] }));
   panelTranscript.push(entry);
   if (panelTranscript.length > PANEL_MAX_ENTRIES) {
     panelTranscript.splice(0, panelTranscript.length - PANEL_MAX_ENTRIES);
@@ -205,6 +236,7 @@ function broadcastPanel() {
       transcript: panelTranscript.slice(-100),
       agent: panelAgent,
       status: panelStatus,
+      progress: panelProgress,
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
@@ -1613,15 +1645,17 @@ async function dispatch(method, params) {
     case "raw.detach":
       return detachRawSession(params);
     case "panel.get":
-      return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, capabilities: PANEL_CAPABILITIES };
+      return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, capabilities: PANEL_CAPABILITIES };
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
-      return { status: setPanelStatus(params.text) };
+      return { status: setPanelStatus(params), progress: panelProgress };
     case "panel.post": {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
-      const entry = recordPanelEntry("agent", text, links);
+      const entry = recordPanelEntry("agent", text, links, panelProgress);
+      panelProgress = [];
+      panelStatus = null;
       broadcastPanel();
       return { posted: true, entry };
     }
@@ -1648,11 +1682,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "panel.get") {
-    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, capabilities: PANEL_CAPABILITIES } });
+    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, capabilities: PANEL_CAPABILITIES } });
     return false;
   }
   if (message?.type === "panel.clear") {
     panelTranscript.length = 0;
+    panelProgress = [];
+    panelStatus = null;
     broadcastPanel();
     sendResponse({ ok: true, result: { cleared: true } });
     return false;
@@ -1660,6 +1696,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "panel.send") {
     try {
       const text = panelText(message.text);
+      panelProgress = [];
+      panelStatus = null;
       const entry = recordPanelEntry("user", text);
       // Surface the user's message to whichever agent is attached via the
       // bridge event stream (agents poll it with browser_watch_events).

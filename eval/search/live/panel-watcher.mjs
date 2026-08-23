@@ -63,7 +63,11 @@ async function handleMessage(text, context) {
     const reply = await new Promise((resolve, reject) => {
       const child = spawn(cmd, args, {
         stdio: ["pipe", "pipe", "pipe"],
-        env: { ...process.env, ...(transcriptJson ? { AB_TRANSCRIPT_JSON: transcriptJson } : {}) },
+        env: {
+          ...process.env,
+          ...(transcriptJson ? { AB_TRANSCRIPT_JSON: transcriptJson } : {}),
+          ...(context.messageId ? { AB_MESSAGE_ID: String(context.messageId), AB_MESSAGE_REVISION: "1" } : {}),
+        },
       });
       let out = "", err = "";
       const timer = setTimeout(() => {

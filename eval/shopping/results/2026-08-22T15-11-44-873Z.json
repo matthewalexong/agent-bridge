@@ -1,0 +1,501 @@
+{
+  "summary": {
+    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v5.md",
+    "model_tier": "local",
+    "runs": 2,
+    "tasks": 10,
+    "action": 1,
+    "selection": 1,
+    "landed": 1,
+    "evidence": 0.65,
+    "gate_pass": true
+  },
+  "results": [
+    {
+      "task": "shipping-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B is selected with a landed total of $98.00, beating Offer A's total of $104.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "shipping-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98,
+        "evidence": [
+          "Offer B is selected with a landed total of $98.00, beating Offer A's total of $104.00"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 98
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "edition-decoy",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Offer B was selected with a landed total of $31, beating offer A ($24) based on matching the requested product key.",
+          "Offer B met the hard requirement of selecting the base product 'armaf-odyssey-homme-black-edp'."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "edition-decoy",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31,
+        "evidence": [
+          "Offer B was selected with a landed total of $31, beating offer A ($24) based on matching the requested product key.",
+          "Offer B met the hard requirement of selecting the base product 'armaf-odyssey-homme-black-edp'."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 31
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "unit-value",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "Selected offer B with a landed total of $48, optimizing for unit_cost, beating offer A's unit cost of $17 (though B's unit cost is $16)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "unit-value",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48,
+        "evidence": [
+          "Selected offer B with a landed total of $48, optimizing for unit_cost, beating offer A's unit cost of $17 (though B's unit cost is $16)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 48
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Offer B is selected with a landed total of $65, beating Offer A's total of $72"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "ineligible-coupon",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65,
+        "evidence": [
+          "Offer B is selected with a landed total of $65, beating Offer A's total of $72"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 65
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0.5,
+      "pass": true,
+      "failures": [
+        "evidence: covered 1/2 critical facts"
+      ]
+    },
+    {
+      "task": "authorized-seller",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "Selected offer B with a landed total of $199, which met the authorized seller requirement, beating offer A ($179) which was not from an authorized seller."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "authorized-seller",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199,
+        "evidence": [
+          "Selected offer B with a landed total of $199, which met the authorized seller requirement, beating offer A ($179) which was not from an authorized seller."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 199
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "condition-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149,
+        "evidence": [
+          "Selected offer B with a landed total of $149, beating offer A ($119) based on the 'new' condition requirement."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "condition-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149,
+        "evidence": [
+          "Selected offer B with a landed total of $149, beating offer A ($119) based on the 'new' condition requirement."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 149
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Selected offer B with a landed total of 46 USD, beating offer A (which had no verified landed total)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "unknown-shipping",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46,
+        "evidence": [
+          "Selected offer B with a landed total of 46 USD, beating offer A (which had no verified landed total)."
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 46
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/2 critical facts"
+      ]
+    },
+    {
+      "task": "stock-trap",
+      "run": 1,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699,
+        "evidence": [
+          "Selected offer B with a landed total of $699, beating offer A which was out of stock"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "stock-trap",
+      "run": 2,
+      "answer": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699,
+        "evidence": [
+          "Selected offer B with a landed total of $699, beating offer A which was out of stock"
+        ]
+      },
+      "want": {
+        "action": "select",
+        "selected_offer": "B",
+        "landed_total_usd": 699
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "no-match",
+      "run": 1,
+      "answer": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "No offer matches the required variant (iso-uk) under the maximum price of $120.",
+          "Offer A is the cheapest but is the wrong variant (ansi-us)."
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "no-match",
+      "run": 2,
+      "answer": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "No offer matches the required variant (iso-uk) under the maximum price of $120.",
+          "Offer A is the cheapest but is the wrong variant (ansi-us)."
+        ]
+      },
+      "want": {
+        "action": "research_more",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 0,
+      "pass": true,
+      "failures": [
+        "evidence: covered 0/1 critical facts"
+      ]
+    },
+    {
+      "task": "clarify",
+      "run": 1,
+      "answer": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "Missing size preference prevents selection",
+          "User must specify the required size for the AlpineShell jacket"
+        ]
+      },
+      "want": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "task": "clarify",
+      "run": 2,
+      "answer": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null,
+        "evidence": [
+          "Missing size preference prevents selection",
+          "User must specify the required size for the AlpineShell jacket"
+        ]
+      },
+      "want": {
+        "action": "clarify",
+        "selected_offer": null,
+        "landed_total_usd": null
+      },
+      "actionOk": true,
+      "selectionOk": true,
+      "landedOk": true,
+      "evidenceScore": 1,
+      "pass": true,
+      "failures": []
+    }
+  ]
+}
