@@ -3,9 +3,10 @@
 // Desktop chat stays on grok-4.6. Panel traffic moves to the shopping profile
 // webhook (default port 8645) only after this script writes the selection.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
 import {
   loadShoppingModelCatalog,
   resolveShoppingPreset,
@@ -95,6 +96,16 @@ hermes(preset.profile, ["config", "set", "memory.user_profile_enabled", "false"]
 hermes(preset.profile, ["config", "set", "platforms.webhook.enabled", "true"]);
 hermes(preset.profile, ["config", "set", "platforms.webhook.extra.port", String(preset.webhook_port)]);
 hermes(preset.profile, ["config", "set", "platforms.webhook.extra.host", "127.0.0.1"]);
+
+const defaultSubs = join(homedir(), ".hermes", "webhook_subscriptions.json");
+const profileSubs = join(homedir(), ".hermes", "profiles", preset.profile, "webhook_subscriptions.json");
+try {
+  const subs = JSON.parse(readFileSync(defaultSubs, "utf8"));
+  mkdirSync(dirname(profileSubs), { recursive: true });
+  writeFileSync(profileSubs, `${JSON.stringify(subs, null, 2)}\n`);
+} catch (error) {
+  console.error(`Warning: could not copy panel webhook subscription (${error.message})`);
+}
 
 const path = shoppingModelFile();
 mkdirSync(dirname(path), { recursive: true });
