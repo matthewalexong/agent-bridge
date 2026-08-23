@@ -187,6 +187,19 @@ function emitBrowserEvent(event, data) {
   }
 }
 
+function panelHistoryPayload(currentId) {
+  return panelTranscript
+    .filter((entry) => entry.id !== currentId)
+    .slice(-8)
+    .map((entry) => ({
+      role: entry.role,
+      text: String(entry.text ?? "").slice(0, 240),
+      titles: Array.isArray(entry.links)
+        ? entry.links.map((link) => link?.title).filter((title) => typeof title === "string" && title.trim()).slice(0, 3)
+        : [],
+    }));
+}
+
 function recordPanelEntry(role, text, links, research) {
   const entry = {
     id: `panel_${nextPanelMessageId++}`,
@@ -1701,7 +1714,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const entry = recordPanelEntry("user", text);
       // Surface the user's message to whichever agent is attached via the
       // bridge event stream (agents poll it with browser_watch_events).
-      emitBrowserEvent("panel.message", { role: "user", text, messageId: entry.id });
+      emitBrowserEvent("panel.message", {
+        role: "user",
+        text,
+        messageId: entry.id,
+        history: panelHistoryPayload(entry.id),
+      });
       broadcastPanel();
       sendResponse({ ok: true, result: { entry } });
     } catch (error) {

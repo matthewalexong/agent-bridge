@@ -80,6 +80,7 @@ test("panel messages reach the agent event stream and replies land in the transc
     assert.equal(panelEvent.data.role, "user");
     assert.equal(panelEvent.data.text, "find me the cheapest whey");
     assert.equal(panelEvent.data.messageId, sent.result.entry.id);
+    assert.deepEqual(panelEvent.data.history, []);
 
     // 2. The agent replies through panel.post: transcript grows + broadcast.
     const posted = await harness.dispatch("panel-post", "panel.post", { text: "NOW Foods, $0.044/g" });
@@ -196,6 +197,9 @@ test("structured progress is bounded, deduplicated, and attached to the final an
     await harness.sendRuntime({ type: "panel.send", text: "now compare phones" });
     const nextTurn = await harness.dispatch("progress-next-turn", "panel.get", {});
     assert.equal(nextTurn.result.progress.length, 0, "research never leaks into the next user turn");
+    const followUp = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
+    assert.ok(followUp.data.history.some((entry) => entry.role === "user" && /laptops/.test(entry.text)));
+    assert.ok(followUp.data.history.some((entry) => entry.role === "agent"));
   } finally {
     harness.restore();
   }

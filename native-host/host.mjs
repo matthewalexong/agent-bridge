@@ -10,6 +10,7 @@ import {
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
 import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
+import { formatPanelConversation } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 
 let authState = await loadOrCreateAuthState();
@@ -261,10 +262,12 @@ async function forwardPanelMessageToHermes(data) {
       log("panel→hermes: webhook secret missing — skipping forward");
       return;
     }
+    const conversation = formatPanelConversation(data.history);
     const body = JSON.stringify({
       event_type: "panel.message",
       text: typeof data.text === "string" ? data.text : "",
       messageId: data.messageId ?? null,
+      conversation,
       observedAt: new Date().toISOString(),
     });
     const timestamp = String(Math.floor(Date.now() / 1000));

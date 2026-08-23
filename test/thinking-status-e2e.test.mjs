@@ -150,6 +150,7 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
   await waitFor(() => received, 10_000, `webhook to receive forwarded message (host stderr: ${hostStderr.slice(-400)})`);
   assert.equal(received.body.event_type, "panel.message");
   assert.equal(received.body.text, "find the cheapest whey");
+  assert.equal(received.body.conversation, "(none)");
   const deliveryId = received.headers["x-request-id"];
   assert.ok(deliveryId && deliveryId.includes(":"), "delivery id carries host-instance nonce");
 
