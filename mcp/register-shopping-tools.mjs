@@ -80,7 +80,7 @@ const dossierStagesReference = z.object({
   stage_names: z.array(id).max(32),
 }).strict();
 
-export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet, storeShoppingRecommendation }) {
+export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet, bindShoppingRecommendationOffers, storeShoppingRecommendation }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
@@ -475,7 +475,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   });
   tool("shopping_decision_dossier", {
     title: "Compose an auditable shopping decision dossier",
-    description: "Compose product-, offer-, or checkout-level process-attested evaluator stages into one deterministic readiness decision. Accepts the signed context or its compact same-process reference; the reference avoids resending request and constraint payloads but fails closed after restart or expiry. The context is authoritative for phase, subject, applicability, destination, user-state revision, and constraints. Rejects missing, altered, mixed-context, wrong-stage, and wrong-subject artifacts. Failed safety gates cannot be overridden by price or model text; purchase_allowed is always false.",
+    description: "Compose product-, offer-, or checkout-level process-attested evaluator stages into one deterministic readiness decision. Accepts the signed context or its compact same-process reference; the reference avoids resending request and constraint payloads but fails closed after restart or expiry. The context is authoritative for phase, subject, applicability, destination, user-state revision, constraints, and any signed candidate-offer evidence used by evaluator waves. Rejects missing, altered, mixed-context, mixed-offer-evidence, wrong-stage, and wrong-subject artifacts. Failed safety gates cannot be overridden by price or model text; purchase_allowed is always false.",
     inputSchema: {
       decision_context: z.union([shoppingDecisionContextArtifactSchema, decisionContextReference]),
       freshness_seconds: z.object({ candidate_coverage: z.number().int().positive().max(2_592_000).optional(), product_evidence: z.number().int().positive().max(31_536_000).optional(), performance: z.number().int().positive().max(2_592_000).optional(), value: z.number().int().positive().max(2_592_000).optional(), condition: z.number().int().positive().max(2_592_000).optional(), promotion: z.number().int().positive().max(86_400).optional(), review_integrity: z.number().int().positive().max(2_592_000).optional(), safety: z.number().int().positive().max(86_400).optional(), composition: z.number().int().positive().max(2_592_000).optional(), privacy: z.number().int().positive().max(2_592_000).optional(), compatibility: z.number().int().positive().max(31_536_000).optional(), lifecycle: z.number().int().positive().max(31_536_000).optional(), preferences: z.number().int().positive().max(31_536_000).optional(), ownership: z.number().int().positive().max(31_536_000).optional(), identity: z.number().int().positive().max(86_400).optional(), merchant: z.number().int().positive().max(86_400).optional(), counterfeit: z.number().int().positive().max(86_400).optional(), protection: z.number().int().positive().max(86_400).optional(), fulfillment: z.number().int().positive().max(86_400).optional(), offer: z.number().int().positive().max(86_400).optional(), deal: z.number().int().positive().max(31_536_000).optional(), checkout: z.number().int().min(10).max(3_600).optional(), checkout_consent: z.number().int().min(10).max(3_600).optional() }).optional(),
@@ -1007,6 +1007,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     const candidateOffers = input.candidate_offers?.candidate_offers_id
       ? candidateOffersRegistry.resolve(input.candidate_offers)
       : input.candidate_offers;
+    if (candidateOffers && typeof bindShoppingRecommendationOffers === "function") {
+      bindShoppingRecommendationOffers(decisionContext.context_id, candidateOffers);
+    }
     const batch = await runShoppingEvaluatorBatch({
       jobs: input.jobs,
       max_concurrency: input.max_concurrency,

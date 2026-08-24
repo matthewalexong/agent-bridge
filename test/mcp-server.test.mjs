@@ -592,6 +592,18 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     jobs: [{ job_id: "bound-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
   } });
   assert.equal(boundSafetyBatch.structuredContent.results[0].error.code, "shopping_safety_identity_scope", JSON.stringify(boundSafetyBatch));
+  const subsetHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    requests: [{ candidate_id: boundCandidate.candidate_id, snapshot_id: detailIds[0], page_kind: "retailer_listing" }],
+  } });
+  assert.equal(subsetHydration.isError, undefined, JSON.stringify(subsetHydration));
+  const mixedOfferEvidenceBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: boundSafetyBatch.structuredContent.decision_context_ref,
+    candidate_offers: subsetHydration.structuredContent.candidate_offers_ref,
+    jobs: [{ job_id: "mixed-offer-evidence", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
+  } });
+  assert.equal(mixedOfferEvidenceBatch.isError, true);
+  assert.match(mixedOfferEvidenceBatch.content[0].text, /shopping_recommendation_offer_binding_conflict/);
   const substitutedSafetyArguments = structuredClone(boundSafetyArguments);
   substitutedSafetyArguments.candidates[0].listing_evidence = otherBoundCandidate.listing_evidence;
   const substitutedSafetyBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {

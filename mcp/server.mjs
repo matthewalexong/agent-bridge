@@ -339,7 +339,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Unhydrated candidates and model-authored product links are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed. Unhydrated candidates and model-authored product links are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
@@ -360,7 +360,11 @@ tool(
     const rejected = validatePanelPost(input);
     if (rejected) return asText({ posted: false, error: rejected });
     if (input.kind === "products" && input.recommendation_state === "verified") {
-      input.candidate_ids.forEach((candidateId, index) => shoppingRecommendationRegistry.authorize(input.recommendation_refs[index], candidateId));
+      input.candidate_ids.forEach((candidateId, index) => shoppingRecommendationRegistry.authorize(
+        input.recommendation_refs[index],
+        candidateId,
+        shoppingCandidateRegistry.binding(input.candidate_set_id, candidateId),
+      ));
     }
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
     const links = input.kind === "products"
@@ -510,6 +514,7 @@ registerShoppingTools({
   storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
   resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
   hydrateListingCandidateSet: (artifact) => shoppingCandidateRegistry.hydrate(artifact),
+  bindShoppingRecommendationOffers: (contextId, artifact) => shoppingRecommendationRegistry.bindCandidateOffers(contextId, artifact),
   storeShoppingRecommendation: (dossier) => shoppingRecommendationRegistry.store(dossier),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");

@@ -79,6 +79,24 @@ test("candidate cards carry only signed exact-page seller and availability facts
   });
 });
 
+test("candidate registry exposes the exact signed card binding and replaces it on rehydration", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  const first = hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 44, status: "explicit" });
+  registry.hydrate(first);
+  assert.deepEqual(registry.binding(set.candidate_set_id, "listing_bbbbbbbbbbbbbbbb"), {
+    candidate_set_id: set.candidate_set_id,
+    candidate_id: "listing_bbbbbbbbbbbbbbbb",
+    evidence_attestation: first.offers[0].listing_evidence.artifact_attestation,
+    candidate_offers_attestation: first.artifact_attestation,
+  });
+  const changed = hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 39, status: "explicit" });
+  registry.hydrate(changed);
+  assert.notEqual(registry.binding(set.candidate_set_id, "listing_bbbbbbbbbbbbbbbb").candidate_offers_attestation, first.artifact_attestation);
+  assert.equal(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].price, "$39.00");
+});
+
 test("candidate cards expose out-of-stock while withholding unsupported seller text", () => {
   const registry = createShoppingCandidateRegistry();
   const set = artifact();
