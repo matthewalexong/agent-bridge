@@ -1535,6 +1535,13 @@ Pass the current exact `offer_id`, product key, and history to
 batch subject and later signed deal stage. Follow its
 deterministic `deal_quality`, `sale_claim.flags`, and `timing.action`:
 
+The harness automatically prefers its private bounded process-verified price
+ledger when enough exact observations have accumulated. Omit `observations`
+when there is no independently verified external history to add; this avoids
+resending history and costs no model inference. A reconciled safe exact landed
+price is recorded automatically after dossier composition. The ledger stores
+no page text and strips URL query strings and fragments.
+
 - `buy_now` means the current safe offer meets the historical/user threshold;
   it does not authorize checkout or purchase.
 - `buy_if_needed` means urgency may justify a typical or expensive price; do

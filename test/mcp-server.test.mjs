@@ -825,6 +825,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(finalOfferDossier.decision.action, "recommend_offer", JSON.stringify(finalOfferDossier));
   assert.equal(finalOfferDossier.decision.selected_offer, boundCandidate.candidate_id);
   assert.match(finalOfferDossier.recommendation_ref.recommendation_id, /^shopping_recommendation_[a-f0-9]{32}$/);
+  const learnedPriceHistory = JSON.parse(await fs.readFile(path.join(bridgeDir, "shopping-price-history.json"), "utf8"));
+  assert.equal(learnedPriceHistory.observations.length, 1);
+  assert.deepEqual({ product_key: learnedPriceHistory.observations[0].product_key, condition: learnedPriceHistory.observations[0].condition, landed_total_usd: learnedPriceHistory.observations[0].landed_total_usd, source_type: learnedPriceHistory.observations[0].source.source_type }, { product_key: "camera-x", condition: "new", landed_total_usd: 80.5, source_type: "retailer" });
   const verifiedPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "This is the verified best offer.", kind: "products", recommendation_state: "verified",
     recommendation_refs: [finalOfferDossier.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
@@ -1193,6 +1196,16 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(deal.structuredContent.timing.action, "buy_now");
   assert.equal(deal.structuredContent.timing.future_price_guaranteed, false);
   assert.equal(deal.structuredContent.history_provenance, "caller_supplied");
+  const dealWithoutRepeatedHistory = await client.callTool({
+    name: "shopping_deal_quality",
+    arguments: {
+      current: { offer_id: "A", product_key: "camera-x", condition: "new", landed_total_usd: 70, landed_price_verified: true, exact_identity: true, stock: "in_stock", risk_status: "low" },
+      policy: { evaluated_at: testNow },
+    },
+  });
+  assert.equal(dealWithoutRepeatedHistory.isError, undefined, JSON.stringify(dealWithoutRepeatedHistory));
+  assert.equal(dealWithoutRepeatedHistory.structuredContent.history_provenance, "caller_supplied");
+  assert.equal(dealWithoutRepeatedHistory.structuredContent.history.sufficient, false);
 
   assert.equal(rankedFulfillment.assessments[1].action, "eligible");
   assert.equal(rankedFulfillment.assessments[1].fully_landed_total_usd.expected_usd, 106);

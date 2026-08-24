@@ -48,6 +48,7 @@ import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBindi
 import { compactShoppingEvaluatorResult } from "../lib/shopping-evaluator-result-compact.mjs";
 import { createShoppingDossierStageRegistry } from "../lib/shopping-dossier-stage-registry.mjs";
 import { createShoppingCandidateOffersRegistry } from "../lib/shopping-candidate-offers-registry.mjs";
+import { createShoppingPriceHistoryLedger } from "../lib/shopping-price-history.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -88,6 +89,8 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const decisionContextRegistry = createShoppingDecisionContextRegistry();
   const dossierStageRegistry = createShoppingDossierStageRegistry();
   const candidateOffersRegistry = createShoppingCandidateOffersRegistry();
+  const priceHistoryLedger = createShoppingPriceHistoryLedger();
+  const candidateOffersByContext = new Map();
   const evaluatorRegistry = new Map();
   tool = (name, definition, handler) => {
     registerTool(name, definition, handler);
@@ -435,14 +438,17 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const historySource = z.object({ id, source_type: z.enum(["history_provider", "retailer", "order_receipt", "search_snippet"]), url: z.string().url().max(4_000).optional(), independence_key: z.string().max(300).optional() });
   tool("shopping_deal_quality", {
     title: "Analyze deal quality and purchase timing",
-    description: "Compare a verified exact-product landed price with comparable historical observations, detect misleading sale/reference-price claims, and return a conservative buy, monitor, wait, research, or avoid action without predicting future prices.",
+    description: "Compare a verified exact-product landed price with bounded history, automatically preferring the harness's private process-verified observations when sufficient. Detect misleading sale/reference-price claims and return a conservative buy, monitor, wait, research, or avoid action without predicting future prices. Caller history can inform timing but never becomes a verified history badge.",
     inputSchema: {
       current: z.object({ offer_id: id, product_key: id, variant: id.optional(), condition: id.optional(), currency: z.string().length(3).optional().default("USD"), landed_total_usd: money, landed_price_verified: z.boolean(), exact_identity: z.boolean(), stock: z.enum(["in_stock", "out_of_stock", "unknown"]), risk_status: z.enum(["low", "acceptable", "elevated", "unknown"]), reference_price_usd: money, advertised_discount_percent: z.number().finite().min(-1_000).max(100).optional(), reference_price_verified: z.boolean().optional(), sale_claimed: z.boolean().optional() }),
-      observations: z.array(z.object({ product_key: id, variant: id.optional(), condition: id.optional(), currency: z.string().length(3).optional().default("USD"), landed_total_usd: z.number().finite().nonnegative().max(10_000_000), verified: z.boolean(), observed_at: z.string().datetime(), source: historySource })).max(10_000),
+      observations: z.array(z.object({ product_key: id, variant: id.optional(), condition: id.optional(), currency: z.string().length(3).optional().default("USD"), landed_total_usd: z.number().finite().nonnegative().max(10_000_000), verified: z.boolean(), observed_at: z.string().datetime(), source: historySource })).max(10_000).optional().default([]),
       policy: z.object({ evaluated_at: z.string().datetime().optional(), max_history_days: z.number().int().positive().max(3650).optional().default(730), min_observations: z.number().int().positive().max(10_000).optional().default(5), min_distinct_days: z.number().int().positive().max(3650).optional().default(5), min_span_days: z.number().nonnegative().max(3650).optional().default(30) }).optional().default({}),
       user_context: z.object({ urgency: z.enum(["immediate", "soon", "flexible"]).optional().default("flexible"), target_price_usd: money, max_price_usd: money }).optional().default({ urgency: "flexible" }),
     },
-  }, async (input) => asText({ ...analyzeDealQuality(input), history_provenance: "caller_supplied" }));
+  }, async (input) => {
+    try { return asText(await priceHistoryLedger.evaluate(input)); }
+    catch { return asText({ ...analyzeDealQuality(input), history_provenance: "caller_supplied" }); }
+  });
 
   const signedFulfillmentPromotionArtifact = z.object({ artifact_attestation: artifactAttestation("promotion"), offer_id: id, product_id: id, evaluated_at: z.string().datetime(), action: z.literal("eligible"), pricing_cleared: z.literal(true), base_price_usd: z.number().finite().nonnegative(), shipping_usd: z.number().finite().nonnegative(), immediate_checkout_discount_usd: z.number().finite().nonnegative(), checkout_landed_total_usd: z.number().finite().nonnegative(), deferred_value_usd: z.number().finite().nonnegative(), required_incremental_cost_usd: z.number().finite().nonnegative(), guaranteed_economic_cost_usd: z.number().finite().nonnegative(), purchase_allowed: z.literal(false) }).passthrough();
   tool("shopping_fulfillment_assess", {
@@ -504,6 +510,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       offer_id: decisionContext.offer_id || undefined,
       applicability: decisionContext.applicability,
     }, { require_stage_attestations: true, require_decision_context: true });
+    await priceHistoryLedger.record({ dossier, stages, candidate_offers: candidateOffersByContext.get(decisionContext.context_id) }).catch(() => null);
     const recommendation_ref = typeof storeShoppingRecommendation === "function" ? storeShoppingRecommendation(dossier, stages) : null;
     return asText({ ...dossier, recommendation_ref });
   });
@@ -1009,6 +1016,11 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       : input.candidate_offers;
     if (candidateOffers && typeof bindShoppingRecommendationOffers === "function") {
       bindShoppingRecommendationOffers(decisionContext.context_id, candidateOffers);
+    }
+    if (candidateOffers) {
+      candidateOffersByContext.delete(decisionContext.context_id);
+      candidateOffersByContext.set(decisionContext.context_id, structuredClone(candidateOffers));
+      while (candidateOffersByContext.size > 128) candidateOffersByContext.delete(candidateOffersByContext.keys().next().value);
     }
     const batch = await runShoppingEvaluatorBatch({
       jobs: input.jobs,

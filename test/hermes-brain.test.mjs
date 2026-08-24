@@ -419,6 +419,10 @@ test("panel skill delegates deal quality and timing to verified history analysis
   assert.match(skill, /do not compare the headline price with MSRP alone/i);
   assert.match(skill, /Pass the current exact `offer_id`, product key, and history to\s+`shopping_deal_quality`/i);
   assert.match(skill, /Follow its\s+deterministic `deal_quality`, `sale_claim\.flags`, and `timing\.action`/i);
+  assert.match(skill, /automatically prefers its private bounded process-verified price\s+ledger/i);
+  assert.match(skill, /Omit `observations`\s+when there is no independently verified external history/i);
+  assert.match(skill, /costs no model inference/i);
+  assert.match(skill, /stores\s+no page text and strips URL query strings and fragments/i);
   assert.match(skill, /`buy_now` .* does not authorize checkout or purchase/is);
   assert.match(skill, /Never\s+promise that the price will fall/i);
   assert.match(skill, /`avoid_offer` overrides an attractive price/i);
