@@ -246,11 +246,40 @@ h1 {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.card-price-row {
+  display: flex;
+  gap: 5px;
+  align-items: baseline;
+}
+.card-price-label {
+  font-size: 10px;
+  color: #9fb1d0;
+}
 .card-price {
   font-size: 12px;
   font-weight: 700;
   color: #91f56d;
 }
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  align-items: center;
+  font-size: 10px;
+  color: #aebbd4;
+}
+.card-seller {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+.card-availability {
+  font-weight: 650;
+}
+.card-availability.is-in { color: #91f56d; }
+.card-availability.is-out { color: #ff8d9b; }
+.card-availability.is-unknown { color: #f2c56b; }
 
 #composer {
   display: flex;

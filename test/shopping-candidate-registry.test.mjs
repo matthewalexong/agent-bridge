@@ -28,11 +28,11 @@ function artifact(overrides = {}) {
   });
 }
 
-function hydratedArtifact(set, candidateId, priceFact = { value: 44, status: "explicit" }) {
+function hydratedArtifact(set, candidateId, priceFact = { value: 44, status: "explicit" }, extraFacts = {}) {
   const candidate = set.candidates.find((item) => item.id === candidateId);
   const listingEvidence = attestShoppingArtifact("page_evidence", {
     source: { url: candidate.url, page_kind: "retailer_listing", captured_at: "2026-08-24T20:00:01.000Z" },
-    facts: { price_usd: priceFact },
+    facts: { price_usd: priceFact, ...extraFacts },
   });
   return attestShoppingArtifact("candidate_offers", {
     candidate_set_id: set.candidate_set_id,
@@ -51,8 +51,8 @@ test("candidate registry reconstructs exact cards in requested order", () => {
   registry.hydrate(hydratedArtifact(set, "listing_cccccccccccccccc", { value: null, status: "unknown" }));
   registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 44, status: "explicit" }));
   assert.deepEqual(registry.cards(set.candidate_set_id, ["listing_cccccccccccccccc", "listing_bbbbbbbbbbbbbbbb"]), [
-    { url: "https://shop.example/products/fan-pro", title: "Observed Fan Pro", image: "https://shop.example/pro.jpg" },
-    { url: "https://shop.example/products/fan", title: "Observed Fan", price: "$44.00" },
+    { url: "https://shop.example/products/fan-pro", title: "Observed Fan Pro", image: "https://shop.example/pro.jpg", availability: "Availability unknown" },
+    { url: "https://shop.example/products/fan", title: "Observed Fan", price: "$44.00", price_label: "Item price", availability: "Availability unknown" },
   ]);
 });
 
@@ -63,6 +63,33 @@ test("candidate registry refuses final cards until exact pages are hydrated", ()
   assert.throws(() => registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"]), { code: "shopping_candidate_not_hydrated" });
   registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb"));
   assert.equal(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].price, "$44.00");
+});
+
+test("candidate cards carry only signed exact-page seller and availability facts", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 44, status: "explicit" }, {
+    seller: { value: "Verified Fan Shop", status: "explicit" },
+    stock: { value: "in_stock", status: "explicit" },
+  }));
+  assert.deepEqual(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0], {
+    url: "https://shop.example/products/fan", title: "Observed Fan", image: "https://shop.example/images/fan.jpg",
+    price: "$44.00", price_label: "Item price", seller: "Verified Fan Shop", availability: "In stock",
+  });
+});
+
+test("candidate cards expose out-of-stock while withholding unsupported seller text", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 44, status: "explicit" }, {
+    seller: { value: "Guessed Shop", status: "estimated" },
+    stock: { value: "out_of_stock", status: "explicit" },
+  }));
+  const card = registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0];
+  assert.equal(card.seller, undefined);
+  assert.equal(card.availability, "Out of stock");
 });
 
 test("candidate registry rejects tampering, unknown IDs, duplicates, and expiry", () => {

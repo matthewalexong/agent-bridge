@@ -260,13 +260,16 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
       title: "Odyssey Homme Black EDP 2.02 oz",
       image: "https://m.media-amazon.com/images/I/thumb.jpg",
       price: "$20.72",
+      price_label: "Item price",
+      seller: "Audio Shop",
+      availability: "In stock",
     };
     const posted = await harness.dispatch("links-post", "panel.post", {
       text: "Best match below.",
       links: [
         goodLink,
         { url: "javascript:alert(1)", title: "evil scheme" }, // stripped: non-http
-        { url: "https://ok.example.com", title: "t".repeat(500) }, // title truncated
+        { url: "https://ok.example.com", title: "t".repeat(500), seller: "s".repeat(500), availability: "Definitely available", price_label: "Free" }, // bounded metadata
         { url: "not a url", title: "garbage" }, // stripped: unparseable
       ],
     });
@@ -277,7 +280,13 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
     assert.equal(stored[0].title, goodLink.title);
     assert.equal(stored[0].image, goodLink.image);
     assert.equal(stored[0].price, "$20.72");
+    assert.equal(stored[0].price_label, "Item price");
+    assert.equal(stored[0].seller, "Audio Shop");
+    assert.equal(stored[0].availability, "In stock");
     assert.ok(stored[1].title.length <= 200, "oversized title truncated");
+    assert.equal(stored[1].seller.length, 120, "oversized seller truncated");
+    assert.equal(stored[1].availability, undefined, "unknown availability literals are dropped");
+    assert.equal(stored[1].price_label, undefined, "unknown price labels are dropped");
 
     // panel.get surfaces the links so the panel page can render cards.
     const got = await harness.dispatch("links-get", "panel.get", {});
@@ -286,6 +295,7 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
     // Capabilities probe is present (lets a stale panel detect an old SW).
     assert.ok(Array.isArray(got.result.capabilities), "panel.get reports capabilities");
     assert.ok(got.result.capabilities.includes("links:v1"));
+    assert.ok(got.result.capabilities.includes("product-card-evidence:v1"));
 
     // A post with no links omits the field entirely.
     const bare = await harness.dispatch("links-bare", "panel.post", { text: "no links" });

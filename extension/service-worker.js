@@ -32,7 +32,7 @@ const PANEL_MAX_ENTRIES = 200;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -269,6 +269,9 @@ function sanitizePanelLinks(raw) {
       card.image = link.image.slice(0, 2000);
     }
     if (typeof link.price === "string") card.price = link.price.slice(0, 40);
+    if (link.price_label === "Item price") card.price_label = "Item price";
+    if (typeof link.seller === "string" && link.seller.trim()) card.seller = link.seller.trim().slice(0, 120);
+    if (["In stock", "Out of stock", "Availability unknown"].includes(link.availability)) card.availability = link.availability;
     out.push(card);
   }
   return out;

@@ -116,10 +116,36 @@ function renderEntry(doc, transcript, entry) {
       title.textContent = link.title || url.hostname;
       info.append(title);
       if (typeof link.price === "string" && link.price.trim()) {
+        const priceRow = doc.createElement("span");
+        priceRow.className = "card-price-row";
+        if (link.price_label === "Item price") {
+          const priceLabel = doc.createElement("span");
+          priceLabel.className = "card-price-label";
+          priceLabel.textContent = "Item price";
+          priceRow.append(priceLabel);
+        }
         const price = doc.createElement("span");
         price.className = "card-price";
         price.textContent = link.price.trim();
-        info.append(price);
+        priceRow.append(price);
+        info.append(priceRow);
+      }
+      if ((typeof link.seller === "string" && link.seller.trim()) || typeof link.availability === "string") {
+        const meta = doc.createElement("span");
+        meta.className = "card-meta";
+        if (typeof link.seller === "string" && link.seller.trim()) {
+          const seller = doc.createElement("span");
+          seller.className = "card-seller";
+          seller.textContent = `Sold by ${link.seller.trim()}`;
+          meta.append(seller);
+        }
+        if (["In stock", "Out of stock", "Availability unknown"].includes(link.availability)) {
+          const availability = doc.createElement("span");
+          availability.className = `card-availability ${link.availability === "In stock" ? "is-in" : link.availability === "Out of stock" ? "is-out" : "is-unknown"}`;
+          availability.textContent = link.availability;
+          meta.append(availability);
+        }
+        if (meta.childElementCount > 0) info.append(meta);
       }
       card.append(info);
       cards.append(card);

@@ -337,7 +337,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current product-page prices. Unhydrated candidates and model-authored product links are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Unhydrated candidates and model-authored product links are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),

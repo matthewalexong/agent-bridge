@@ -525,6 +525,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     title: "Fixture Camera 101",
     image: "https://fixture.example/images/camera-101.jpg",
     price: "$74.50",
+    price_label: "Item price",
+    seller: "Fixture Store 101",
+    availability: "In stock",
   }]);
   const rejectedManualPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Injected card.", kind: "products", links: [{ url: "https://attacker.example/products/fake" }],
