@@ -23,6 +23,7 @@ export const PANEL_TOOL_NAMES = Object.freeze([
   "browser_panel_read",
   "browser_panel_status",
   "shopping_request_intake",
+  "shopping_listing_candidates",
   "shopping_page_evidence",
   "shopping_page_evidence_batch",
   "shopping_evaluator_batch",
@@ -58,6 +59,7 @@ export function compactPanelSnapshot(snapshot, surface = resolveMcpSurface()) {
 
 const KEEP_FULL_PANEL_SCHEMA = new Set([
   "shopping_request_intake",
+  "shopping_listing_candidates",
   "shopping_page_evidence",
   "shopping_page_evidence_batch",
 ]);

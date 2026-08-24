@@ -2,7 +2,7 @@ import { z } from "zod";
 import { analyzeShoppingOffers } from "../lib/shopping-decision.mjs";
 import { deriveShoppingRiskFeatures } from "../lib/shopping-risk.mjs";
 import { deriveShoppingResearchFeatures } from "../lib/shopping-sufficiency.mjs";
-import { createShoppingPageEvidenceLedger, extractBrowserObservedCheckoutEvidence, extractBrowserObservedCheckoutTermsEvidence } from "../lib/shopping-browser-evidence.mjs";
+import { createShoppingPageEvidenceLedger, extractBrowserObservedCheckoutEvidence, extractBrowserObservedCheckoutTermsEvidence, extractBrowserObservedListingCandidates } from "../lib/shopping-browser-evidence.mjs";
 import { preflightShoppingCheckout } from "../lib/shopping-checkout.mjs";
 import { assessCheckoutConsentFromEvidence, checkoutConsentInputFromSignedEvidence } from "../lib/shopping-checkout-consent-evidence.mjs";
 import { createShoppingCheckoutPatternRegistry } from "../lib/shopping-checkout-patterns.mjs";
@@ -475,6 +475,22 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     seller_query: z.string().min(1).max(200).optional(),
     directory_complete: z.boolean().optional().default(false),
   };
+  tool("shopping_listing_candidates", {
+    title: "Extract verified product candidates from a search page",
+    description: "Deterministically extract bounded product-card candidates from browser-observed links in a fresh snapshot. Returns normalized observed URL, title, image, nearby price, and ref with a signed source receipt. It removes tracking parameters, navigation links, duplicates, and surrounding page text but never ranks or selects a product.",
+    inputSchema: {
+      snapshot_id: id.optional().describe("Snapshot receipt ID from browser_snapshot."),
+      snapshotId: id.optional().describe("Compatibility alias for snapshot_id."),
+      query: z.string().max(300).optional().default(""),
+      max_candidates: z.number().int().min(1).max(40).optional().default(20),
+      max_snapshot_age_seconds: z.number().int().min(10).max(300).optional().default(300),
+    },
+  }, async (input) => {
+    const snapshot_id = input.snapshot_id ?? input.snapshotId;
+    if (!snapshot_id) throw Object.assign(new Error("Pass snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
+    return asText(extractBrowserObservedListingCandidates(resolveBrowserSnapshot, { ...input, snapshot_id }));
+  });
+
   tool("shopping_page_evidence", {
     title: "Extract shopping page evidence",
     description: "Extract signed provenance-backed seller, fulfiller, price, shipping, stock, returns, warranty, identifiers, authorized-directory matches, and review risk mentions only from a short-lived browser-observed snapshot receipt. Model-provided page text and URLs are not accepted. Missing facts remain unknown.",

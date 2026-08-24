@@ -64,6 +64,9 @@ function chromeHarness({ inspectResults = [] } = {}) {
               tag: "button",
               role: "combobox",
               name: "1 minute",
+              href: "https://example.com/products/timer?utm_source=test",
+              image: "https://example.com/timer.jpg",
+              context: "Timer 1 minute $19.99",
               disabled: false,
               expanded: false,
               _locator: {
@@ -126,6 +129,8 @@ test("semantic snapshot refs drive one atomic CDP click and become stale afterwa
     assert.match(snapshot.result.snapshotId, /^snapshot_/);
     assert.equal(snapshot.result.refCount, 1);
     assert.equal(snapshot.result.elements[0].ref, "e1");
+    assert.equal(snapshot.result.elements[0].href, "https://example.com/products/timer?utm_source=test");
+    assert.equal(snapshot.result.elements[0].context, "Timer 1 minute $19.99");
     assert.equal("_locator" in snapshot.result.elements[0], false);
 
     const clicked = await request(harness, "click", "page.act", { tabId: 42, kind: "click", ref: "e1" });

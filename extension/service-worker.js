@@ -444,6 +444,26 @@ function snapshotPage(maxChars) {
     ).slice(0, 160);
   };
 
+  const absoluteHttpUrl = (value) => {
+    try {
+      const url = new URL(String(value || ""), location.href);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const observedLinkDetails = (element, role) => {
+    if (role !== "link" || !(element instanceof HTMLAnchorElement)) return {};
+    const href = absoluteHttpUrl(element.href);
+    if (!href) return {};
+    const root = element.closest('[data-component-type="s-search-result"], article, [role="listitem"], li') || element.parentElement;
+    const imageElement = element.querySelector("img") || root?.querySelector("img");
+    const image = absoluteHttpUrl(imageElement?.currentSrc || imageElement?.src);
+    const context = normalize(root?.innerText || element.innerText).slice(0, 1_000);
+    return { href, image, context };
+  };
+
   const roleSelector = [...interactiveRoles].map((role) => `[role="${role}"]`).join(",");
   const interactiveSelector = [
     "a[href]", "button", "summary", "input:not([type='hidden'])", "select", "textarea",
@@ -480,6 +500,7 @@ function snapshotPage(maxChars) {
       tag: element.tagName.toLowerCase(),
       type: element.getAttribute("type") || undefined,
     };
+    const linkDetails = observedLinkDetails(element, role);
     elements.push({
       index: elements.length,
       ref,
@@ -492,6 +513,7 @@ function snapshotPage(maxChars) {
       checked,
       selected,
       expanded,
+      ...linkDetails,
       _locator: locator,
     });
     const states = [

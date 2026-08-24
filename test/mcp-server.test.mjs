@@ -100,7 +100,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
         url: snapshotUrl.get(tabId) || `https://fixture.example/${tabId}`,
         text,
         truncated: false,
-        elements: [],
+        elements: [{
+          ref: "e1",
+          role: "link",
+          name: `Fixture Camera ${tabId}`,
+          href: `https://fixture.example/products/camera-${tabId}?utm_source=test`,
+          image: `https://fixture.example/images/camera-${tabId}.jpg`,
+          context: `Fixture Camera ${tabId} $79.00`,
+        }],
       } }));
     });
   });
@@ -267,6 +274,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
       "shopping_fulfillment_assess",
       "shopping_identity_resolve",
       "shopping_lifecycle_assess",
+      "shopping_listing_candidates",
       "shopping_merchant_trust",
       "shopping_offer_analyze",
       "shopping_ownership_cost",
@@ -455,6 +463,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(snapshotBatch.isError, undefined, JSON.stringify(snapshotBatch));
   assert.deepEqual(snapshotBatch.structuredContent.results.map((item) => item.status), ["complete", "complete"]);
   const [snapshotA, snapshotB] = snapshotBatch.structuredContent.results.map((item) => item.snapshot.snapshotId);
+  const listingCandidates = await client.callTool({ name: "shopping_listing_candidates", arguments: {
+    snapshotId: snapshotA,
+    query: "fixture camera",
+  } });
+  assert.equal(listingCandidates.isError, undefined, JSON.stringify(listingCandidates));
+  assert.equal(listingCandidates.structuredContent.candidates.length, 1);
+  assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
+  assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
   const evidenceBatch = await client.callTool({ name: "shopping_page_evidence_batch", arguments: { requests: [
     { snapshot_id: snapshotA, page_kind: "retailer_listing" },
     { snapshot_id: snapshotB, page_kind: "retailer_listing" },

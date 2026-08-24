@@ -23,6 +23,7 @@ test("browser-observed snapshots issue bounded signed receipts with a content di
   assert.equal(verifyShoppingArtifactAttestation("browser_snapshot", receipt), true);
   assert.equal(receipt.url, "https://shop.example/camera");
   assert.equal(receipt.content_sha256, crypto.createHash("sha256").update(snapshot("snapshot-a").text).digest("hex"));
+  assert.match(receipt.elements_sha256, /^[a-f0-9]{64}$/);
   assert.equal(registry.resolve("snapshot-a", { evaluated_at: NOW }).text, snapshot("snapshot-a").text);
 
   registry.capture({ tab_id: 42, snapshot: snapshot("snapshot-b"), captured_at: NOW });
