@@ -60,8 +60,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [705, "Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes\nPromotion Inventory: complete\nPromotion: id=save10; type=coupon; code=SAVE10; application=applied; amount=$10.00; affects advertised price=yes; eligibility=complete; obligations=none; stacking=verified\nDiscount: -$10.00\nOrder Total: $96.00"],
     [1101, "Order Receipt: complete\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nPurchased At: 2026-08-01T12:00:00.000Z\nDelivered At: 2026-08-05T12:00:00.000Z\nCurrency: USD\nItem Price: $100.00\nOrder Shipping: $0.00\nOrder Total: $100.00\nSeller: Example Shop\nMerchant of record: Example Shop"],
     [1102, "Event Evidence: complete\nCase Event: merchant_contacted\nEvent At: 2026-08-06T12:00:00.000Z\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nEvent Reference: message-44\nEvent Counterparty: Example Shop"],
-    [1201, "Brand: Acme\nModel: Camera 101\nCurrent Price: $74.50\nSold by: Fixture Store 101\nIn stock\nCondition: new"],
+    [1201, "Brand: Acme\nProduct Line: Camera X\nProduct Category: cameras\nModel: CX-1\nCurrent Price: $74.50\nFREE delivery\nSold by: Camera Store A\nIn stock\nManufacturer warranty: included\n30-day returns\nCondition: new"],
     [1203, "Brand: Acme\nModel: Camera 103\nCurrent Price: $79.00\nSold by: Fixture Store 103\nIn stock\nCondition: new"],
+    [1207, "Checkout\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $74.50\nShipping: $0.00\nTax: $6.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes"],
     [502, "Brand: Acme\nModel: Drive X"],
     [503, "Brand: Sony\nProduct Line: WH-1000XM5\nModel: WH-1000XM5"],
     [504, "Brand: SONY\nProduct Line: WH 1000XM5\nModel: WH1000XM5\nCondition: new\nSold by: Audio Shop"],
@@ -534,7 +535,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     image: "https://fixture.example/images/camera-101.jpg",
     price: "$74.50",
     price_label: "Item price",
-    seller: "Fixture Store 101",
+    seller: "Camera Store A",
     availability: "In stock",
   }]);
   const rejectedManualPost = await client.callTool({ name: "browser_panel_post", arguments: {
@@ -591,7 +592,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     candidate_offers: hydrated.structuredContent.candidate_offers_ref,
     jobs: [{ job_id: "bound-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
   } });
-  assert.equal(boundSafetyBatch.structuredContent.results[0].error.code, "shopping_safety_identity_scope", JSON.stringify(boundSafetyBatch));
+  assert.equal(boundSafetyBatch.structuredContent.results[0].status, "complete", JSON.stringify(boundSafetyBatch));
   const subsetHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     requests: [{ candidate_id: boundCandidate.candidate_id, snapshot_id: detailIds[0], page_kind: "retailer_listing" }],
@@ -749,6 +750,85 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   });
   assert.equal(shoppingDecision.structuredContent.verified_decision.selected_offer, "B", JSON.stringify(shoppingDecision.structuredContent));
   assert.equal(shoppingDecision.structuredContent.verified_decision.landed_total_usd, 106);
+
+  const boundSafety = (await client.callTool({ name: "shopping_safety_assess", arguments: {
+    evaluated_at: testNow, jurisdiction: "US", identity: boundIdentity,
+    coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }],
+    candidates: [{ id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence }],
+  } })).structuredContent;
+  const boundMerchantArguments = { evaluated_at: testNow, candidates: [{
+    id: boundCandidate.candidate_id, product_id: "camera-x", listing_evidence: boundCandidate.listing_evidence,
+    terms_evidence: rankedMerchantA.terms_evidence, privacy_evidence: rankedMerchantA.privacy_evidence,
+    return_policy_evidence: rankedMerchantA.return_policy_evidence, checkout_evidence: rankedMerchantA.checkout_evidence,
+  }] };
+  const boundMerchant = (await client.callTool({ name: "shopping_merchant_trust", arguments: boundMerchantArguments })).structuredContent;
+  const boundCounterfeitArguments = { evaluated_at: testNow, category: "cameras", identity: boundIdentity, offers: [{
+    id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence,
+    authorization_evidence: rankedDirectoryA, warranty_evidence: rankedWarrantyA,
+  }] };
+  const boundCounterfeit = (await client.callTool({ name: "shopping_counterfeit_assess", arguments: boundCounterfeitArguments })).structuredContent;
+  const boundProtectionArguments = { evaluated_at: testNow, identity: boundIdentity, candidates: [{
+    id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence,
+    return_policy_evidence: rankedMerchantA.return_policy_evidence, warranty_evidence: rankedWarrantyA,
+    authorization_evidence: rankedDirectoryA,
+  }] };
+  const boundProtection = (await client.callTool({ name: "shopping_protection_assess", arguments: boundProtectionArguments })).structuredContent;
+  const boundCheckout = await observedPage(1207, "checkout");
+  const boundFulfillmentArguments = { evaluated_at: testNow, destination_country: "US", identity: boundIdentity, offers: [{
+    id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence,
+    checkout_evidence: boundCheckout, return_policy_evidence: rankedMerchantA.return_policy_evidence,
+  }] };
+  const boundFulfillmentResponse = await client.callTool({ name: "shopping_fulfillment_assess", arguments: boundFulfillmentArguments });
+  assert.equal(boundFulfillmentResponse.isError, undefined, JSON.stringify(boundFulfillmentResponse));
+  const boundFulfillment = boundFulfillmentResponse.structuredContent;
+  const boundOfferArguments = {
+    evaluated_at: testNow, destination_country: "US", requirements: { product_key: "camera-x", condition: "new" },
+    offers: [{ id: boundCandidate.candidate_id, product_key: "camera-x", condition: "new", seller: "Camera Store A", quantity: 1, price_usd: 74.5, shipping_usd: 0, return_days: 30 }],
+    fulfillment: boundFulfillment, counterfeit: boundCounterfeit, merchant: boundMerchant, protection: boundProtection,
+    identity: boundIdentity, safety: boundSafety, product_clearance: productClearance,
+  };
+  const boundOfferResponse = await client.callTool({ name: "shopping_offer_analyze", arguments: boundOfferArguments });
+  assert.equal(boundOfferResponse.isError, undefined, JSON.stringify(boundOfferResponse));
+  assert.equal(boundOfferResponse.structuredContent.verified_decision.selected_offer, boundCandidate.candidate_id, JSON.stringify(boundOfferResponse.structuredContent));
+  assert.equal(boundOfferResponse.structuredContent.verified_decision.landed_total_usd, 80.5);
+
+  const boundIdentityArguments = { evaluated_at: testNow, target_product_id: "camera-x", target_evidence: rankedTargetEvidence, candidates: [{ id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence }] };
+  const offerDecisionBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: decisionContext({ phase: "offer_recommendation", product_id: "camera-x", offer_id: boundCandidate.candidate_id, applicability: exactProductApplicability }),
+    candidate_offers: subsetHydration.structuredContent.candidate_offers_ref,
+    max_concurrency: 4,
+    jobs: [
+      { job_id: "verified-product-evidence", tool: "shopping_product_evidence", subject: { product_id: "camera-x" }, arguments: { policy: { evaluated_at: testNow }, claims: [{ product_id: "camera-x", attribute: "model", claim_type: "objective", evidence_role: "declared_specification", value: "CX-1", source: { id: "manufacturer-camera-x", source_type: "manufacturer", captured_at: testNow } }] } },
+      { job_id: "verified-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: { evaluated_at: testNow, jurisdiction: "US", identity: boundIdentity, coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [{ id: boundCandidate.candidate_id }] } },
+      { job_id: "verified-identity", tool: "shopping_identity_resolve", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundIdentityArguments },
+      { job_id: "verified-merchant", tool: "shopping_merchant_trust", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundMerchantArguments },
+      { job_id: "verified-counterfeit", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundCounterfeitArguments },
+      { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundProtectionArguments },
+      { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundFulfillmentArguments },
+      { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundOfferArguments },
+    ],
+  } });
+  assert.equal(offerDecisionBatch.isError, undefined, JSON.stringify(offerDecisionBatch));
+  assert.deepEqual(offerDecisionBatch.structuredContent.results.map((result) => result.status), Array(8).fill("complete"), JSON.stringify(offerDecisionBatch));
+  const finalOfferDossierResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: {
+    decision_context: offerDecisionBatch.structuredContent.decision_context_ref,
+    dossier_stages_ref: offerDecisionBatch.structuredContent.dossier_stages_ref,
+  } });
+  assert.equal(finalOfferDossierResponse.isError, undefined, JSON.stringify(finalOfferDossierResponse));
+  const finalOfferDossier = finalOfferDossierResponse.structuredContent;
+  assert.equal(finalOfferDossier.decision.action, "recommend_offer", JSON.stringify(finalOfferDossier));
+  assert.equal(finalOfferDossier.decision.selected_offer, boundCandidate.candidate_id);
+  assert.match(finalOfferDossier.recommendation_ref.recommendation_id, /^shopping_recommendation_[a-f0-9]{32}$/);
+  const verifiedPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "This is the verified best offer.", kind: "products", recommendation_state: "verified",
+    recommendation_refs: [finalOfferDossier.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    candidate_ids: [boundCandidate.candidate_id],
+  } });
+  assert.equal(verifiedPost.isError, undefined, JSON.stringify(verifiedPost));
+  assert.equal(panelPosts.length, 2);
+  assert.match(panelPosts[1].text, /^This is the verified best offer\.\n\nVerified details: \$80\.50 landed total · sold by Camera Store A · in stock · delivery Aug 25–Aug 27 · 30-day returns · 12-month warranty · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · protection requirements met$/);
+  assert.equal(panelPosts[1].links[0].price, "$74.50");
+  assert.equal(panelPosts[1].links[0].seller, "Camera Store A");
 
   const shoppingValue = await client.callTool({
     name: "shopping_value_assess",

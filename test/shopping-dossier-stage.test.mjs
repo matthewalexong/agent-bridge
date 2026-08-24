@@ -48,6 +48,16 @@ test("adapters fail closed on ambiguous or mismatched evaluator subjects", () =>
   assert.throws(() => adaptShoppingEvaluatorResult({ tool: "shopping_identity_resolve", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: {}, result: identityResult, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW }), { code: "shopping_dossier_stage_source_invalid" });
 });
 
+test("product-scoped evidence remains valid inside an exact-offer context", () => {
+  const stage = adaptShoppingEvaluatorResult({
+    tool: "shopping_product_evidence", subject: { product_id: "camera-x" }, input: { policy: { evaluated_at: NOW } }, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW,
+    result: { policy: { evaluated_at: NOW }, products: [{ id: "camera-x", attribute_evidence: { model: "verified" } }] },
+  });
+  assert.equal(stage.product_id, "camera-x");
+  assert.equal(stage.status, "verified");
+  assert.equal(verifyShoppingDossierStage("product_evidence", stage), true);
+});
+
 test("offer stages preserve bounded verified delivery and protection facts for final explanations", () => {
   const decisionContext = context("offer_recommendation", "offer-a");
   const protection = adaptShoppingEvaluatorResult({

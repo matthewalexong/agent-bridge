@@ -516,7 +516,7 @@ registerShoppingTools({
   resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
   hydrateListingCandidateSet: (artifact) => shoppingCandidateRegistry.hydrate(artifact),
   bindShoppingRecommendationOffers: (contextId, artifact) => shoppingRecommendationRegistry.bindCandidateOffers(contextId, artifact),
-  storeShoppingRecommendation: (dossier) => shoppingRecommendationRegistry.store(dossier),
+  storeShoppingRecommendation: (dossier, stages) => shoppingRecommendationRegistry.store(dossier, stages),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");
     const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);
