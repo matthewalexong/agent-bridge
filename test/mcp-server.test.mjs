@@ -504,6 +504,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   } });
   assert.equal(hydrated.isError, undefined, JSON.stringify(hydrated));
   assert.match(hydrated.structuredContent.candidate_offers.artifact_attestation, /^v1\.candidate_offers\./);
+  assert.match(hydrated.structuredContent.candidate_offers_ref.candidate_offers_id, /^candidate_offers_[a-f0-9]{32}$/);
+  assert.deepEqual(hydrated.structuredContent.candidate_offers_ref.candidate_ids, hydrated.structuredContent.candidate_offers.offers.map((offer) => offer.candidate_id));
+  assert.ok(JSON.stringify(hydrated.structuredContent.candidate_offers_ref).length * 3 < JSON.stringify(hydrated.structuredContent.candidate_offers).length);
   assert.equal("artifacts" in hydrated.structuredContent, false, "bound hydration must not duplicate page artifacts already embedded in candidate_offers");
   const duplicatedHydrationShape = { ...hydrated.structuredContent, artifacts: hydrated.structuredContent.candidate_offers.offers.map((offer) => offer.listing_evidence) };
   assert.ok(JSON.stringify(hydrated.structuredContent).length < JSON.stringify(duplicatedHydrationShape).length * 0.7, "bound hydration should materially reduce repeated evidence characters");
@@ -583,7 +586,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {
       candidate_coverage: skipped("The exact product is already known."), performance: skipped("Not used."), value: skipped("Not used."), condition: skipped("Not used."), promotion: skipped("Not used."), review_integrity: skipped("Not used."), composition: skipped("Not used."), privacy: skipped("Not used."), compatibility: skipped("Not used."), lifecycle: skipped("Not used."), preferences: skipped("Not used."), ownership: skipped("Not used."), deal: skipped("Not used."),
     } }),
-    candidate_offers: hydrated.structuredContent.candidate_offers,
+    candidate_offers: hydrated.structuredContent.candidate_offers_ref,
     jobs: [{ job_id: "bound-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
   } });
   assert.equal(boundSafetyBatch.structuredContent.results[0].error.code, "shopping_safety_identity_scope", JSON.stringify(boundSafetyBatch));
@@ -593,11 +596,22 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {
       candidate_coverage: skipped("The exact product is already known."), performance: skipped("Not used."), value: skipped("Not used."), condition: skipped("Not used."), promotion: skipped("Not used."), review_integrity: skipped("Not used."), composition: skipped("Not used."), privacy: skipped("Not used."), compatibility: skipped("Not used."), lifecycle: skipped("Not used."), preferences: skipped("Not used."), ownership: skipped("Not used."), deal: skipped("Not used."),
     } }),
-    candidate_offers: hydrated.structuredContent.candidate_offers,
+    candidate_offers: hydrated.structuredContent.candidate_offers_ref,
     jobs: [{ job_id: "substituted-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: substitutedSafetyArguments }],
   } });
   assert.equal(substitutedSafetyBatch.structuredContent.results[0].status, "failed");
   assert.equal(substitutedSafetyBatch.structuredContent.results[0].error.code, "shopping_candidate_offer_evidence_mismatch");
+  const alteredOffersReference = structuredClone(hydrated.structuredContent.candidate_offers_ref);
+  alteredOffersReference.candidate_ids = [otherBoundCandidate.candidate_id, boundCandidate.candidate_id];
+  const alteredOffersBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {
+      candidate_coverage: skipped("The exact product is already known."), performance: skipped("Not used."), value: skipped("Not used."), condition: skipped("Not used."), promotion: skipped("Not used."), review_integrity: skipped("Not used."), composition: skipped("Not used."), privacy: skipped("Not used."), compatibility: skipped("Not used."), lifecycle: skipped("Not used."), preferences: skipped("Not used."), ownership: skipped("Not used."), deal: skipped("Not used."),
+    } }),
+    candidate_offers: alteredOffersReference,
+    jobs: [{ job_id: "altered-offers-ref", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
+  } });
+  assert.equal(alteredOffersBatch.isError, true);
+  assert.match(alteredOffersBatch.content[0].text, /shopping_candidate_offers_reference_mismatch/);
   const exactProductApplicability = { candidate_coverage: skipped("The user specified this exact camera."), performance: skipped("No measured-performance metric is used in this fixture."), value: skipped("No normalized unit-value metric is used in this fixture."), condition: skipped("This fixture uses verified ordinary new inventory without a condition conflict."), promotion: skipped("No promotion changes price in this fixture."), review_integrity: skipped("No review-derived metric is used in this fixture."), composition: skipped("This camera fixture has no ingredient, allergen, material, or formulation dependency."), privacy: skipped("This bounded camera fixture does not assess connected data processing."), compatibility: skipped("No user-product compatibility dependency in this bounded fixture."), lifecycle: skipped("No lifecycle-sensitive dependency in this bounded fixture."), preferences: skipped("The user specified one exact product."), ownership: skipped("No material ongoing costs."), deal: skipped("Timing was not requested.") };
   const staleProfileBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
     decision_context: decisionContext({ request_id: "request-stale-profile", phase: "product_recommendation", product_id: "camera-x", applicability: exactProductApplicability, profile_revision: 999 }),

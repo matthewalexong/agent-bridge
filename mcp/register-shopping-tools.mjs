@@ -47,6 +47,7 @@ import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evi
 import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 import { compactShoppingEvaluatorResult } from "../lib/shopping-evaluator-result-compact.mjs";
 import { createShoppingDossierStageRegistry } from "../lib/shopping-dossier-stage-registry.mjs";
+import { createShoppingCandidateOffersRegistry } from "../lib/shopping-candidate-offers-registry.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -66,6 +67,11 @@ const candidateOffersArtifact = z.object({
   evaluated_at: z.string().datetime(),
   offers: z.array(z.object({ candidate_id: id, listing_evidence: pageEvidenceArtifact }).passthrough()).min(1).max(5),
 }).passthrough();
+const candidateOffersReference = z.object({
+  candidate_offers_id: z.string().regex(/^candidate_offers_[a-f0-9]{32}$/),
+  candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/),
+  candidate_ids: z.array(id).min(1).max(5),
+}).strict();
 const decisionContextReference = z.object({ context_id: z.string().regex(/^shopping_context_[a-f0-9]{32}$/) }).strict();
 const reusableDecisionContext = z.union([shoppingDecisionContextArtifactSchema, decisionContextReference, shoppingDecisionContextInputSchema]);
 const dossierStagesReference = z.object({
@@ -81,6 +87,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const checkoutPatternRegistry = createShoppingCheckoutPatternRegistry();
   const decisionContextRegistry = createShoppingDecisionContextRegistry();
   const dossierStageRegistry = createShoppingDossierStageRegistry();
+  const candidateOffersRegistry = createShoppingCandidateOffersRegistry();
   const evaluatorRegistry = new Map();
   tool = (name, definition, handler) => {
     registerTool(name, definition, handler);
@@ -569,8 +576,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       });
       if (typeof hydrateListingCandidateSet === "function") hydrateListingCandidateSet(candidate_offers);
     }
+    const candidate_offers_ref = candidate_offers ? candidateOffersRegistry.store(candidate_offers) : null;
     return asText({
-      ...(candidate_offers ? { candidate_offers } : { artifacts }),
+      ...(candidate_offers ? { candidate_offers, candidate_offers_ref } : { artifacts }),
       ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses },
     });
   });
@@ -975,7 +983,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     description: "Create one process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency. Later waves and dossier composition can use its compact process-owned reference, preserving exact context identity without repeating request and constraint tokens; unknown, expired, restarted-process, or stale-profile references fail closed. Before production schema validation, the process injects exact listing evidence once from the signed candidate-offers artifact by candidate ID. Caller-supplied substituted evidence is rejected rather than overwritten. Successful compact-mode jobs retain the complete exact-subject result and top-level diagnostics while omitting unrelated candidates; full mode is an explicit diagnostic escape hatch. Duplicate, inapplicable, wrong-subject, and unsigned-offer jobs fail before execution. Every successful stage remains bound to the exact context, and shopping_decision_dossier remains mandatory.",
     inputSchema: {
       decision_context: reusableDecisionContext.describe("Use the full input only for the first wave. Later waves should pass the returned decision_context_ref so the exact signed context is reused without resending its request and constraints."),
-      candidate_offers: candidateOffersArtifact.optional().describe("Signed output of shopping_page_evidence_batch. Required for exact-offer evidence, condition, ranking, deal, and checkout evaluators in offer and checkout phases."),
+      candidate_offers: z.union([candidateOffersArtifact, candidateOffersReference]).optional().describe("Use candidate_offers_ref from hydration by default. The full signed candidate-offers artifact remains accepted for diagnostics and compatibility."),
       max_concurrency: z.number().int().min(1).max(8).optional().default(4),
       max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
       result_mode: z.enum(["compact", "full"]).optional().default("compact").describe("Compact keeps the complete exact-subject result and top-level diagnostics while dropping other candidates' array entries. Use full only for explicit diagnostics."),
@@ -994,6 +1002,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
         : createShoppingDecisionContext(input.decision_context);
     if (!isReference && !isArtifact) decisionContextRegistry.remember(decisionContext, evaluatedAt);
     if (decisionContext.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
+    const candidateOffers = input.candidate_offers?.candidate_offers_id
+      ? candidateOffersRegistry.resolve(input.candidate_offers)
+      : input.candidate_offers;
     const batch = await runShoppingEvaluatorBatch({
       jobs: input.jobs,
       max_concurrency: input.max_concurrency,
@@ -1002,7 +1013,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       include_decision_context: !isReference,
       evaluated_at: evaluatedAt,
       decision_context: decisionContext,
-      candidate_offers: input.candidate_offers,
+      candidate_offers: candidateOffers,
       required_stages: requiredShoppingDossierStages({ phase: decisionContext.phase, applicability: decisionContext.applicability, stages: {}, decision_context: decisionContext }),
       stage_adapter: adaptShoppingEvaluatorResult,
       constraint_validator: validateShoppingConstraintJob,

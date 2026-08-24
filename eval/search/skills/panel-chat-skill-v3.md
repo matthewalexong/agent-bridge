@@ -70,11 +70,15 @@ diagnostic need involving the other candidates. `result_compaction` and
 `wave.saved_result_chars` report the character savings; this compaction adds no
 model call and does not alter the signed `dossier_stage`.
 
-After `shopping_page_evidence_batch` hydrates a shortlist, pass its returned
-signed `candidate_offers` unchanged to every later evaluator batch that touches
-an exact offer. A bound hydration response contains the evidence once inside
-`candidate_offers` and intentionally omits a duplicate top-level `artifacts`
-array. Use each `candidate_id` as the evaluator item ID, but omit
+After `shopping_page_evidence_batch` hydrates a shortlist, inspect its returned
+signed `candidate_offers` once, then pass only its `candidate_offers_ref` to
+every later evaluator batch that touches an exact offer. The bounded
+process-owned reference resolves to that exact signed artifact and fails closed
+when altered, expired, evicted, or used after restart. A bound hydration response
+contains the evidence once inside `candidate_offers` and intentionally omits a duplicate
+top-level `artifacts` array. The compact reference prevents that large
+page-evidence payload from being resent in each dependency wave. Use each
+`candidate_id` as the evaluator item ID, but omit
 `listing_evidence` from identity, promotion, safety, merchant, counterfeit,
 protection, and fulfillment job arguments. The batch injects that candidate's
 authoritative evidence before production-schema validation, then verifies the
@@ -83,7 +87,7 @@ candidate's page artifact; caller-supplied evidence is checked and a
 substitution fails rather than being overwritten. In offer and checkout phases,
 identity, condition, promotion, safety, merchant, counterfeit, protection,
 fulfillment, offer ranking, deal timing, checkout, and checkout-consent jobs
-fail before execution when this artifact is absent or mismatched. This is a
+fail before execution when this artifact or reference is absent or mismatched. This is a
 deterministic in-process check that removes repeated payload tokens and adds no
 model call or search round trip.
 
