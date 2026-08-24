@@ -326,6 +326,8 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
 
   const panelStatus = tools.find((tool) => tool.name === "browser_panel_status");
   assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 300);
+  assert.equal(panelStatus.inputSchema.properties.text.maxLength, 300);
+  assert.equal(panelStatus.inputSchema.required?.includes("summary") ?? false, false);
   assert.deepEqual(panelStatus.inputSchema.properties.phase.enum, ["plan", "search", "inspect", "verify", "compare", "decision", "working"]);
   assert.equal(panelStatus.inputSchema.properties.evidence.maxItems, 5);
   assert.equal(panelStatus.inputSchema.properties.evidence.items.maxLength, 160);
@@ -731,7 +733,8 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(counterfeit.structuredContent.decision.selects_offer, false);
 
   const pageEvidenceTool = tools.find((candidate) => candidate.name === "shopping_page_evidence");
-  assert.ok(pageEvidenceTool.inputSchema.required.includes("snapshot_id"));
+  assert.equal(pageEvidenceTool.inputSchema.required?.includes("snapshot_id") ?? false, false);
+  assert.ok(pageEvidenceTool.inputSchema.properties.snapshotId);
   assert.equal("page_text" in pageEvidenceTool.inputSchema.properties, false);
   assert.equal("url" in pageEvidenceTool.inputSchema.properties, false);
   const counterfeitTool = tools.find((candidate) => candidate.name === "shopping_counterfeit_assess");

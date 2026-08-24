@@ -7,7 +7,7 @@ import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cd
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
-import { advertisedDescription, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
+import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
@@ -21,6 +21,11 @@ function asText(value) {
     content: [{ type: "text", text: serializeToolPayload(value) }],
     structuredContent: value,
   };
+}
+
+function asPanelText(value) {
+  if (mcpSurface !== "panel") return asText(value);
+  return { content: [{ type: "text", text: serializeToolPayload(value) }] };
 }
 
 function asError(error) {
@@ -137,7 +142,7 @@ tool(
   {
     title: "Snapshot page",
     description:
-      "Read visible page text plus semantic interactive elements with short-lived refs. Use a ref with browser_act, then take a fresh snapshot after every action.",
+      "Read bounded visible page text plus semantic short-lived refs. The response includes snapshotId; pass it to shopping_page_evidence. Use a ref with browser_act, then take a fresh snapshot after every action.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       maxChars: z.number().int().min(1_000).max(50_000).optional().default(8_000),
@@ -150,7 +155,10 @@ tool(
       snapshot: result,
       captured_at: result.captured_at || result.capturedAt || null,
     });
-    return asText({ ...result, evidence_receipt });
+    // Hermes consumes the text content. Repeating a large snapshot again as
+    // structuredContent can cross its spillover threshold, hiding snapshotId
+    // from the very next shopping evidence call and wasting recovery turns.
+    return asPanelText(compactPanelSnapshot({ ...result, evidence_receipt }, mcpSurface));
   },
 );
 
@@ -167,10 +175,17 @@ tool(
       })).min(1).max(8),
     },
   },
-  async (input) => asText({ results: await captureBrowserSnapshotsBatch(input.pages, {
-    snapshot: (page) => callBridge("page.snapshot", page),
-    capture: (entry) => browserEvidenceRegistry.capture(entry),
-  }) }),
+  async (input) => {
+    const results = await captureBrowserSnapshotsBatch(input.pages, {
+      snapshot: (page) => callBridge("page.snapshot", page),
+      capture: (entry) => browserEvidenceRegistry.capture(entry),
+    });
+    return asPanelText({
+      results: results.map((entry) => entry.status === "complete"
+        ? { ...entry, snapshot: compactPanelSnapshot(entry.snapshot, mcpSurface) }
+        : entry),
+    });
+  },
 );
 
 tool(
@@ -295,17 +310,24 @@ tool(
   {
     title: "Update live side panel progress",
     description:
-      "Publish a bounded user-visible research update. For non-trivial panel requests, call early with the plan and again after meaningful evidence or decisions. State actions, concrete evidence, conclusions, and the next step—never hidden chain-of-thought, private scratch work, or generic 'thinking'. Updates appear live and are attached to the final answer as a collapsible research trail.",
+      "Publish a bounded user-visible research update. Call directly, never through tool_call. For non-trivial panel requests, call early with the plan and again after meaningful evidence or decisions. State actions, concrete evidence, conclusions, and the next step—never hidden chain-of-thought, private scratch work, or generic 'thinking'. Updates appear live and are attached to the final answer as a collapsible research trail.",
     inputSchema: {
-      summary: z.string().min(1).max(300).describe(
+      summary: z.string().min(1).max(300).optional().describe(
         "Cumulative progress summary, ideally using short 'Doing / Found / Next' phrases. Include concrete sources, counts, constraints, or decisions when known.",
       ),
+      text: z.string().min(1).max(300).optional().describe("Compatibility alias for summary."),
       phase: z.enum(["plan", "search", "inspect", "verify", "compare", "decision", "working"]).optional().default("working"),
       evidence: z.array(z.string().min(1).max(160)).max(5).optional().default([]).describe("Short externally supportable facts, source names, counts, prices, or gate results; no hidden reasoning."),
       next: z.string().min(1).max(200).optional().describe("The next concrete action or unresolved question."),
     },
   },
-  async (input) => asText(await callBridge("panel.status", { text: input.summary, phase: input.phase, evidence: input.evidence, next: input.next, persist: true })),
+  async (input) => asText(await callBridge("panel.status", {
+    text: input.summary ?? input.text ?? "Researching current options…",
+    phase: input.phase,
+    evidence: input.evidence,
+    next: input.next,
+    persist: true,
+  })),
 );
 
 tool(

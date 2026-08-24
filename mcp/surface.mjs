@@ -50,6 +50,12 @@ export function serializeToolPayload(value) {
   return JSON.stringify(value);
 }
 
+export function compactPanelSnapshot(snapshot, surface = resolveMcpSurface()) {
+  if (surface !== MCP_SURFACE_PANEL || !snapshot || typeof snapshot !== "object") return snapshot;
+  const { elements: _elements, ...compact } = snapshot;
+  return compact;
+}
+
 const KEEP_FULL_PANEL_SCHEMA = new Set([
   "shopping_request_intake",
   "shopping_page_evidence",

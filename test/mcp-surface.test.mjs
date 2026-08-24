@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   advertisedDescription,
+  compactPanelSnapshot,
   defaultEvaluatorResultChars,
   MCP_SURFACE_FULL,
   MCP_SURFACE_PANEL,
@@ -58,4 +59,20 @@ test("tool payloads are compact JSON", () => {
   const compact = serializeToolPayload({ a: 1, b: ["x"] });
   assert.equal(compact, '{"a":1,"b":["x"]}');
   assert.ok(compact.length < pretty.length);
+});
+
+test("panel snapshots keep the evidence handle without duplicating element metadata", () => {
+  const snapshot = {
+    snapshotId: "snapshot-1",
+    snapshot: '- link "Product" [ref=e1]',
+    text: "Product $20",
+    elements: Array.from({ length: 500 }, (_, index) => ({ ref: `e${index + 1}`, selector: `#item-${index}` })),
+    evidence_receipt: { snapshot_id: "snapshot-1" },
+  };
+  const compact = compactPanelSnapshot(snapshot, MCP_SURFACE_PANEL);
+  assert.equal(compact.snapshotId, "snapshot-1");
+  assert.equal(compact.evidence_receipt.snapshot_id, "snapshot-1");
+  assert.equal("elements" in compact, false);
+  assert.ok(JSON.stringify(compact).length < JSON.stringify(snapshot).length / 4);
+  assert.equal(compactPanelSnapshot(snapshot, MCP_SURFACE_FULL), snapshot);
 });

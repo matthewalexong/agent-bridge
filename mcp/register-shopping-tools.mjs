@@ -468,7 +468,8 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   });
 
   const pageEvidenceRequest = {
-    snapshot_id: id,
+    snapshot_id: id.optional().describe("Snapshot receipt ID from browser_snapshot."),
+    snapshotId: id.optional().describe("Compatibility alias for snapshot_id."),
     page_kind: z.enum(["manufacturer_product", "retailer_listing", "manufacturer_authorized_sellers", "manufacturer_warranty", "reviews", "merchant_terms", "merchant_privacy", "checkout", "order_receipt", "merchant_correspondence", "carrier_tracking", "return_status", "warranty_status", "return_policy", "repairability", "safety_authority_search", "safety_notice", "certification_directory", "safety_remediation"]).optional().default("retailer_listing"),
     max_snapshot_age_seconds: z.number().int().min(10).max(300).optional().default(300),
     seller_query: z.string().min(1).max(200).optional(),
@@ -479,7 +480,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     description: "Extract signed provenance-backed seller, fulfiller, price, shipping, stock, returns, warranty, identifiers, authorized-directory matches, and review risk mentions only from a short-lived browser-observed snapshot receipt. Model-provided page text and URLs are not accepted. Missing facts remain unknown.",
     inputSchema: pageEvidenceRequest,
   }, async (input) => {
-    return asText(pageEvidenceLedger.extract(input));
+    const snapshot_id = input.snapshot_id ?? input.snapshotId;
+    if (!snapshot_id) throw Object.assign(new Error("Pass snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
+    return asText(pageEvidenceLedger.extract({ ...input, snapshot_id }));
   });
 
   tool("shopping_page_evidence_batch", {
@@ -488,7 +491,11 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     inputSchema: { requests: z.array(z.object(pageEvidenceRequest)).min(1).max(20) },
   }, async (input) => {
     const before = pageEvidenceLedger.stats();
-    const artifacts = await Promise.all(input.requests.map(async (request) => pageEvidenceLedger.extract(request)));
+    const artifacts = await Promise.all(input.requests.map(async (request) => {
+      const snapshot_id = request.snapshot_id ?? request.snapshotId;
+      if (!snapshot_id) throw Object.assign(new Error("Each request needs snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
+      return pageEvidenceLedger.extract({ ...request, snapshot_id });
+    }));
     const after = pageEvidenceLedger.stats();
     return asText({ artifacts, ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses } });
   });
