@@ -7,6 +7,7 @@ import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cd
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
+import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
 import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
@@ -14,6 +15,7 @@ const server = new McpServer({
   version: "0.9.0",
 });
 const browserEvidenceRegistry = createBrowserEvidenceRegistry();
+const shoppingCandidateRegistry = createShoppingCandidateRegistry();
 const mcpSurface = resolveMcpSurface();
 
 function asText(value) {
@@ -335,24 +337,29 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat, visible to the user. The bounded browser_panel_status updates for the current turn are attached automatically as a collapsible research trail. Keep replies focused; markdown is not rendered. For product or build recommendations set kind=products and pass live listing cards in links (url, title, image, price). Posts that name a product without cards are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, set kind=products and choose candidate_ids from the short-lived candidate_set_id returned by shopping_listing_candidates; Agent Bridge reconstructs exact observed cards. Model-authored product links are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
-      kind: z.enum(["products", "question", "none"]).describe("products = recommendations (links required). question = one product-specific ask. none = no listing to show."),
+      kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
+      candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional().describe("Short-lived set ID from shopping_listing_candidates. Required for products."),
+      candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
       links: z.array(z.object({
         url: z.string().url(),
         title: z.string().max(200).optional(),
         image: z.string().url().optional().describe("Thumbnail image URL shown on the card."),
         price: z.string().max(40).optional(),
-      })).max(5).optional().describe("Product/page cards rendered under the reply text. Required when kind=products."),
+      })).max(5).optional().describe("Optional non-product page cards. Rejected for kind=products."),
     },
   },
   async (input) => {
     const rejected = validatePanelPost(input);
     if (rejected) return asText({ posted: false, error: rejected });
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
-    return asText(await callBridge("panel.post", { text: input.text, links: input.links ?? [] }));
+    const links = input.kind === "products"
+      ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
+      : input.links ?? [];
+    return asText(await callBridge("panel.post", { text: input.text, links }));
   },
 );
 
@@ -490,6 +497,7 @@ registerShoppingTools({
   tool,
   asText,
   resolveBrowserSnapshot: (snapshotId, options) => browserEvidenceRegistry.resolve(snapshotId, options),
+  storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");
     const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);

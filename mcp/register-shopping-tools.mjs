@@ -55,7 +55,7 @@ const pageEvidenceArtifact = z.object({
   source_receipt: z.object({ artifact_attestation: artifactAttestation("browser_snapshot"), source_id: id, snapshot_id: id, tab_id: z.number().int().nonnegative(), url: z.string().url().max(4_000), captured_at: z.string().datetime(), content_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).passthrough(),
 }).passthrough();
 
-export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest }) {
+export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
@@ -488,7 +488,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   }, async (input) => {
     const snapshot_id = input.snapshot_id ?? input.snapshotId;
     if (!snapshot_id) throw Object.assign(new Error("Pass snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
-    return asText(extractBrowserObservedListingCandidates(resolveBrowserSnapshot, { ...input, snapshot_id }));
+    const artifact = extractBrowserObservedListingCandidates(resolveBrowserSnapshot, { ...input, snapshot_id });
+    if (typeof storeListingCandidateSet === "function") storeListingCandidateSet(artifact);
+    return asText(artifact);
   });
 
   tool("shopping_page_evidence", {

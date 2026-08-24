@@ -50,8 +50,10 @@ test("panel slims fat shopping schemas and descriptions", () => {
 test("product posts without link cards are rejected", () => {
   assert.equal(validatePanelPost({ kind: "question" }), null);
   assert.equal(validatePanelPost({ kind: "none" }), null);
-  assert.match(validatePanelPost({ kind: "products" }), /requires links/);
-  assert.equal(validatePanelPost({ kind: "products", links: [{ url: "https://www.amazon.com/dp/B0EXAMPLE" }] }), null);
+  assert.match(validatePanelPost({ kind: "products" }), /requires candidate_set_id/);
+  assert.match(validatePanelPost({ kind: "products", links: [{ url: "https://www.amazon.com/dp/B0EXAMPLE" }] }), /rejects model-authored links/);
+  assert.equal(validatePanelPost({ kind: "products", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), null);
+  assert.match(validatePanelPost({ kind: "none", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /only valid/);
 });
 
 test("tool payloads are compact JSON", () => {

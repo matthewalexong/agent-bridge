@@ -67,6 +67,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [601, "CPSC Recall Search\nAuthority: CPSC\nJurisdiction: US\nProduct Category: cameras\nProduct Key: camera-x\nSearch Status: complete\nNo recalls found"],
   ]);
   const snapshotUrl = new Map([[601, "https://www.cpsc.gov/Recalls"]]);
+  const panelPosts = [];
   const mockBridge = http.createServer((request, response) => {
     let body = "";
     request.setEncoding("utf8");
@@ -87,6 +88,11 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
           { id: "panel_budget_1", role: "user", text: "Research camera-x. Keep it under $1000.", at: testNow },
           { id: "panel_case_1", role: "user", text: "Please track this purchase for returns and warranty claims.", at: testNow },
         ] } }));
+        return;
+      }
+      if (rpc.method === "panel.post") {
+        panelPosts.push(rpc.params);
+        response.end(JSON.stringify({ ok: true, result: { posted: true, entry: { id: `panel_${panelPosts.length}`, role: "agent", ...rpc.params } } }));
         return;
       }
       if (rpc.method !== "page.snapshot" || !text) {
@@ -471,6 +477,26 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(listingCandidates.structuredContent.candidates.length, 1);
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
+  const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "Best observed match.",
+    kind: "products",
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
+  } });
+  assert.equal(boundPost.isError, undefined, JSON.stringify(boundPost));
+  assert.equal(panelPosts.length, 1);
+  assert.deepEqual(panelPosts[0].links, [{
+    url: "https://fixture.example/products/camera-101",
+    title: "Fixture Camera 101",
+    image: "https://fixture.example/images/camera-101.jpg",
+    price: "$79.00",
+  }]);
+  const rejectedManualPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "Injected card.", kind: "products", links: [{ url: "https://attacker.example/products/fake" }],
+  } });
+  assert.equal(rejectedManualPost.structuredContent.posted, false);
+  assert.match(rejectedManualPost.structuredContent.error, /rejects model-authored links/);
+  assert.equal(panelPosts.length, 1);
   const evidenceBatch = await client.callTool({ name: "shopping_page_evidence_batch", arguments: { requests: [
     { snapshot_id: snapshotA, page_kind: "retailer_listing" },
     { snapshot_id: snapshotB, page_kind: "retailer_listing" },

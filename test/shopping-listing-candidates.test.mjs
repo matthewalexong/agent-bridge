@@ -36,6 +36,7 @@ test("signed browser observations become bounded exact listing candidates", () =
   });
 
   assert.equal(verifyShoppingArtifactAttestation("listing_candidates", result), true);
+  assert.match(result.candidate_set_id, /^cset_[a-f0-9]{24}$/);
   assert.equal(result.selects_product, false);
   assert.equal(result.coverage.observed_product_links, 2);
   assert.equal(result.candidates.length, 2);

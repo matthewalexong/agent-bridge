@@ -79,10 +79,15 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
 
-export function validatePanelPost({ kind, links } = {}) {
+export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids } = {}) {
   const cards = Array.isArray(links) ? links : [];
-  if (kind === "products" && cards.length === 0) {
-    return "kind=products requires links[]. Copy url, title, image, and price from a live listing. Do not name a product without a card.";
+  if (kind === "products") {
+    if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
+    if (!candidate_set_id || !Array.isArray(candidate_ids) || candidate_ids.length === 0) {
+      return "kind=products requires candidate_set_id and candidate_ids from shopping_listing_candidates.";
+    }
+  } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0)) {
+    return "candidate_set_id and candidate_ids are only valid with kind=products.";
   }
   return null;
 }
