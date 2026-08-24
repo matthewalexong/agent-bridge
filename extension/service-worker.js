@@ -29,10 +29,12 @@ const rawSessionByChildSessionId = new Map();
 const pageSnapshotsByTabId = new Map();
 const pageActionChains = new Map();
 const PANEL_MAX_ENTRIES = 200;
+const PANEL_LIFECYCLE_PORT = "agent-bridge-panel-lifecycle";
+const PANEL_CLOSE_GRACE_MS = 300;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -50,6 +52,8 @@ let panelAgent = null;
 // audit summary; host placeholders opt out with persist:false.
 let panelStatus = null;
 let panelProgress = [];
+const panelLifecyclePorts = new Set();
+let panelCloseTimer = null;
 
 function progressText(value, max) {
   const text = String(value ?? "").trim().slice(0, max);
@@ -221,6 +225,31 @@ async function resetPanelConversation() {
     // ignore
   }
   if (previousId) emitBrowserEvent("panel.close", { conversationId: previousId });
+}
+
+async function closePanelSession() {
+  panelTranscript.length = 0;
+  panelProgress = [];
+  panelStatus = null;
+  await resetPanelConversation();
+  broadcastPanel();
+}
+
+function registerPanelLifecyclePort(port) {
+  if (port?.name !== PANEL_LIFECYCLE_PORT) return;
+  if (panelCloseTimer) {
+    clearTimeout(panelCloseTimer);
+    panelCloseTimer = null;
+  }
+  panelLifecyclePorts.add(port);
+  port.onDisconnect.addListener(() => {
+    panelLifecyclePorts.delete(port);
+    if (panelLifecyclePorts.size > 0) return;
+    panelCloseTimer = setTimeout(() => {
+      panelCloseTimer = null;
+      if (panelLifecyclePorts.size === 0) void closePanelSession();
+    }, PANEL_CLOSE_GRACE_MS);
+  });
 }
 
 async function nextConversationTurn() {
@@ -1750,6 +1779,7 @@ async function dispatch(method, params) {
 chrome.runtime.onInstalled.addListener(connect);
 chrome.runtime.onStartup.addListener(connect);
 chrome.action.onClicked.addListener(connect);
+chrome.runtime.onConnect?.addListener(registerPanelLifecyclePort);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
   const action = message?.type === "auth.get"
@@ -1781,7 +1811,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "panel.close") {
     void (async () => {
-      await resetPanelConversation();
+      await closePanelSession();
       sendResponse({ ok: true, result: { closed: true } });
     })();
     return true;

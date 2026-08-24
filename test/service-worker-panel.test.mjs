@@ -15,11 +15,16 @@ async function flush() {
   await new Promise((resolve) => setImmediate(resolve));
 }
 
+async function wait(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function loadHarness() {
   const nativeMessages = [];
   const broadcasts = [];
   const nativeMessage = event();
   const runtimeMessage = event();
+  const runtimeConnect = event();
   const port = {
     onMessage: nativeMessage,
     onDisconnect: event(),
@@ -34,6 +39,7 @@ async function loadHarness() {
       getManifest: () => ({ version: "0.9.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
+      onConnect: runtimeConnect,
       onMessage: runtimeMessage,
       sendMessage: (message) => { broadcasts.push(message); return Promise.resolve(); },
     },
@@ -54,6 +60,11 @@ async function loadHarness() {
     sendRuntime: (message) => new Promise((resolve) => {
       runtimeMessage.listener(message, sender, resolve);
     }),
+    connectPanel: () => {
+      const panelPort = { name: "agent-bridge-panel-lifecycle", onDisconnect: event() };
+      runtimeConnect.listener(panelPort);
+      return { disconnect: () => panelPort.onDisconnect.listener() };
+    },
     dispatch: async (id, method, params) => {
       await nativeMessage.listener({ type: "request", id, method, params }, port);
       await flush();
@@ -113,6 +124,49 @@ test("panel messages reach the agent event stream and replies land in the transc
     assert.equal(closeEvent.data.conversationId, sent.result.conversationId);
     const after = await harness.dispatch("panel-get-2", "panel.get", {});
     assert.equal(after.result.transcript.length, 0);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("one Hermes conversation lasts until the side panel closes", async () => {
+  const harness = await loadHarness();
+  try {
+    const panel = harness.connectPanel();
+    const first = await harness.sendRuntime({ type: "panel.send", text: "find a safe camera" });
+    const second = await harness.sendRuntime({ type: "panel.send", text: "only show weather-sealed options" });
+    assert.equal(second.result.conversationId, first.result.conversationId);
+    assert.equal(second.result.resume, true);
+
+    panel.disconnect();
+    await wait(350);
+    const closeEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.close");
+    assert.equal(closeEvent.data.conversationId, first.result.conversationId);
+    const afterClose = await harness.dispatch("after-panel-close", "panel.get", {});
+    assert.equal(afterClose.result.transcript.length, 0);
+
+    harness.connectPanel();
+    const reopened = await harness.sendRuntime({ type: "panel.send", text: "now find headphones" });
+    assert.notEqual(reopened.result.conversationId, first.result.conversationId);
+    assert.equal(reopened.result.resume, false);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("a quick side-panel reload preserves the active Hermes conversation", async () => {
+  const harness = await loadHarness();
+  try {
+    const firstPanel = harness.connectPanel();
+    const first = await harness.sendRuntime({ type: "panel.send", text: "compare two laptops" });
+    firstPanel.disconnect();
+    await wait(50);
+    harness.connectPanel();
+    await wait(300);
+    const second = await harness.sendRuntime({ type: "panel.send", text: "focus on battery life" });
+    assert.equal(second.result.conversationId, first.result.conversationId);
+    assert.equal(second.result.resume, true);
+    assert.equal(harness.nativeMessages.some((message) => message.type === "event" && message.event === "panel.close"), false);
   } finally {
     harness.restore();
   }

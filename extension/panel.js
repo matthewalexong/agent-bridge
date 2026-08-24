@@ -280,6 +280,10 @@ function setThinking(doc, transcript, status, progress = []) {
 }
 
 export function startPanel(doc = document) {
+  // This long-lived port scopes Hermes context to this side-panel document.
+  // Disconnect means the panel closed; the service worker allows a short
+  // reconnect grace period so an ordinary document reload keeps its session.
+  const lifecyclePort = chrome.runtime.connect({ name: "agent-bridge-panel-lifecycle" });
   const transcript = doc.querySelector("#transcript");
   const status = doc.querySelector("#status");
   const form = doc.querySelector("#composer");
