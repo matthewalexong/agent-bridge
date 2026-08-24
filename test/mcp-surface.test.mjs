@@ -29,8 +29,16 @@ test("panel surface keeps hubs and hides analysis/checkout tools", () => {
   assert.equal(shouldRegisterMcpTool("shopping_checkout_terms_accept", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("shopping_merchant_trust", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("shopping_profile_remember", MCP_SURFACE_PANEL), false);
+  assert.equal(shouldRegisterMcpTool("browser_click", MCP_SURFACE_PANEL), false, "selector compatibility clicks should stay behind browser_act");
+  assert.equal(shouldRegisterMcpTool("browser_fill", MCP_SURFACE_PANEL), false, "selector compatibility fills should stay behind browser_act");
+  assert.equal(shouldRegisterMcpTool("browser_click", MCP_SURFACE_FULL), true);
+  assert.equal(shouldRegisterMcpTool("browser_fill", MCP_SURFACE_FULL), true);
+  for (const evaluator of ["shopping_identity_resolve", "shopping_preference_rank", "shopping_product_evidence", "shopping_candidate_coverage", "shopping_offer_analyze"]) {
+    assert.equal(shouldRegisterMcpTool(evaluator, MCP_SURFACE_PANEL), false, `${evaluator} should be reachable only through the evaluator batch`);
+    assert.equal(shouldRegisterMcpTool(evaluator, MCP_SURFACE_FULL), true);
+  }
   assert.equal(shouldRegisterMcpTool("collect_code", MCP_SURFACE_FULL), true);
-  assert.ok(PANEL_TOOL_NAMES.length <= 32);
+  assert.ok(PANEL_TOOL_NAMES.length <= 20);
   assert.ok(PANEL_TOOL_NAMES.includes("shopping_evaluator_batch"));
 });
 

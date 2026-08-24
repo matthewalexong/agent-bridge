@@ -39,6 +39,10 @@ test("default MCP server advertises the compact panel surface only", async (cont
   const dossier = tools.find((tool) => tool.name === "shopping_decision_dossier");
   assert.ok(dossier, "dossier stays on the panel surface");
   assert.ok(JSON.stringify(dossier.inputSchema || {}).length < 2_000, "dossier schema must stay slim");
+  for (const hidden of ["shopping_identity_resolve", "shopping_preference_rank", "shopping_product_evidence", "shopping_candidate_coverage", "shopping_offer_analyze"]) {
+    assert.equal(tools.some((tool) => tool.name === hidden), false, `${hidden} must stay behind shopping_evaluator_batch`);
+  }
+  for (const hidden of ["browser_click", "browser_fill"]) assert.equal(tools.some((tool) => tool.name === hidden), false, `${hidden} must stay behind browser_act`);
 });
 
 test("live panel skill stays small and does not replace judgment with keywords", async () => {

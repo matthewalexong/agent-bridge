@@ -16,8 +16,6 @@ export const PANEL_TOOL_NAMES = Object.freeze([
   "browser_snapshot_batch",
   "browser_screenshot",
   "browser_act",
-  "browser_click",
-  "browser_fill",
   "browser_panel_identify",
   "browser_panel_post",
   "browser_panel_read",
@@ -28,11 +26,6 @@ export const PANEL_TOOL_NAMES = Object.freeze([
   "shopping_page_evidence_batch",
   "shopping_evaluator_batch",
   "shopping_decision_dossier",
-  "shopping_identity_resolve",
-  "shopping_preference_rank",
-  "shopping_product_evidence",
-  "shopping_candidate_coverage",
-  "shopping_offer_analyze",
 ]);
 
 const PANEL_TOOL_SET = new Set(PANEL_TOOL_NAMES);
