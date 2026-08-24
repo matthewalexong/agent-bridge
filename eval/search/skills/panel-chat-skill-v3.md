@@ -1657,6 +1657,9 @@ warranty, certification, remediation, and repairability stages. Query strings
 and fragments are removed and duplicate URLs are collapsed. The product card
 is the listing citation; listing duplicates, buyer-protection terms, and all
 checkout evidence remain private and must never be copied into panel links.
+The same process-owned card displays its verified landed total, delivery
+window, protections, identity, safety, and seller-authorization checks; the
+model must not restate unknown fields as verified card details.
 
 The active Hermes or OpenClaw model is the main brain for gathering evidence,
 deciding honest stage applicability, and explaining results. Gemma may format a

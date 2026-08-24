@@ -111,6 +111,12 @@ function renderEntry(doc, transcript, entry) {
       }
       const info = doc.createElement("span");
       info.className = "card-info";
+      if (link.verification === "Verified pick") {
+        const verified = doc.createElement("span");
+        verified.className = "card-verified";
+        verified.textContent = "✓ Verified pick";
+        info.append(verified);
+      }
       const title = doc.createElement("span");
       title.className = "card-title";
       title.textContent = link.title || url.hostname;
@@ -130,6 +136,16 @@ function renderEntry(doc, transcript, entry) {
         priceRow.append(price);
         info.append(priceRow);
       }
+      if (typeof link.landed_total === "string" && link.landed_total.trim()) {
+        const total = doc.createElement("span");
+        total.className = "card-landed-total";
+        const label = doc.createElement("span");
+        label.textContent = "Landed total";
+        const amount = doc.createElement("strong");
+        amount.textContent = link.landed_total.trim();
+        total.append(label, amount);
+        info.append(total);
+      }
       if ((typeof link.seller === "string" && link.seller.trim()) || typeof link.availability === "string") {
         const meta = doc.createElement("span");
         meta.className = "card-meta";
@@ -146,6 +162,24 @@ function renderEntry(doc, transcript, entry) {
           meta.append(availability);
         }
         if (meta.childElementCount > 0) info.append(meta);
+      }
+      if (typeof link.delivery === "string" && link.delivery.trim()) {
+        const delivery = doc.createElement("span");
+        delivery.className = "card-delivery";
+        delivery.textContent = link.delivery.trim();
+        info.append(delivery);
+      }
+      const chips = [...(Array.isArray(link.protections) ? link.protections : []), ...(Array.isArray(link.checks) ? link.checks : [])];
+      if (chips.length > 0) {
+        const details = doc.createElement("span");
+        details.className = "card-details";
+        for (const value of chips.slice(0, 6)) {
+          if (typeof value !== "string" || !value.trim()) continue;
+          const chip = doc.createElement("span");
+          chip.textContent = value.trim();
+          details.append(chip);
+        }
+        if (details.childElementCount > 0) info.append(details);
       }
       card.append(info);
       cards.append(card);

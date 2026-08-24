@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, formatShoppingRecommendationSummary, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
+import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, formatShoppingRecommendationSummary, shoppingRecommendationCardDetails, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
 import { attestShoppingArtifact } from "../lib/shopping-attestation.mjs";
 
 const NOW = Date.parse("2026-08-24T20:00:00.000Z");
@@ -133,6 +133,13 @@ test("verified recommendation summaries expose only process-derived decisive fac
   });
   assert.equal(formatShoppingRecommendationSummary([summary]), "Verified details: $106.00 landed total · sold by Exact Shop · in stock · delivery Aug 28–Aug 30 · 30-day returns · 12-month warranty · 60-day buyer protection · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · seller authorization verified");
   assert.equal(appendShoppingRecommendationSummary("My pick.", [summary]), `My pick.\n\n${formatShoppingRecommendationSummary([summary])}`);
+  assert.deepEqual(shoppingRecommendationCardDetails(summary), {
+    verification: "Verified pick",
+    landed_total: "$106.00",
+    delivery: "Delivery Aug 28–Aug 30",
+    protections: ["30-day returns", "12-month warranty", "60-day buyer protection"],
+    checks: ["Exact item", "Safety checked", "Authorized seller"],
+  });
   assert.deepEqual(shoppingRecommendationEvidenceCards([summary]), [
     { url: "https://regulator.example/search", title: "Evidence · Official safety search" },
     { url: "https://shop.example/returns", title: "Evidence · Return policy" },

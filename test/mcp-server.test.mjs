@@ -829,6 +829,19 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.match(panelPosts[1].text, /^This is the verified best offer\.\n\nVerified details: \$80\.50 landed total · sold by Camera Store A · in stock · delivery Aug 25–Aug 27 · 30-day returns · 12-month warranty · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · protection requirements met$/);
   assert.equal(panelPosts[1].links[0].price, "$74.50");
   assert.equal(panelPosts[1].links[0].seller, "Camera Store A");
+  assert.deepEqual({
+    verification: panelPosts[1].links[0].verification,
+    landed_total: panelPosts[1].links[0].landed_total,
+    delivery: panelPosts[1].links[0].delivery,
+    protections: panelPosts[1].links[0].protections,
+    checks: panelPosts[1].links[0].checks,
+  }, {
+    verification: "Verified pick",
+    landed_total: "$80.50",
+    delivery: "Delivery Aug 25–Aug 27",
+    protections: ["30-day returns", "12-month warranty"],
+    checks: ["Exact item", "Safety checked", "Low counterfeit risk"],
+  });
   assert.deepEqual(panelPosts[1].links.slice(1), [
     { url: "https://www.cpsc.gov/Recalls", title: "Evidence · Official safety search" },
     { url: "https://fixture.example/102", title: "Evidence · Authorized seller directory" },

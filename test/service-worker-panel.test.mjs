@@ -263,6 +263,11 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
       price_label: "Item price",
       seller: "Audio Shop",
       availability: "In stock",
+      verification: "Verified pick",
+      landed_total: "$24.18",
+      delivery: "Delivery Aug 26–Aug 28",
+      protections: ["30-day returns", "12-month warranty", 42, "x".repeat(100)],
+      checks: ["Exact item", "Safety checked", "Invented check"],
     };
     const posted = await harness.dispatch("links-post", "panel.post", {
       text: "Best match below.",
@@ -283,10 +288,16 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
     assert.equal(stored[0].price_label, "Item price");
     assert.equal(stored[0].seller, "Audio Shop");
     assert.equal(stored[0].availability, "In stock");
+    assert.equal(stored[0].verification, "Verified pick");
+    assert.equal(stored[0].landed_total, "$24.18");
+    assert.equal(stored[0].delivery, "Delivery Aug 26–Aug 28");
+    assert.deepEqual(stored[0].protections, ["30-day returns", "12-month warranty"]);
+    assert.deepEqual(stored[0].checks, ["Exact item", "Safety checked"]);
     assert.ok(stored[1].title.length <= 200, "oversized title truncated");
     assert.equal(stored[1].seller.length, 120, "oversized seller truncated");
     assert.equal(stored[1].availability, undefined, "unknown availability literals are dropped");
     assert.equal(stored[1].price_label, undefined, "unknown price labels are dropped");
+    assert.equal(stored[1].verification, undefined, "unverified cards cannot invent the badge");
 
     // panel.get surfaces the links so the panel page can render cards.
     const got = await harness.dispatch("links-get", "panel.get", {});

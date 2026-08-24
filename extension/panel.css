@@ -246,6 +246,17 @@ h1 {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.card-verified {
+  width: max-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(145, 245, 109, 0.14);
+  color: #91f56d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .card-price-row {
   display: flex;
   gap: 5px;
@@ -259,6 +270,17 @@ h1 {
   font-size: 12px;
   font-weight: 700;
   color: #91f56d;
+}
+.card-landed-total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #bdd0e8;
+  font-size: 10px;
+}
+.card-landed-total strong {
+  color: #91f56d;
+  font-size: 15px;
 }
 .card-meta {
   display: flex;
@@ -280,6 +302,24 @@ h1 {
 .card-availability.is-in { color: #91f56d; }
 .card-availability.is-out { color: #ff8d9b; }
 .card-availability.is-unknown { color: #f2c56b; }
+.card-delivery {
+  color: #bdd0e8;
+  font-size: 10px;
+}
+.card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.card-details > span {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(47, 215, 255, 0.09);
+  border: 1px solid rgba(47, 215, 255, 0.16);
+  color: #c8d9ed;
+  font-size: 9px;
+}
 
 #composer {
   display: flex;

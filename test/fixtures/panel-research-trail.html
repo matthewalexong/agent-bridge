@@ -23,7 +23,10 @@
       const state = {
         transcript: [
           { id: "u1", role: "user", text: "Find the best verified price for this camera.", at: "2026-08-22T19:59:00.000Z" },
-          { id: "a1", role: "agent", text: "Offer B is the best verified option at $106 fully landed. It is the exact model, in stock, and sold by an authorized seller.", research: trail, at: "2026-08-22T20:02:00.000Z" },
+          { id: "a1", role: "agent", text: "Offer B is the best verified option at $106 fully landed. It is the exact model, in stock, and sold by an authorized seller.", research: trail, links: [
+            { url: "https://shop.example/camera", title: "Fixture Camera X", image: "https://fixture.example/images/camera-101.jpg", price: "$99.00", price_label: "Item price", seller: "Camera Store B", availability: "In stock", verification: "Verified pick", landed_total: "$106.00", delivery: "Delivery Aug 28–Aug 30", protections: ["30-day returns", "12-month warranty"], checks: ["Exact item", "Safety checked", "Authorized seller"] },
+            { url: "https://regulator.example/search", title: "Evidence · Official safety search" },
+          ], at: "2026-08-22T20:02:00.000Z" },
         ],
         agent: { name: "Hermes", since: "2026-08-22T19:58:00.000Z" },
         status: { text: "Checking return protection before final confirmation.", phase: "verify", evidence: ["30-day verified return window", "No restocking fee"], next: "Reconcile checkout total", at: "2026-08-22T20:03:00.000Z" },
