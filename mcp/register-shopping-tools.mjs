@@ -46,6 +46,7 @@ import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mj
 import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evidence.mjs";
 import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 import { compactShoppingEvaluatorResult } from "../lib/shopping-evaluator-result-compact.mjs";
+import { createShoppingDossierStageRegistry } from "../lib/shopping-dossier-stage-registry.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -67,6 +68,11 @@ const candidateOffersArtifact = z.object({
 }).passthrough();
 const decisionContextReference = z.object({ context_id: z.string().regex(/^shopping_context_[a-f0-9]{32}$/) }).strict();
 const reusableDecisionContext = z.union([shoppingDecisionContextArtifactSchema, decisionContextReference, shoppingDecisionContextInputSchema]);
+const dossierStagesReference = z.object({
+  context_id: z.string().regex(/^shopping_context_[a-f0-9]{32}$/),
+  bundle_id: z.string().regex(/^dossier_stages_[a-f0-9]{32}$/),
+  stage_names: z.array(id).max(32),
+}).strict();
 
 export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet }) {
   const registerTool = tool;
@@ -74,6 +80,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
   const checkoutPatternRegistry = createShoppingCheckoutPatternRegistry();
   const decisionContextRegistry = createShoppingDecisionContextRegistry();
+  const dossierStageRegistry = createShoppingDossierStageRegistry();
   const evaluatorRegistry = new Map();
   tool = (name, definition, handler) => {
     registerTool(name, definition, handler);
@@ -465,7 +472,8 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     inputSchema: {
       decision_context: z.union([shoppingDecisionContextArtifactSchema, decisionContextReference]),
       freshness_seconds: z.object({ candidate_coverage: z.number().int().positive().max(2_592_000).optional(), product_evidence: z.number().int().positive().max(31_536_000).optional(), performance: z.number().int().positive().max(2_592_000).optional(), value: z.number().int().positive().max(2_592_000).optional(), condition: z.number().int().positive().max(2_592_000).optional(), promotion: z.number().int().positive().max(86_400).optional(), review_integrity: z.number().int().positive().max(2_592_000).optional(), safety: z.number().int().positive().max(86_400).optional(), composition: z.number().int().positive().max(2_592_000).optional(), privacy: z.number().int().positive().max(2_592_000).optional(), compatibility: z.number().int().positive().max(31_536_000).optional(), lifecycle: z.number().int().positive().max(31_536_000).optional(), preferences: z.number().int().positive().max(31_536_000).optional(), ownership: z.number().int().positive().max(31_536_000).optional(), identity: z.number().int().positive().max(86_400).optional(), merchant: z.number().int().positive().max(86_400).optional(), counterfeit: z.number().int().positive().max(86_400).optional(), protection: z.number().int().positive().max(86_400).optional(), fulfillment: z.number().int().positive().max(86_400).optional(), offer: z.number().int().positive().max(86_400).optional(), deal: z.number().int().positive().max(31_536_000).optional(), checkout: z.number().int().min(10).max(3_600).optional(), checkout_consent: z.number().int().min(10).max(3_600).optional() }).optional(),
-      stages: shoppingDossierStagesSchema,
+      stages: shoppingDossierStagesSchema.optional().describe("Full signed stages for explicit diagnostics. Normally omit and pass dossier_stages_ref."),
+      dossier_stages_ref: dossierStagesReference.optional().describe("Latest compact stage-bundle reference returned by shopping_evaluator_batch."),
     },
   }, async (input) => {
     const evaluatedAt = new Date().toISOString();
@@ -474,9 +482,14 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       : decisionContextRegistry.resolve(input.decision_context, evaluatedAt);
     const profile = await listShoppingProfile({ evaluated_at: evaluatedAt });
     if (decisionContext.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
+    const hasFullStages = input.stages != null;
+    const hasStageReference = input.dossier_stages_ref != null;
+    if (hasFullStages === hasStageReference) throw Object.assign(new Error("Pass exactly one of stages or dossier_stages_ref"), { code: "shopping_dossier_stages_input_invalid" });
+    const stages = hasStageReference ? dossierStageRegistry.resolve(input.dossier_stages_ref, decisionContext.context_id) : input.stages;
     return asText(composeShoppingDossier({
       ...input,
       decision_context: decisionContext,
+      stages,
       evaluated_at: evaluatedAt,
       current_profile_state_revision: profile.state_revision,
       phase: decisionContext.phase,
@@ -966,6 +979,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       max_concurrency: z.number().int().min(1).max(8).optional().default(4),
       max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
       result_mode: z.enum(["compact", "full"]).optional().default("compact").describe("Compact keeps the complete exact-subject result and top-level diagnostics while dropping other candidates' array entries. Use full only for explicit diagnostics."),
+      stage_mode: z.enum(["reference", "full"]).optional().default("reference").describe("Reference stores signed dossier stages in process and returns only the latest bundle reference. Full also returns each stage for explicit diagnostics."),
       jobs: z.array(z.object({ job_id: id, tool: z.enum(Object.keys(SHOPPING_EVALUATOR_STAGES)), subject: z.object({ product_id: id, offer_id: id.optional() }), constraint_ids: z.array(id).max(1_000).optional().default([]), arguments: z.record(z.any()) })).min(1).max(24),
     },
   }, async (input) => {
@@ -980,7 +994,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
         : createShoppingDecisionContext(input.decision_context);
     if (!isReference && !isArtifact) decisionContextRegistry.remember(decisionContext, evaluatedAt);
     if (decisionContext.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
-    return asText(await runShoppingEvaluatorBatch({
+    const batch = await runShoppingEvaluatorBatch({
       jobs: input.jobs,
       max_concurrency: input.max_concurrency,
       max_result_chars: input.max_result_chars ?? defaultEvaluatorResultChars(),
@@ -995,6 +1009,12 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       offer_input_projector: projectShoppingEvaluatorOfferInput,
       offer_binding_validator: validateShoppingEvaluatorOfferBinding,
       result_compactor: compactShoppingEvaluatorResult,
-    }, evaluatorRegistry));
+    }, evaluatorRegistry);
+    const completedStages = Object.fromEntries(batch.results.filter((result) => result.status === "complete" && result.dossier_stage).map((result) => [result.stage, result.dossier_stage]));
+    const failedStages = batch.results.filter((result) => result.status === "failed" && result.stage).map((result) => result.stage);
+    batch.dossier_stages_ref = dossierStageRegistry.remember({ context_id: decisionContext.context_id, stages: completedStages, invalidate_stages: failedStages });
+    batch.stage_mode = input.stage_mode;
+    if (input.stage_mode === "reference") for (const result of batch.results) delete result.dossier_stage;
+    return asText(batch);
   });
 }

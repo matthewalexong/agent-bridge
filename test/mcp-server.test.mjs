@@ -458,7 +458,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     candidate_coverage: { action: "coverage_sufficient", candidate_set_cleared_for_ranking: true, eligible_candidate_ids: ["camera-x"] },
     candidates: [{ id: "camera-x", price_usd: 900, price_evidence_status: "verified" }],
   };
-  const constrainedBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: { decision_context: budgetContext, jobs: [
+  const constrainedBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: { decision_context: budgetContext, stage_mode: "full", jobs: [
     { job_id: "budget-preference", tool: "shopping_preference_rank", subject: { product_id: "camera-x" }, constraint_ids: ["budget"], arguments: budgetPreferenceArguments },
   ] } });
   assert.equal(constrainedBatch.structuredContent.results[0].status, "complete", JSON.stringify(constrainedBatch));
@@ -612,6 +612,8 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   } });
   assert.equal(productEvidenceWave.isError, undefined, JSON.stringify(productEvidenceWave));
   assert.match(productEvidenceWave.structuredContent.decision_context_ref.context_id, /^shopping_context_[a-f0-9]{32}$/);
+  assert.equal("dossier_stage" in productEvidenceWave.structuredContent.results[0], false);
+  assert.deepEqual(productEvidenceWave.structuredContent.dossier_stages_ref.stage_names, ["product_evidence"]);
   const safetyWave = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
     decision_context: productEvidenceWave.structuredContent.decision_context_ref, jobs: [
       { job_id: "safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: "A" }, arguments: { evaluated_at: testNow, jurisdiction: "US", identity: rankedIdentity, coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [{ id: "A", listing_evidence: rankedListingA }] } },
@@ -622,19 +624,26 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.deepEqual(safetyWave.structuredContent.decision_context_ref, productEvidenceWave.structuredContent.decision_context_ref);
   assert.ok(JSON.stringify(safetyWave.structuredContent.decision_context_ref).length * 10 < JSON.stringify(productEvidenceWave.structuredContent.decision_context).length, "the compact reference should materially reduce repeated context tokens");
   assert.deepEqual(safetyWave.structuredContent.results.map((item) => item.status), ["complete"]);
-  const coreStages = Object.fromEntries([...productEvidenceWave.structuredContent.results, ...safetyWave.structuredContent.results].map((item) => [item.stage, item.dossier_stage]));
-  assert.match(coreStages.product_evidence.artifact_attestation, /^v1\.dossier_stage\.[a-f0-9]{64}$/);
-  assert.match(coreStages.safety.artifact_attestation, /^v1\.dossier_stage\.[a-f0-9]{64}$/);
-  const productClearanceResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: productEvidenceWave.structuredContent.decision_context_ref, stages: coreStages } });
+  assert.equal("dossier_stage" in safetyWave.structuredContent.results[0], false);
+  assert.deepEqual(safetyWave.structuredContent.dossier_stages_ref.stage_names, ["product_evidence", "safety"]);
+  const productClearanceResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: productEvidenceWave.structuredContent.decision_context_ref, dossier_stages_ref: safetyWave.structuredContent.dossier_stages_ref } });
   assert.equal(productClearanceResponse.isError, undefined, JSON.stringify(productClearanceResponse));
   const productClearance = productClearanceResponse.structuredContent;
   assert.equal(productClearance.decision.action, "recommend_product");
   assert.match(productClearance.clearance_attestation, /^v1\.[a-f0-9]{64}$/);
-  const tamperedStages = structuredClone(coreStages);
-  tamperedStages.safety.action = "avoid_product";
-  const tamperedDossier = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: productEvidenceWave.structuredContent.decision_context_ref, stages: tamperedStages } });
-  assert.equal(tamperedDossier.structuredContent.decision.action, "block");
-  assert.ok(tamperedDossier.structuredContent.audit.invalid_artifacts.includes("safety"));
+  const failedSafetyRerun = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: productEvidenceWave.structuredContent.decision_context_ref,
+    jobs: [{ job_id: "failed-safety-rerun", tool: "shopping_safety_assess", subject: { product_id: "camera-x" }, arguments: {} }],
+  } });
+  assert.equal(failedSafetyRerun.structuredContent.results[0].status, "failed");
+  assert.deepEqual(failedSafetyRerun.structuredContent.dossier_stages_ref.stage_names, ["product_evidence"], "a failed rerun must remove prior safety authority");
+  const dossierAfterFailedRerun = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: productEvidenceWave.structuredContent.decision_context_ref, dossier_stages_ref: failedSafetyRerun.structuredContent.dossier_stages_ref } });
+  assert.ok(dossierAfterFailedRerun.structuredContent.audit.missing.includes("safety"));
+  const alteredStageReference = structuredClone(safetyWave.structuredContent.dossier_stages_ref);
+  alteredStageReference.bundle_id = `dossier_stages_${"0".repeat(32)}`;
+  const tamperedDossier = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: productEvidenceWave.structuredContent.decision_context_ref, dossier_stages_ref: alteredStageReference } });
+  assert.equal(tamperedDossier.isError, true);
+  assert.match(tamperedDossier.content[0].text, /shopping_dossier_stages_reference_stale/);
   const rankedMerchantA = await observedMerchant(301);
   const rankedMerchantB = await observedMerchant(311);
   const rankedMerchant = (await client.callTool({

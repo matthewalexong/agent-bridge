@@ -188,20 +188,28 @@ failure. `not_in_wave` describes this call only and does not prove that evidence
 exists elsewhere. A partial or failed wave remains unresolved.
 
 The process adapter selects exactly one matching evaluator result for each job,
-validates the stage-specific schema, and returns a `dossier_stage` carrying a
+validates the stage-specific schema, and creates a `dossier_stage` carrying a
 process-only attestation over its stage name, artifact ID, timestamp, subject,
 decision-context ID, exact evaluator-input digest, consumed constraint IDs, and
-gate fields. Market, safety-jurisdiction, fulfillment-destination, and
+gate fields. In the default `stage_mode=reference`, the process accumulates each
+successful stage under its exact context and returns only the latest
+`dossier_stages_ref`; this avoids transporting or merging signed stage payloads
+in the main-brain context. Each later wave extends that bundle. Pass the latest
+reference to `shopping_decision_dossier`. A failed attempted rerun removes the
+older copy of that stage from the latest bundle, so a reference cannot conceal
+newer failure. An old, altered, wrong-context, or post-restart reference fails
+closed. Use `stage_mode=full` only for targeted
+diagnostics; never create, edit, retype, merge, or repair a returned full stage.
+Market, safety-jurisdiction, fulfillment-destination, and
 checkout-destination inputs
 must match their context. Ambiguous, missing, wrong-product,
 wrong-offer, expired-context, or context-mismatched results fail
-adaptation. Never create, edit, retype, merge, or repair a `dossier_stage`; rerun
-the targeted evaluator when adaptation fails. A process restart invalidates old
-stage authority.
+adaptation. Rerun the targeted evaluator when adaptation fails. A process
+restart invalidates old stage authority and bundle references.
 
 The batch readiness object always leaves `recommendation_ready` and
 `purchase_allowed` false. Then call `shopping_decision_dossier` separately with
-the exact returned signed `decision_context` and `dossier_stage` objects. The
+the exact returned `decision_context_ref` and latest `dossier_stages_ref`. The
 production dossier derives phase, product, offer, and applicability from that
 context and rejects missing, expired, altered, mixed-context, forged, edited,
 wrong-stage, wrong-subject, and restarted-process artifacts. Only that

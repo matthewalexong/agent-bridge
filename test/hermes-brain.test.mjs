@@ -63,8 +63,12 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /rejects missing, expired, altered, mixed-context, forged, edited/i);
   assert.match(skill, /no local\s+model may plan a wave/i);
   assert.match(skill, /declare the exact `subject\.product_id` and.*`subject\.offer_id`/is);
-  assert.match(skill, /returns a `dossier_stage` carrying a\s+process-only attestation/i);
-  assert.match(skill, /Never create, edit, retype, merge, or repair a `dossier_stage`/i);
+  assert.match(skill, /creates a `dossier_stage` carrying a\s+process-only attestation/i);
+  assert.match(skill, /default `stage_mode=reference`/i);
+  assert.match(skill, /returns only the latest\s+`dossier_stages_ref`/i);
+  assert.match(skill, /Pass the latest\s+reference to `shopping_decision_dossier`/i);
+  assert.match(skill, /failed attempted rerun removes the\s+older copy of that stage/i);
+  assert.match(skill, /never create, edit, retype, merge, or repair a returned full stage/i);
   assert.match(skill, /production dossier derives phase, product, offer, and applicability from that\s+context/i);
   assert.match(skill, /no local\s+model may.*transport a partial stage/is);
   assert.match(skill, /main brain still owns the plan, applicability, narrowing, and synthesis/i);
