@@ -85,3 +85,46 @@ test("exact-offer binding rejects a modified candidate-offers artifact", () => {
   }), { code: "shopping_candidate_offers_invalid" });
 });
 
+test("condition and deal stages preserve the exact signed subject ID", () => {
+  const candidate_offers = artifact();
+  assert.deepEqual(validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "condition", subject, input: { offer: { id: "offer-a" } } }), ["offer-a"]);
+  assert.deepEqual(validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "deal", subject, input: { current: { offer_id: "offer-a" } } }), ["offer-a"]);
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "condition", subject, input: { offer: { id: "offer-b" } } }), { code: "shopping_candidate_offer_id_mismatch" });
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "deal", subject, input: { current: { offer_id: "offer-b" } } }), { code: "shopping_candidate_offer_id_mismatch" });
+});
+
+test("offer analysis accepts only unique signed shortlist IDs and must include its subject", () => {
+  const candidate_offers = artifact();
+  const run = (offers) => validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "offer", subject, input: { offers } });
+  assert.deepEqual(run([{ id: "offer-a" }, { id: "offer-b" }]), ["offer-a", "offer-b"]);
+  assert.throws(() => run([{ id: "offer-a" }, { id: "offer-a" }]), { code: "shopping_candidate_offer_id_duplicate" });
+  assert.throws(() => run([{ id: "offer-b" }]), { code: "shopping_candidate_offer_subject_omitted" });
+  assert.throws(() => run([{ id: "offer-a" }, { id: "offer-x" }]), { code: "shopping_candidate_offer_id_mismatch" });
+});
+
+test("checkout binds the expected offer while allowing explicitly handled extra cart items", () => {
+  const candidate_offers = artifact();
+  const run = (expectedId, items) => validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: { phase: "checkout_review", offer_id: "offer-a" }, stage: "checkout", subject,
+    input: { expected: { offer_id: expectedId }, cart: { items } },
+  });
+  assert.deepEqual(run("offer-a", [{ id: "offer-a" }, { id: "user-added-accessory" }]), ["offer-a"]);
+  assert.throws(() => run("offer-b", [{ id: "offer-b" }]), { code: "shopping_candidate_offer_id_mismatch" });
+  assert.throws(() => run("offer-a", [{ id: "user-added-accessory" }]), { code: "shopping_candidate_offer_subject_omitted" });
+});
+
+test("checkout consent keeps signed terms and pattern evidence on one exact offer", () => {
+  const candidate_offers = artifact();
+  const run = (termsId, patternId) => validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: { phase: "checkout_review", offer_id: "offer-a" }, stage: "checkout_consent", subject,
+    input: { terms_evidence: { offer_id: termsId }, pattern_evidence: { offer_id: patternId } },
+  });
+  assert.deepEqual(run("offer-a", "offer-a"), ["offer-a"]);
+  assert.throws(() => run("offer-a", "offer-b"), { code: "shopping_candidate_offer_id_mismatch" });
+});
+
+test("offer and checkout phases require candidate offers for every derived offer stage", () => {
+  for (const stage of ["condition", "offer", "deal", "checkout", "checkout_consent"]) {
+    assert.throws(() => validateShoppingEvaluatorOfferBinding({ candidate_offers: null, decision_context: context, stage, subject, input: {} }), { code: "shopping_candidate_offers_required" });
+  }
+});
