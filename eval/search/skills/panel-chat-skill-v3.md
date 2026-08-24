@@ -59,6 +59,17 @@ and dossier mutation or authority paths. Keep the default aggregate result
 budget; an oversized result fails closed instead of returning a truncated
 artifact. Rerun that evaluator alone with narrower evidence.
 
+Use the default `result_mode=compact`. After a successful stage is adapted, the
+batch keeps the complete result entry for the exact context product or offer,
+plus every top-level warning and diagnostic, while omitting only other
+candidates' entries from that job's returned array. Cross-candidate selection
+outputs remain complete, and adaptation failures retain the full result for
+diagnosis. Inspect the exact-subject action, gate, warnings, unknowns, and
+disclosures exactly as before. Use `result_mode=full` only for an explicit
+diagnostic need involving the other candidates. `result_compaction` and
+`wave.saved_result_chars` report the character savings; this compaction adds no
+model call and does not alter the signed `dossier_stage`.
+
 After `shopping_page_evidence_batch` hydrates a shortlist, pass its returned
 signed `candidate_offers` unchanged to every later evaluator batch that touches
 an exact offer. A bound hydration response contains the evidence once inside

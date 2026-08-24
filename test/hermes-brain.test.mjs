@@ -32,6 +32,10 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /intentionally omits a duplicate top-level `artifacts`\s+array/i);
   assert.match(skill, /omit\s+`listing_evidence` from identity, promotion, safety, merchant, counterfeit/i);
   assert.match(skill, /removes repeated payload tokens/i);
+  assert.match(skill, /Use the default `result_mode=compact`/i);
+  assert.match(skill, /complete result entry for the exact context product or offer/i);
+  assert.match(skill, /Cross-candidate selection\s+outputs remain complete/i);
+  assert.match(skill, /`wave\.saved_result_chars` report the character savings/i);
   assert.match(skill, /call `browser_panel_post` with `kind=products`, the signed `candidate_set_id`/i);
   assert.match(skill, /unhydrated candidate is rejected.*unknown exact price is omitted/is);
   assert.match(skill, /signed exact-page item price, observed seller, and availability/i);

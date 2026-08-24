@@ -194,3 +194,20 @@ test("evaluator batch projects process-owned offer evidence before production sc
   assert.equal(result.results[0].status, "complete");
   assert.deepEqual(observed, { offers: [{ id: "offer-a", listing_evidence: { signed: true } }] });
 });
+
+test("evaluator batch compacts exact-subject results by default and preserves explicit full diagnostics", async () => {
+  const payload = { assessments: [{ id: "camera-x", detail: "selected" }, { id: "camera-y", detail: "other" }], warnings: ["keep me"] };
+  const registry = new Map([["shopping_compatibility_assess", definition("compatibility", z.object({}), async () => ({ structuredContent: payload }))]]);
+  const stage_adapter = () => ({ stage: "compatibility" });
+  const result_compactor = ({ subject, result }) => ({ ...result, assessments: result.assessments.filter((item) => item.id === subject.product_id) });
+  const job = { job_id: "compat", tool: "shopping_compatibility_assess", subject: { product_id: "camera-x" }, arguments: {} };
+  const compact = await runShoppingEvaluatorBatch({ jobs: [job], stage_adapter, result_compactor }, registry);
+  assert.equal(compact.results[0].result.assessments.length, 1);
+  assert.deepEqual(compact.results[0].result.warnings, ["keep me"]);
+  assert.ok(compact.results[0].result_compaction.saved_chars > 0);
+  assert.equal(compact.wave.saved_result_chars, compact.results[0].result_compaction.saved_chars);
+  const full = await runShoppingEvaluatorBatch({ jobs: [job], stage_adapter, result_compactor, result_mode: "full" }, registry);
+  assert.equal(full.results[0].result.assessments.length, 2);
+  assert.equal(full.results[0].result_compaction.saved_chars, 0);
+  assert.equal(full.wave.result_mode, "full");
+});
