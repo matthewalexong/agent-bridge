@@ -36,6 +36,15 @@ test("evaluator batch starts independent jobs concurrently and preserves input o
   assert.deepEqual(result.dossier_requirements.not_in_this_wave, ["product_evidence"]);
   assert.equal(result.readiness.recommendation_ready, false);
   assert.equal(result.readiness.dossier_composition_required, true);
+  assert.equal(result.decision_context_ref, null);
+});
+
+test("evaluator batch can suppress a repeated full context while retaining its compact reference", async () => {
+  const decision_context = { context_id: `shopping_context_${"a".repeat(32)}` };
+  const registry = new Map([["shopping_value_assess", definition("value", z.object({}), async () => ({ structuredContent: { action: "comparable" } }))]]);
+  const result = await runShoppingEvaluatorBatch({ include_decision_context: false, decision_context, jobs: [{ job_id: "value", tool: "shopping_value_assess", arguments: {} }] }, registry);
+  assert.equal("decision_context" in result, false);
+  assert.deepEqual(result.decision_context_ref, { context_id: decision_context.context_id });
 });
 
 test("evaluator batch never starts more jobs than its concurrency bound", async () => {

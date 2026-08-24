@@ -39,6 +39,7 @@ import { runShoppingEvaluatorBatch, SHOPPING_EVALUATOR_STAGES } from "../lib/sho
 import { adaptShoppingEvaluatorResult } from "../lib/shopping-dossier-stage.mjs";
 import { shoppingDossierStagesSchema } from "../lib/shopping-dossier-stage-schema.mjs";
 import { createShoppingDecisionContext } from "../lib/shopping-decision-context.mjs";
+import { createShoppingDecisionContextRegistry } from "../lib/shopping-decision-context-registry.mjs";
 import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema, shoppingDecisionContextInputSchema } from "../lib/shopping-decision-context-schema.mjs";
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
 import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
@@ -64,12 +65,15 @@ const candidateOffersArtifact = z.object({
   evaluated_at: z.string().datetime(),
   offers: z.array(z.object({ candidate_id: id, listing_evidence: pageEvidenceArtifact }).passthrough()).min(1).max(5),
 }).passthrough();
+const decisionContextReference = z.object({ context_id: z.string().regex(/^shopping_context_[a-f0-9]{32}$/) }).strict();
+const reusableDecisionContext = z.union([shoppingDecisionContextArtifactSchema, decisionContextReference, shoppingDecisionContextInputSchema]);
 
 export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
   const checkoutPatternRegistry = createShoppingCheckoutPatternRegistry();
+  const decisionContextRegistry = createShoppingDecisionContextRegistry();
   const evaluatorRegistry = new Map();
   tool = (name, definition, handler) => {
     registerTool(name, definition, handler);
@@ -457,23 +461,28 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   });
   tool("shopping_decision_dossier", {
     title: "Compose an auditable shopping decision dossier",
-    description: "Compose product-, offer-, or checkout-level process-attested evaluator stages into one deterministic readiness decision. The signed decision context returned by shopping_evaluator_batch is authoritative for phase, subject, applicability, destination, user-state revision, and constraints. Rejects missing, expired, altered, mixed-context, wrong-stage, wrong-subject, and restarted-process artifacts. Failed safety gates cannot be overridden by price or model text; purchase_allowed is always false.",
+    description: "Compose product-, offer-, or checkout-level process-attested evaluator stages into one deterministic readiness decision. Accepts the signed context or its compact same-process reference; the reference avoids resending request and constraint payloads but fails closed after restart or expiry. The context is authoritative for phase, subject, applicability, destination, user-state revision, and constraints. Rejects missing, altered, mixed-context, wrong-stage, and wrong-subject artifacts. Failed safety gates cannot be overridden by price or model text; purchase_allowed is always false.",
     inputSchema: {
-      decision_context: shoppingDecisionContextArtifactSchema,
+      decision_context: z.union([shoppingDecisionContextArtifactSchema, decisionContextReference]),
       freshness_seconds: z.object({ candidate_coverage: z.number().int().positive().max(2_592_000).optional(), product_evidence: z.number().int().positive().max(31_536_000).optional(), performance: z.number().int().positive().max(2_592_000).optional(), value: z.number().int().positive().max(2_592_000).optional(), condition: z.number().int().positive().max(2_592_000).optional(), promotion: z.number().int().positive().max(86_400).optional(), review_integrity: z.number().int().positive().max(2_592_000).optional(), safety: z.number().int().positive().max(86_400).optional(), composition: z.number().int().positive().max(2_592_000).optional(), privacy: z.number().int().positive().max(2_592_000).optional(), compatibility: z.number().int().positive().max(31_536_000).optional(), lifecycle: z.number().int().positive().max(31_536_000).optional(), preferences: z.number().int().positive().max(31_536_000).optional(), ownership: z.number().int().positive().max(31_536_000).optional(), identity: z.number().int().positive().max(86_400).optional(), merchant: z.number().int().positive().max(86_400).optional(), counterfeit: z.number().int().positive().max(86_400).optional(), protection: z.number().int().positive().max(86_400).optional(), fulfillment: z.number().int().positive().max(86_400).optional(), offer: z.number().int().positive().max(86_400).optional(), deal: z.number().int().positive().max(31_536_000).optional(), checkout: z.number().int().min(10).max(3_600).optional(), checkout_consent: z.number().int().min(10).max(3_600).optional() }).optional(),
       stages: shoppingDossierStagesSchema,
     },
   }, async (input) => {
     const evaluatedAt = new Date().toISOString();
+    const decisionContext = "artifact_attestation" in input.decision_context
+      ? (decisionContextRegistry.remember(input.decision_context, evaluatedAt), input.decision_context)
+      : decisionContextRegistry.resolve(input.decision_context, evaluatedAt);
     const profile = await listShoppingProfile({ evaluated_at: evaluatedAt });
+    if (decisionContext.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
     return asText(composeShoppingDossier({
       ...input,
+      decision_context: decisionContext,
       evaluated_at: evaluatedAt,
       current_profile_state_revision: profile.state_revision,
-      phase: input.decision_context.phase,
-      product_id: input.decision_context.product_id,
-      offer_id: input.decision_context.offer_id || undefined,
-      applicability: input.decision_context.applicability,
+      phase: decisionContext.phase,
+      product_id: decisionContext.product_id,
+      offer_id: decisionContext.offer_id || undefined,
+      applicability: decisionContext.applicability,
     }, { require_stage_attestations: true, require_decision_context: true }));
   });
 
@@ -950,9 +959,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
 
   registerTool("shopping_evaluator_batch", {
     title: "Run a bounded shopping evaluator wave",
-    description: "Create a process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency in one tool round trip. Before production schema validation, the process injects exact listing evidence once from the signed candidate-offers artifact by candidate ID, so jobs do not resend large page artifacts. Caller-supplied substituted evidence is rejected rather than overwritten. Successful compact-mode jobs retain the complete exact-subject result and top-level diagnostics while omitting unrelated candidates; full mode is an explicit diagnostic escape hatch. The harness also rejects duplicate stages, applicability-skipped stages, product/offer subjects that differ from the context, and exact-offer IDs outside the signed shortlist. The context binds the request revision, user-state revision, objective, constraints, destination, applicability, product, and offer. The process derives common domain evaluator bindings from signed request clauses, rejects caller-authored alternatives, and requires each job to claim its complete routed constraint set. Canonical rules and literals must appear unchanged in the evaluator's real input before execution. Every successful stage is bound to that context; altered, omitted, substituted, or mixed-context waves fail closed. Per-job duration, wave wall time, avoided executions, and saved result characters expose latency and output savings without weakening gates. Failures remain isolated, and shopping_decision_dossier remains mandatory.",
+    description: "Create one process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency. Later waves and dossier composition can use its compact process-owned reference, preserving exact context identity without repeating request and constraint tokens; unknown, expired, restarted-process, or stale-profile references fail closed. Before production schema validation, the process injects exact listing evidence once from the signed candidate-offers artifact by candidate ID. Caller-supplied substituted evidence is rejected rather than overwritten. Successful compact-mode jobs retain the complete exact-subject result and top-level diagnostics while omitting unrelated candidates; full mode is an explicit diagnostic escape hatch. Duplicate, inapplicable, wrong-subject, and unsigned-offer jobs fail before execution. Every successful stage remains bound to the exact context, and shopping_decision_dossier remains mandatory.",
     inputSchema: {
-      decision_context: shoppingDecisionContextInputSchema,
+      decision_context: reusableDecisionContext.describe("Use the full input only for the first wave. Later waves should pass the returned decision_context_ref so the exact signed context is reused without resending its request and constraints."),
       candidate_offers: candidateOffersArtifact.optional().describe("Signed output of shopping_page_evidence_batch. Required for exact-offer evidence, condition, ranking, deal, and checkout evaluators in offer and checkout phases."),
       max_concurrency: z.number().int().min(1).max(8).optional().default(4),
       max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
@@ -962,14 +971,22 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   }, async (input) => {
     const evaluatedAt = new Date().toISOString();
     const profile = await listShoppingProfile({ evaluated_at: evaluatedAt });
-    if (input.decision_context.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
-    const decisionContext = createShoppingDecisionContext(input.decision_context);
+    const isReference = !input.decision_context.artifact_attestation && Object.keys(input.decision_context).length === 1 && "context_id" in input.decision_context;
+    const isArtifact = Boolean(input.decision_context.artifact_attestation);
+    const decisionContext = isReference
+      ? decisionContextRegistry.resolve(input.decision_context, evaluatedAt)
+      : isArtifact
+        ? (decisionContextRegistry.remember(input.decision_context, evaluatedAt), input.decision_context)
+        : createShoppingDecisionContext(input.decision_context);
+    if (!isReference && !isArtifact) decisionContextRegistry.remember(decisionContext, evaluatedAt);
+    if (decisionContext.profile_state_revision !== profile.state_revision) throw Object.assign(new Error("Decision context profile revision is stale; resolve the shopping profile again"), { code: "shopping_decision_context_profile_stale" });
     return asText(await runShoppingEvaluatorBatch({
       jobs: input.jobs,
       max_concurrency: input.max_concurrency,
       max_result_chars: input.max_result_chars ?? defaultEvaluatorResultChars(),
       result_mode: input.result_mode,
-      evaluated_at: decisionContext.evaluated_at,
+      include_decision_context: !isReference,
+      evaluated_at: evaluatedAt,
       decision_context: decisionContext,
       candidate_offers: input.candidate_offers,
       required_stages: requiredShoppingDossierStages({ phase: decisionContext.phase, applicability: decisionContext.applicability, stages: {}, decision_context: decisionContext }),

@@ -127,8 +127,15 @@ exact signed request receipt and clause mapping, the `state_revision` returned b
 current `shopping_profile_resolve`, phase, exact product and offer scope,
 objective, market country, destination, normalized hard and soft constraints,
 and the complete applicability map. The batch signs this
-context in the same call, so it adds no separate model round trip. Reuse the
-returned context unchanged for dossier composition. A changed user request,
+context in the same call, so it adds no separate model round trip. For every
+later dependency wave and for dossier composition, pass only the returned
+`decision_context_ref`. The process resolves it to the exact same signed
+context, while avoiding repeated request-receipt, constraint, and applicability
+tokens in both directions. A reference wave intentionally omits the duplicate
+full `decision_context` from its output. An unknown reference after a process
+restart, an expired context, or a stale profile revision fails closed; restart
+from the full first-wave input instead of reconstructing or editing context.
+A changed user request,
 profile revision, destination, constraint, applicability decision, product, or
 offer is a new context: rerun every affected evaluator instead of carrying a
 stage forward. Never invent a request or profile revision when the runtime

@@ -36,6 +36,9 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /complete result entry for the exact context product or offer/i);
   assert.match(skill, /Cross-candidate selection\s+outputs remain complete/i);
   assert.match(skill, /`wave\.saved_result_chars` report the character savings/i);
+  assert.match(skill, /pass only the returned\s+`decision_context_ref`/i);
+  assert.match(skill, /avoiding repeated request-receipt, constraint, and applicability\s+tokens/i);
+  assert.match(skill, /unknown reference after a process\s+restart.*fails closed/is);
   assert.match(skill, /call `browser_panel_post` with `kind=products`, the signed `candidate_set_id`/i);
   assert.match(skill, /unhydrated candidate is rejected.*unknown exact price is omitted/is);
   assert.match(skill, /signed exact-page item price, observed seller, and availability/i);
