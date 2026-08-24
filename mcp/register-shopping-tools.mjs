@@ -989,7 +989,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
 
   registerTool("shopping_evaluator_batch", {
     title: "Run a bounded shopping evaluator wave",
-    description: "Create one process-attested decision context and run up to 24 allowlisted read-only shopping evaluators as a validated bounded dependency graph. Independent and currently-ready jobs run concurrently; argument_bindings inject a complete upstream process result into one omitted top-level argument, eliminating extra model/tool turns and repeated artifact tokens. Unknown sources, cycles, duplicate targets, caller overwrites, failed dependencies, expired references, stale profiles, wrong subjects, and unsigned offers fail before downstream execution. The process also injects exact listing evidence once from signed candidate offers. Compact results omit unrelated candidates while complete internal results feed dependencies. Every successful stage remains context-bound, and shopping_decision_dossier remains mandatory.",
+    description: "Create one process-attested decision context and run up to 24 allowlisted read-only shopping evaluators as a validated bounded dependency graph. Standard identity-to-risk and identity/risk-to-offer dependencies auto-wire when their arguments are omitted; independent and currently-ready jobs run concurrently. Use explicit argument_bindings only for a nonstandard diagnostic graph. Unknown sources, cycles, duplicate targets, caller overwrites, failed dependencies, expired references, stale profiles, wrong subjects, and unsigned offers fail before downstream execution. The process injects exact listing evidence once from signed candidate offers. Compact results omit unrelated candidates while complete internal results feed dependencies. Every successful stage remains context-bound, and shopping_decision_dossier remains mandatory.",
     inputSchema: {
       decision_context: reusableDecisionContext.describe("Use the full input only for the first wave. Later waves should pass the returned decision_context_ref so the exact signed context is reused without resending its request and constraints."),
       candidate_offers: z.union([candidateOffersArtifact, candidateOffersReference]).optional().describe("Use candidate_offers_ref from hydration by default. The full signed candidate-offers artifact remains accepted for diagnostics and compatibility."),
@@ -997,6 +997,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
       result_mode: z.enum(["compact", "full"]).optional().default("compact").describe("Compact keeps the complete exact-subject result and top-level diagnostics while dropping other candidates' array entries. Use full only for explicit diagnostics."),
       stage_mode: z.enum(["reference", "full"]).optional().default("reference").describe("Reference stores signed dossier stages in process and returns only the latest bundle reference. Full also returns each stage for explicit diagnostics."),
+      dependency_mode: z.enum(["auto", "explicit"]).optional().default("auto").describe("Auto derives standard identity, risk, fulfillment, and offer edges from the included evaluator stages. Explicit disables derivation for nonstandard diagnostic graphs."),
       jobs: z.array(z.object({ job_id: id, tool: z.enum(Object.keys(SHOPPING_EVALUATOR_STAGES)), subject: z.object({ product_id: id, offer_id: id.optional() }), constraint_ids: z.array(id).max(1_000).optional().default([]), arguments: z.record(z.any()), argument_bindings: z.array(z.object({ from_job_id: id, target_key: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/) })).max(24).optional().default([]) })).min(1).max(24),
     },
   }, async (input) => {
@@ -1027,6 +1028,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       max_concurrency: input.max_concurrency,
       max_result_chars: input.max_result_chars ?? defaultEvaluatorResultChars(),
       result_mode: input.result_mode,
+      dependency_mode: input.dependency_mode,
       include_decision_context: !isReference,
       evaluated_at: evaluatedAt,
       decision_context: decisionContext,

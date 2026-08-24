@@ -51,6 +51,7 @@ test("evaluator dependency graph runs ready layers concurrently and binds comple
   ]);
   const subject = { product_id: "camera-x", offer_id: "offer-a" };
   const result = await runShoppingEvaluatorBatch({
+    dependency_mode: "explicit",
     decision_context: subject,
     required_stages: ["identity", "safety", "merchant", "counterfeit", "offer"],
     max_concurrency: 4,
@@ -72,8 +73,70 @@ test("evaluator dependency graph runs ready layers concurrently and binds comple
   assert.deepEqual(result.results.map((item) => item.status), Array(5).fill("complete"));
   assert.deepEqual(result.results[4].dependencies, ["merchant", "counterfeit"]);
   assert.equal(result.wave.dependency_edges, 4);
+  assert.equal(result.wave.auto_dependency_edges, 0);
+  assert.equal(result.wave.dependency_mode, "explicit");
   assert.equal(result.wave.dependency_layers, 3);
   assert.ok(result.wave.dependency_input_chars_saved > 0);
+});
+
+test("standard evaluator dependencies auto-wire from stages without model-authored bindings", async () => {
+  const observed = {};
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({}), async () => ({ structuredContent: { artifact: "identity" } }))],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({ artifact: z.literal("identity") }) }), async (input) => { observed.merchant = input; return { structuredContent: { artifact: "merchant" } }; })],
+    ["shopping_offer_analyze", definition("offer", z.object({ identity: z.object({ artifact: z.literal("identity") }), merchant: z.object({ artifact: z.literal("merchant") }) }), async (input) => { observed.offer = input; return { structuredContent: { artifact: "offer" } }; })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({ jobs: [
+    { job_id: "identity", tool: "shopping_identity_resolve", arguments: {} },
+    { job_id: "merchant", tool: "shopping_merchant_trust", arguments: {} },
+    { job_id: "offer", tool: "shopping_offer_analyze", arguments: {} },
+  ] }, registry);
+  assert.deepEqual(observed.merchant, { identity: { artifact: "identity" } });
+  assert.deepEqual(observed.offer, { identity: { artifact: "identity" }, merchant: { artifact: "merchant" } });
+  assert.deepEqual(result.results.map((item) => item.status), Array(3).fill("complete"));
+  assert.deepEqual(result.results[2].dependencies, ["identity", "merchant"]);
+  assert.equal(result.wave.dependency_mode, "auto");
+  assert.equal(result.wave.dependency_edges, 3);
+  assert.equal(result.wave.auto_dependency_edges, 3);
+  assert.equal(result.wave.dependency_layers, 3);
+});
+
+test("explicit dependency mode disables standard graph derivation", async () => {
+  let executions = 0;
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({}), async () => ({ structuredContent: { artifact: "identity" } }))],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({}) }), async () => { executions++; return { structuredContent: {} }; })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({ dependency_mode: "explicit", jobs: [
+    { job_id: "identity", tool: "shopping_identity_resolve", arguments: {} },
+    { job_id: "merchant", tool: "shopping_merchant_trust", arguments: {} },
+  ] }, registry);
+  assert.equal(result.results[1].status, "failed");
+  assert.equal(result.wave.dependency_edges, 0);
+  assert.equal(result.wave.auto_dependency_edges, 0);
+  assert.equal(executions, 0);
+});
+
+test("auto dependency planning never overwrites caller artifacts or guesses among duplicate stages", async () => {
+  const seen = [];
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({ marker: z.string() }), async (input) => ({ structuredContent: input }))],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({ marker: z.string() }) }), async (input) => { seen.push(input.identity.marker); return { structuredContent: {} }; })],
+  ]);
+  const callerOwned = await runShoppingEvaluatorBatch({ jobs: [
+    { job_id: "identity", tool: "shopping_identity_resolve", arguments: { marker: "derived" } },
+    { job_id: "merchant", tool: "shopping_merchant_trust", arguments: { identity: { marker: "caller" } } },
+  ] }, registry);
+  assert.equal(callerOwned.wave.auto_dependency_edges, 0);
+  assert.equal(seen[0], "caller");
+  const ambiguous = await runShoppingEvaluatorBatch({ jobs: [
+    { job_id: "identity-a", tool: "shopping_identity_resolve", arguments: { marker: "a" } },
+    { job_id: "identity-b", tool: "shopping_identity_resolve", arguments: { marker: "b" } },
+    { job_id: "merchant", tool: "shopping_merchant_trust", arguments: {} },
+  ] }, registry);
+  assert.equal(ambiguous.wave.auto_dependency_edges, 0);
+  assert.equal(ambiguous.results[2].status, "failed");
+  assert.equal(seen.length, 1);
 });
 
 test("dependency bindings use complete internal outputs even when returned results are compact", async () => {
@@ -123,6 +186,7 @@ test("dependency graph rejects unknown sources, cycles, duplicate targets, and c
   await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), job("b", [{ from_job_id: "a", target_key: "value" }], { value: "caller" })] }, registry), { code: "shopping_evaluator_dependency_overwrite" });
   await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), job("b", [{ from_job_id: "a", target_key: "constructor" }])] }, registry), { code: "shopping_evaluator_dependency_invalid" });
   await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), { ...job("b"), argument_bindings: Array(25).fill({ from_job_id: "a", target_key: "value" }) }] }, registry), { code: "shopping_evaluator_dependency_invalid" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ dependency_mode: "guess", jobs: [job("a")] }, registry), { code: "shopping_evaluator_batch_invalid" });
 });
 
 test("evaluator batch can suppress a repeated full context while retaining its compact reference", async () => {

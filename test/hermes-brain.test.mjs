@@ -57,8 +57,11 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /An `unknown` comparison operator stays unknown and requires clarification/i);
   assert.match(skill, /batch signs this\s+context in the same call, so it adds no separate model round trip/i);
   assert.match(skill, /changed user request,\s+profile revision, destination, constraint, applicability decision, product, or\s+offer is a new context/i);
+  assert.match(skill, /Leave `dependency_mode=auto` and omit standard dependency artifacts/i);
+  assert.match(skill, /identity-to-safety\/merchant\/counterfeit\/\s*protection\/fulfillment edges/i);
+  assert.match(skill, /nonstandard diagnostic graph only, set `dependency_mode=explicit`/i);
   assert.match(skill, /`argument_bindings: \[\{from_job_id, target_key\}\]`/i);
-  assert.match(skill, /resolve identity once and feed it directly to safety,\s+merchant, counterfeit, protection, and fulfillment jobs in parallel/i);
+  assert.match(skill, /auto mode runs the\s+standard three-layer graph/i);
   assert.match(skill, /failed upstream job suppresses every\s+dependent job without executing it/i);
   assert.match(skill, /Compact\s+output never becomes dependency input/i);
   assert.match(skill, /`wave\.dependency_input_chars_saved` reports the artifact payload the main brain\s+did not have to resend/i);

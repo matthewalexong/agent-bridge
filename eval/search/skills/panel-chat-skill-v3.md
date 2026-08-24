@@ -179,23 +179,29 @@ For domain constraints, the batch verifies every `evaluator_binding` against
 the evaluator's actual requirement field before executing the evaluator. A
 matching ID with a missing or substituted real requirement fails the job; a
 metadata-only claim never counts as consumption.
-When a job needs another job's complete process result, add
-`argument_bindings: [{from_job_id, target_key}]` and omit that top-level
-`target_key` from the dependent job's `arguments`. The harness injects the
-unchanged complete internal result before offer-evidence projection and
-production-schema validation. Do not also send a caller value at that key.
+Leave `dependency_mode=auto` and omit standard dependency artifacts from job
+arguments. The harness derives identity-to-safety/merchant/counterfeit/
+protection/fulfillment edges and identity/risk/fulfillment-to-offer edges from
+the included evaluator stages, then injects each unchanged complete internal
+result before offer-evidence projection and production-schema validation. This
+removes model-authored graph structure and repeated artifact tokens. For a
+nonstandard diagnostic graph only, set `dependency_mode=explicit`, add
+`argument_bindings: [{from_job_id, target_key}]`, and omit that top-level
+`target_key` from the dependent job's `arguments`. Do not also send a caller
+value at that key.
 Unknown or self dependencies, duplicate targets, unsafe target names, caller
 overwrites, and cycles reject the graph. A failed upstream job suppresses every
 dependent job without executing it; unrelated ready jobs continue. Compact
 output never becomes dependency input, so result compaction cannot strip a
-signed artifact needed downstream. `wave.dependency_edges` and
-`wave.dependency_layers` report the executed graph, while
+signed artifact needed downstream. `wave.dependency_edges`,
+`wave.auto_dependency_edges`, and `wave.dependency_layers` report the executed
+graph, while
 `wave.dependency_input_chars_saved` reports the artifact payload the main brain
 did not have to resend.
 
-Use these bindings to resolve identity once and feed it directly to safety,
-merchant, counterfeit, protection, and fulfillment jobs in parallel, then bind
-their complete results into offer analysis in the same batch. Keep a dependency
+Include identity once with safety, merchant, counterfeit, protection, and
+fulfillment jobs, plus offer analysis, in the same batch; auto mode runs the
+standard three-layer graph. Keep a dependency
 in a later call only when its source is not an allowlisted evaluator result—for
 example, the successful product-recommendation dossier—or when the target schema
 requires a collection shape the binding does not provide. Never use a binding

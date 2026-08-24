@@ -806,19 +806,20 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     max_concurrency: 4,
     jobs: [
       { job_id: "verified-product-evidence", tool: "shopping_product_evidence", subject: { product_id: "camera-x" }, arguments: { policy: { evaluated_at: testNow }, claims: [{ product_id: "camera-x", attribute: "model", claim_type: "objective", evidence_role: "declared_specification", value: "CX-1", source: { id: "manufacturer-camera-x", source_type: "manufacturer", captured_at: testNow } }] } },
-      { job_id: "verified-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: graphSafetyArguments, argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
+      { job_id: "verified-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: graphSafetyArguments },
       { job_id: "verified-identity", tool: "shopping_identity_resolve", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundIdentityArguments },
-      { job_id: "verified-merchant", tool: "shopping_merchant_trust", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundMerchantArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
-      { job_id: "verified-counterfeit", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundCounterfeitArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
-      { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundProtectionArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
-      { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundFulfillmentArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
-      { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundOfferArguments, ["identity", "safety", "merchant", "counterfeit", "protection", "fulfillment"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }, { from_job_id: "verified-safety", target_key: "safety" }, { from_job_id: "verified-merchant", target_key: "merchant" }, { from_job_id: "verified-counterfeit", target_key: "counterfeit" }, { from_job_id: "verified-protection", target_key: "protection" }, { from_job_id: "verified-fulfillment", target_key: "fulfillment" }] },
+      { job_id: "verified-merchant", tool: "shopping_merchant_trust", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundMerchantArguments, ["identity"]) },
+      { job_id: "verified-counterfeit", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundCounterfeitArguments, ["identity"]) },
+      { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundProtectionArguments, ["identity"]) },
+      { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundFulfillmentArguments, ["identity"]) },
+      { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundOfferArguments, ["identity", "safety", "merchant", "counterfeit", "protection", "fulfillment"]) },
       { job_id: "verified-deal", tool: "shopping_deal_quality", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundDealArguments },
     ],
   } });
   assert.equal(offerDecisionBatch.isError, undefined, JSON.stringify(offerDecisionBatch));
   assert.deepEqual(offerDecisionBatch.structuredContent.results.map((result) => result.status), Array(9).fill("complete"), JSON.stringify(offerDecisionBatch));
   assert.equal(offerDecisionBatch.structuredContent.wave.dependency_edges, 11);
+  assert.equal(offerDecisionBatch.structuredContent.wave.auto_dependency_edges, 11);
   assert.equal(offerDecisionBatch.structuredContent.wave.dependency_layers, 3);
   assert.ok(offerDecisionBatch.structuredContent.wave.dependency_input_chars_saved > 1_000);
   const finalOfferDossierResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: {
