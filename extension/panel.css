@@ -297,6 +297,38 @@ h1 {
   color: #dbe8f8;
   font-weight: 700;
 }
+.card-deal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.card-deal > span {
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 750;
+}
+.card-deal-quality {
+  background: rgba(47, 215, 255, 0.11);
+  color: #50ddff;
+}
+.card-timing.is-buy {
+  background: rgba(145, 245, 109, 0.14);
+  color: #91f56d;
+}
+.card-timing.is-wait {
+  background: rgba(255, 206, 107, 0.14);
+  color: #ffce6b;
+}
+.card-history {
+  color: #9fb1d0;
+  font-size: 9px;
+}
+.card-deal-flags {
+  color: #ffce6b;
+  font-size: 9px;
+}
 .card-meta {
   display: flex;
   flex-wrap: wrap;

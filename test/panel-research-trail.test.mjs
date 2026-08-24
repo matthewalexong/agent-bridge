@@ -28,10 +28,12 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(script, /card-price-label/);
   assert.match(script, /Sold by /);
   assert.match(script, /Availability unknown/);
-  assert.match(script, /✓ Verified pick/);
+  assert.match(script, /Verified offer/);
   assert.match(script, /Landed total/);
   assert.match(script, /card-details/);
   assert.match(script, /card-breakdown/);
+  assert.match(script, /card-deal/);
+  assert.match(script, /card-history/);
   assert.match(styles, /\.card-availability\.is-in/);
   assert.match(styles, /\.card-availability\.is-out/);
   assert.match(styles, /\.card-availability\.is-unknown/);
@@ -39,4 +41,7 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(styles, /\.card-landed-total/);
   assert.match(styles, /\.card-details/);
   assert.match(styles, /\.card-breakdown/);
+  assert.match(styles, /\.card-deal-quality/);
+  assert.match(styles, /\.card-timing\.is-wait/);
+  assert.match(styles, /\.card-history/);
 });

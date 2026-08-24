@@ -442,7 +442,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       policy: z.object({ evaluated_at: z.string().datetime().optional(), max_history_days: z.number().int().positive().max(3650).optional().default(730), min_observations: z.number().int().positive().max(10_000).optional().default(5), min_distinct_days: z.number().int().positive().max(3650).optional().default(5), min_span_days: z.number().nonnegative().max(3650).optional().default(30) }).optional().default({}),
       user_context: z.object({ urgency: z.enum(["immediate", "soon", "flexible"]).optional().default("flexible"), target_price_usd: money, max_price_usd: money }).optional().default({ urgency: "flexible" }),
     },
-  }, async (input) => asText(analyzeDealQuality(input)));
+  }, async (input) => asText({ ...analyzeDealQuality(input), history_provenance: "caller_supplied" }));
 
   const signedFulfillmentPromotionArtifact = z.object({ artifact_attestation: artifactAttestation("promotion"), offer_id: id, product_id: id, evaluated_at: z.string().datetime(), action: z.literal("eligible"), pricing_cleared: z.literal(true), base_price_usd: z.number().finite().nonnegative(), shipping_usd: z.number().finite().nonnegative(), immediate_checkout_discount_usd: z.number().finite().nonnegative(), checkout_landed_total_usd: z.number().finite().nonnegative(), deferred_value_usd: z.number().finite().nonnegative(), required_incremental_cost_usd: z.number().finite().nonnegative(), guaranteed_economic_cost_usd: z.number().finite().nonnegative(), purchase_allowed: z.literal(false) }).passthrough();
   tool("shopping_fulfillment_assess", {

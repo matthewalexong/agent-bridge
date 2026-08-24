@@ -111,10 +111,10 @@ function renderEntry(doc, transcript, entry) {
       }
       const info = doc.createElement("span");
       info.className = "card-info";
-      if (link.verification === "Verified pick") {
+      if (["Verified pick", "Verified offer"].includes(link.verification)) {
         const verified = doc.createElement("span");
         verified.className = "card-verified";
-        verified.textContent = "✓ Verified pick";
+        verified.textContent = `✓ ${link.verification}`;
         info.append(verified);
       }
       const title = doc.createElement("span");
@@ -160,6 +160,35 @@ function renderEntry(doc, transcript, entry) {
           breakdown.append(component);
         }
         if (breakdown.childElementCount > 0) info.append(breakdown);
+      }
+      if (link.deal_label || link.timing_label) {
+        const deal = doc.createElement("span");
+        deal.className = "card-deal";
+        if (typeof link.deal_label === "string") {
+          const quality = doc.createElement("span");
+          quality.className = "card-deal-quality";
+          quality.textContent = link.deal_label;
+          deal.append(quality);
+        }
+        if (typeof link.timing_label === "string") {
+          const timing = doc.createElement("span");
+          timing.className = `card-timing ${["Wait", "Monitor price"].includes(link.timing_label) ? "is-wait" : "is-buy"}`;
+          timing.textContent = link.timing_label;
+          deal.append(timing);
+        }
+        info.append(deal);
+      }
+      if (typeof link.history_context === "string" && link.history_context.trim()) {
+        const history = doc.createElement("span");
+        history.className = "card-history";
+        history.textContent = link.history_context.trim();
+        info.append(history);
+      }
+      if (Array.isArray(link.deal_flags) && link.deal_flags.length > 0) {
+        const flags = doc.createElement("span");
+        flags.className = "card-deal-flags";
+        flags.textContent = link.deal_flags.join(" · ");
+        info.append(flags);
       }
       if ((typeof link.seller === "string" && link.seller.trim()) || typeof link.availability === "string") {
         const meta = doc.createElement("span");

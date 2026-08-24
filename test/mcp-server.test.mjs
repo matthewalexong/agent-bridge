@@ -793,8 +793,13 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(boundOfferResponse.structuredContent.verified_decision.landed_total_usd, 80.5);
 
   const boundIdentityArguments = { evaluated_at: testNow, target_product_id: "camera-x", target_evidence: rankedTargetEvidence, candidates: [{ id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence }] };
+  const boundDealArguments = {
+    current: { offer_id: boundCandidate.candidate_id, product_key: "camera-x", condition: "new", landed_total_usd: 80.5, landed_price_verified: true, exact_identity: true, stock: "in_stock", risk_status: "low" },
+    observations: [100, 95, 90, 85, 82].map((landed_total_usd, index) => ({ product_key: "camera-x", condition: "new", landed_total_usd, verified: true, observed_at: new Date(Date.parse(testNow) - (5 - index) * 10 * 86_400_000).toISOString(), source: { id: `bound-history-${index}`, source_type: "history_provider", url: "https://history.example/camera-x" } })),
+    policy: { evaluated_at: testNow },
+  };
   const offerDecisionBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
-    decision_context: decisionContext({ phase: "offer_recommendation", product_id: "camera-x", offer_id: boundCandidate.candidate_id, applicability: exactProductApplicability }),
+    decision_context: decisionContext({ phase: "offer_recommendation", product_id: "camera-x", offer_id: boundCandidate.candidate_id, applicability: { ...exactProductApplicability, deal: { required: true, reason: "The user asked whether this verified price is historically strong." } } }),
     candidate_offers: subsetHydration.structuredContent.candidate_offers_ref,
     max_concurrency: 4,
     jobs: [
@@ -806,10 +811,11 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
       { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundProtectionArguments },
       { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundFulfillmentArguments },
       { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundOfferArguments },
+      { job_id: "verified-deal", tool: "shopping_deal_quality", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundDealArguments },
     ],
   } });
   assert.equal(offerDecisionBatch.isError, undefined, JSON.stringify(offerDecisionBatch));
-  assert.deepEqual(offerDecisionBatch.structuredContent.results.map((result) => result.status), Array(8).fill("complete"), JSON.stringify(offerDecisionBatch));
+  assert.deepEqual(offerDecisionBatch.structuredContent.results.map((result) => result.status), Array(9).fill("complete"), JSON.stringify(offerDecisionBatch));
   const finalOfferDossierResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: {
     decision_context: offerDecisionBatch.structuredContent.decision_context_ref,
     dossier_stages_ref: offerDecisionBatch.structuredContent.dossier_stages_ref,
@@ -835,6 +841,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     landed_total_label: panelPosts[1].links[0].landed_total_label,
     delivery: panelPosts[1].links[0].delivery,
     cost_breakdown: panelPosts[1].links[0].cost_breakdown,
+    timing_label: panelPosts[1].links[0].timing_label,
     protections: panelPosts[1].links[0].protections,
     checks: panelPosts[1].links[0].checks,
   }, {
@@ -843,6 +850,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     landed_total_label: "Landed total",
     delivery: "Delivery Aug 25–Aug 27",
     cost_breakdown: [{ label: "Item", amount: "$74.50" }, { label: "Tax", amount: "$6.00" }],
+    timing_label: "Buy now",
     protections: ["30-day returns", "12-month warranty"],
     checks: ["Exact item", "Safety checked", "Low counterfeit risk"],
   });
@@ -853,6 +861,25 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     { url: "https://fixture.example/306", title: "Evidence · Warranty policy" },
   ]);
   assert.equal(panelPosts[1].links.some((link) => link.url.includes("checkout")), false);
+
+  const deferredDealBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: offerDecisionBatch.structuredContent.decision_context_ref,
+    candidate_offers: subsetHydration.structuredContent.candidate_offers_ref,
+    jobs: [{ job_id: "deferred-deal", tool: "shopping_deal_quality", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: { ...boundDealArguments, observations: [40, 50, 60, 70, 75].map((landed_total_usd, index) => ({ product_key: "camera-x", condition: "new", landed_total_usd, verified: true, observed_at: new Date(Date.parse(testNow) - (5 - index) * 10 * 86_400_000).toISOString(), source: { id: `deferred-history-${index}`, source_type: "history_provider", url: "https://history.example/camera-x" } })) } }],
+  } });
+  assert.equal(deferredDealBatch.isError, undefined, JSON.stringify(deferredDealBatch));
+  const deferredDossierResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: { decision_context: deferredDealBatch.structuredContent.decision_context_ref, dossier_stages_ref: deferredDealBatch.structuredContent.dossier_stages_ref } });
+  assert.equal(deferredDossierResponse.isError, undefined, JSON.stringify(deferredDossierResponse));
+  assert.equal(deferredDossierResponse.structuredContent.decision.action, "defer_purchase");
+  assert.equal(deferredDossierResponse.structuredContent.decision.selected_offer, boundCandidate.candidate_id);
+  const deferredPost = await client.callTool({ name: "browser_panel_post", arguments: { text: "This is the safe offer to monitor, but the current price is not compelling.", kind: "products", recommendation_state: "verified", recommendation_refs: [deferredDossierResponse.structuredContent.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id, candidate_ids: [boundCandidate.candidate_id] } });
+  assert.equal(deferredPost.isError, undefined, JSON.stringify(deferredPost));
+  assert.equal(panelPosts.length, 3);
+  assert.equal(panelPosts[2].links[0].verification, "Verified offer");
+  assert.equal(panelPosts[2].links[0].timing_label, "Wait");
+  assert.equal(panelPosts[2].links[0].deal_label, undefined, "caller-supplied history cannot become a verified deal badge");
+  assert.equal(panelPosts[2].links[0].history_context, undefined, "caller-supplied history cannot become verified history context");
+  assert.match(panelPosts[2].text, / · wait$/);
 
   const shoppingValue = await client.callTool({
     name: "shopping_value_assess",
@@ -1165,6 +1192,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(deal.structuredContent.deal_quality, "historical_low");
   assert.equal(deal.structuredContent.timing.action, "buy_now");
   assert.equal(deal.structuredContent.timing.future_price_guaranteed, false);
+  assert.equal(deal.structuredContent.history_provenance, "caller_supplied");
 
   assert.equal(rankedFulfillment.assessments[1].action, "eligible");
   assert.equal(rankedFulfillment.assessments[1].fully_landed_total_usd.expected_usd, 106);

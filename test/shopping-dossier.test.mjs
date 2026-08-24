@@ -515,11 +515,28 @@ test("unknown offer safety evidence requests research", () => {
 
 test("deal timing can defer purchase without erasing the safe offer", () => {
   const input = offerInput({ applicability: applicability({ deal: { required: true } }) });
-  input.stages.deal = artifact("deal", { product_id: "product-a", offer_id: "offer-a", timing_action: "wait" });
+  input.stages.deal = artifact("deal", { product_id: "product-a", offer_id: "offer-a", current_landed_total_usd: 100, current_landed_price_verified: true, current_exact_identity: true, current_stock: "in_stock", current_risk_status: "low", timing_action: "wait" });
   const result = composeShoppingDossier(input);
   assert.equal(result.decision.action, "defer_purchase");
   assert.equal(result.decision.selected_offer, "offer-a");
   assert.deepEqual(result.decision.warnings, ["deal:wait"]);
+});
+
+test("deal timing must reconcile with the same authoritative offer stages", () => {
+  const baseDeal = { product_id: "product-a", offer_id: "offer-a", current_landed_total_usd: 100, current_landed_price_verified: true, current_exact_identity: true, current_stock: "in_stock", current_risk_status: "low", timing_action: "buy_now" };
+  for (const [field, value, blocker] of [
+    ["current_landed_total_usd", 1, "deal:landed_cost_mismatch"],
+    ["current_landed_price_verified", false, "deal:landed_price_authority_mismatch"],
+    ["current_exact_identity", false, "deal:identity_authority_mismatch"],
+    ["current_stock", "out_of_stock", "deal:stock_authority_mismatch"],
+    ["current_risk_status", "acceptable", "deal:risk_authority_mismatch"],
+  ]) {
+    const input = offerInput({ applicability: applicability({ deal: { required: true } }) });
+    input.stages.deal = artifact("deal", { ...baseDeal, [field]: value });
+    const result = composeShoppingDossier(input);
+    assert.equal(result.decision.action, "block", field);
+    assert.ok(result.decision.blockers.includes(blocker), field);
+  }
 });
 
 test("checkout review requires a fresh preflight and preserves confirmation authority", () => {

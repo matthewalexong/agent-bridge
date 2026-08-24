@@ -1547,6 +1547,11 @@ deterministic `deal_quality`, `sale_claim.flags`, and `timing.action`:
 
 Search snippets, wrong variants or conditions, other currencies, unverified
 observations, and repeated same-day duplicates cannot establish price history.
+Caller-supplied history may inform the deterministic timing action, but it must
+not produce a verified deal-quality badge or verified history context. Show
+those claims only when the harness marks the history `process_verified`. The
+deal stage's current price, identity, stock, and risk must also reconcile with
+the signed offer stages; otherwise research again instead of presenting timing.
 Never describe a crossed-out price or advertised percentage as savings when
 the tool flags discount math, inflated reference price, or an ordinary price
 marketed as a sale. Pass urgency, target price, and maximum price only when the
@@ -1636,8 +1641,9 @@ Follow `decision.action` exactly:
 
 - `recommend_product` or `recommend_offer` permits that scoped recommendation
   only; it does not authorize a purchase.
-- `defer_purchase` preserves the safe offer but reports the returned wait or
-  monitor reason instead of urging the user to buy.
+- `defer_purchase` preserves the exact safe offer as a “Verified offer,” not a
+  “Verified pick,” and reports the returned wait or monitor reason instead of
+  urging the user to buy.
 - `research_more` requires every returned missing or stale stage to be resolved
   and the dossier recomposed.
 - `clarify` requires the named user choice or explicit lifecycle-tradeoff

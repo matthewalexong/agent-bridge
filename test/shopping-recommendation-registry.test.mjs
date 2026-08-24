@@ -36,6 +36,7 @@ test("recommendation registry authorizes the exact cleared candidate", () => {
   const binding = { candidate_set_id: candidateSet, candidate_id: candidate, evidence_attestation: offers.offers[0].listing_evidence.artifact_attestation, candidate_offers_attestation: offers.artifact_attestation };
   assert.deepEqual(registry.authorize(reference, candidate, binding), {
     candidate_id: candidate,
+    recommendation_action: "recommend_product",
     landed_total_usd: null,
     landed_total_range_usd: null,
     landed_total_status: "unknown",
@@ -54,6 +55,14 @@ test("recommendation registry authorizes the exact cleared candidate", () => {
     delivery_latest_at: null,
     tracking_available: null,
     cost_breakdown: [],
+    timing_action: null,
+    timing_reason: null,
+    deal_quality: null,
+    history_observation_count: 0,
+    history_span_days: 0,
+    history_median_usd: null,
+    current_vs_median_percent: null,
+    sale_claim_flags: [],
     evidence_links: [],
   });
   assert.throws(() => registry.authorize(reference, "listing_bbbbbbbbbbbbbbbb", binding), { code: "shopping_recommendation_reference_mismatch" });
@@ -126,6 +135,7 @@ test("verified recommendation summaries expose only process-derived decisive fac
       { kind: "return_policy", url: "https://shop.example/returns" }, { kind: "warranty", url: "https://maker.example/warranty" },
     ] },
     fulfillment: { fully_landed_total_usd: { low_usd: 106, expected_usd: 106, high_usd: 106 }, fully_landed_status: "verified", delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true, cost_breakdown: [{ kind: "item_price", amount_usd: 99 }, { kind: "shipping", amount_usd: 7 }, { kind: "immediate_discount", amount_usd: 0 }], evidence_links: [] },
+    deal: { timing_action: "buy_now", timing_reason: "current_price_is_low_relative_to_verified_history", deal_quality: "below_typical", history_provenance: "process_verified", history_sufficient: true, history_observation_count: 8, history_span_days: 70, history_median_usd: 120, current_vs_median_percent: -11.67, sale_claim_flags: [] },
     safety: { action: "eligible", safety_cleared_for_ranking: true, evidence_links: [{ kind: "safety_authority", url: "https://regulator.example/search" }] },
   });
   const summary = registry.authorize(reference, candidate, {
@@ -142,6 +152,9 @@ test("verified recommendation summaries expose only process-derived decisive fac
     landed_total_label: "Landed total",
     delivery: "Delivery Aug 28–Aug 30",
     cost_breakdown: [{ label: "Item", amount: "$99.00" }, { label: "Shipping", amount: "$7.00" }],
+    deal_label: "Below typical",
+    timing_label: "Buy now",
+    history_context: "11.7% below verified median · 8 prices over 70 days",
     protections: ["30-day returns", "12-month warranty", "60-day buyer protection"],
     checks: ["Exact item", "Safety checked", "Authorized seller"],
   });
@@ -157,10 +170,26 @@ test("verified recommendation summaries expose only process-derived decisive fac
     landed_total: "$101.00–$108.00",
     landed_total_label: "Estimated landed range",
     delivery: "Delivery Aug 28–Aug 30",
+    deal_label: "Below typical",
+    timing_label: "Buy now",
+    history_context: "11.7% below verified median · 8 prices over 70 days",
     protections: ["30-day returns", "12-month warranty", "60-day buyer protection"],
     checks: ["Exact item", "Safety checked", "Authorized seller"],
   });
   const bounded = appendShoppingRecommendationSummary("x".repeat(30), [summary], 80);
   assert.ok(bounded.length <= 80);
   assert.match(bounded, /^Verified details: .*…$/);
+});
+
+test("deferred purchases retain a verified safe-offer card without becoming a pick", () => {
+  const registry = createShoppingRecommendationRegistry({ now: () => NOW });
+  const offers = candidateOffers();
+  registry.bindCandidateOffers(contextId, offers);
+  const reference = registry.store(dossier({
+    phase: "offer_recommendation",
+    decision: { action: "defer_purchase", selected_product: candidate, selected_offer: candidate, blockers: [], research: [], clarifications: [], warnings: ["deal:wait"], purchase_allowed: false, model_override_allowed: false },
+  }), { deal: { timing_action: "wait", timing_reason: "price_above_verified_history_range", deal_quality: "above_typical", history_provenance: "caller_supplied", history_sufficient: true, history_observation_count: 6, history_span_days: 80, history_median_usd: 80, current_vs_median_percent: 23.75, sale_claim_flags: [] } });
+  assert.match(reference.recommendation_id, /^shopping_recommendation_/);
+  const summary = registry.authorize(reference, candidate, { candidate_set_id: candidateSet, candidate_id: candidate, evidence_attestation: offers.offers[0].listing_evidence.artifact_attestation, candidate_offers_attestation: offers.artifact_attestation });
+  assert.deepEqual(shoppingRecommendationCardDetails(summary), { verification: "Verified offer", timing_label: "Wait" });
 });

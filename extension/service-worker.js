@@ -272,11 +272,15 @@ function sanitizePanelLinks(raw) {
     if (link.price_label === "Item price") card.price_label = "Item price";
     if (typeof link.seller === "string" && link.seller.trim()) card.seller = link.seller.trim().slice(0, 120);
     if (["In stock", "Out of stock", "Availability unknown"].includes(link.availability)) card.availability = link.availability;
-    if (link.verification === "Verified pick") card.verification = "Verified pick";
+    if (["Verified pick", "Verified offer"].includes(link.verification)) card.verification = link.verification;
     if (typeof link.landed_total === "string" && /^\$[0-9][0-9,]*(?:\.[0-9]{2})?(?:–\$[0-9][0-9,]*(?:\.[0-9]{2})?)?$/.test(link.landed_total)) card.landed_total = link.landed_total.slice(0, 80);
     if (["Landed total", "Estimated landed range"].includes(link.landed_total_label)) card.landed_total_label = link.landed_total_label;
     if (typeof link.delivery === "string" && /^Delivery\s/.test(link.delivery)) card.delivery = link.delivery.slice(0, 80);
     if (Array.isArray(link.cost_breakdown)) card.cost_breakdown = link.cost_breakdown.slice(0, 9).filter((item) => item && ["Item", "Shipping", "Tax", "Duty", "Brokerage", "Carrier fee", "FX fee", "Required add-on", "Discount"].includes(item.label) && /^(?:−)?\$[0-9][0-9,]*(?:\.[0-9]{2})?$/.test(item.amount)).map((item) => ({ label: item.label, amount: item.amount.slice(0, 40) }));
+    if (["Historical low", "Well below typical", "Below typical", "Typical price", "Above typical"].includes(link.deal_label)) card.deal_label = link.deal_label;
+    if (["Buy now", "Buy if needed", "Monitor price", "Wait"].includes(link.timing_label)) card.timing_label = link.timing_label;
+    if (typeof link.history_context === "string" && link.history_context.trim()) card.history_context = link.history_context.trim().slice(0, 160);
+    if (Array.isArray(link.deal_flags)) card.deal_flags = link.deal_flags.slice(0, 2).filter((item) => ["Advertised discount math mismatch", "Reference-price inflation risk", "Sale is not historically special"].includes(item));
     if (Array.isArray(link.protections)) card.protections = link.protections.slice(0, 3).filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim().slice(0, 80));
     if (Array.isArray(link.checks)) card.checks = link.checks.slice(0, 3).filter((item) => ["Exact item", "Safety checked", "Authorized seller", "Low counterfeit risk"].includes(item));
     out.push(card);
