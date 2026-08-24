@@ -42,6 +42,7 @@ import { createShoppingDecisionContext } from "../lib/shopping-decision-context.
 import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema, shoppingDecisionContextInputSchema } from "../lib/shopping-decision-context-schema.mjs";
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
 import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
+import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evidence.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -56,7 +57,7 @@ const pageEvidenceArtifact = z.object({
   source_receipt: z.object({ artifact_attestation: artifactAttestation("browser_snapshot"), source_id: id, snapshot_id: id, tab_id: z.number().int().nonnegative(), url: z.string().url().max(4_000), captured_at: z.string().datetime(), content_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).passthrough(),
 }).passthrough();
 
-export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet }) {
+export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
@@ -471,6 +472,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const pageEvidenceRequest = {
     snapshot_id: id.optional().describe("Snapshot receipt ID from browser_snapshot."),
     snapshotId: id.optional().describe("Compatibility alias for snapshot_id."),
+    candidate_id: id.optional().describe("Signed candidate ID to bind to this exact product-page snapshot when candidate_set_id is supplied to the batch tool."),
     page_kind: z.enum(["manufacturer_product", "retailer_listing", "manufacturer_authorized_sellers", "manufacturer_warranty", "reviews", "merchant_terms", "merchant_privacy", "checkout", "order_receipt", "merchant_correspondence", "carrier_tracking", "return_status", "warranty_status", "return_policy", "repairability", "safety_authority_search", "safety_notice", "certification_directory", "safety_remediation"]).optional().default("retailer_listing"),
     max_snapshot_age_seconds: z.number().int().min(10).max(300).optional().default(300),
     seller_query: z.string().min(1).max(200).optional(),
@@ -511,10 +513,16 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   });
 
   tool("shopping_page_evidence_batch", {
-    title: "Extract several signed shopping pages with ledger reuse",
-    description: "Convert 1-20 fresh browser snapshot receipts into signed shopping-page artifacts in one bounded call. Exact snapshot content plus page kind, seller query, and completeness scope form the process-owned ledger key, so identical work is reused while differently scoped evidence remains isolated.",
-    inputSchema: { requests: z.array(z.object(pageEvidenceRequest)).min(1).max(20) },
+    title: "Extract and bind several signed shopping pages",
+    description: "Convert 1-20 fresh snapshots into signed page evidence. With candidate_set_id, bind 1-5 shortlisted candidate IDs to their own fresh retailer product pages using canonical retailer URL identity and return one signed candidate-offer artifact. Cross-listing evidence, stale sets, mismatched redirects, and model-authored URLs fail closed.",
+    inputSchema: {
+      candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional(),
+      requests: z.array(z.object(pageEvidenceRequest)).min(1).max(20),
+    },
   }, async (input) => {
+    if (input.candidate_set_id && input.requests.length > 5) throw Object.assign(new Error("Hydrate at most 5 shortlisted candidates"), { code: "shopping_candidate_binding_invalid" });
+    if (!input.candidate_set_id && input.requests.some((request) => request.candidate_id != null)) throw Object.assign(new Error("candidate_id requires candidate_set_id"), { code: "shopping_candidate_binding_invalid" });
+    if (input.candidate_set_id && input.requests.some((request) => !request.candidate_id)) throw Object.assign(new Error("Every bound request needs candidate_id"), { code: "shopping_candidate_binding_invalid" });
     const before = pageEvidenceLedger.stats();
     const artifacts = await Promise.all(input.requests.map(async (request) => {
       const snapshot_id = request.snapshot_id ?? request.snapshotId;
@@ -522,7 +530,19 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       return pageEvidenceLedger.extract({ ...request, snapshot_id });
     }));
     const after = pageEvidenceLedger.stats();
-    return asText({ artifacts, ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses } });
+    let candidate_offers;
+    if (input.candidate_set_id) {
+      if (typeof resolveListingCandidateSet !== "function") throw Object.assign(new Error("Candidate set resolution is unavailable"), { code: "shopping_candidate_set_not_found" });
+      candidate_offers = bindShoppingCandidateOffers({
+        candidate_set: resolveListingCandidateSet(input.candidate_set_id),
+        bindings: input.requests.map((request, index) => ({ candidate_id: request.candidate_id, listing_evidence: artifacts[index] })),
+      });
+    }
+    return asText({
+      artifacts,
+      ...(candidate_offers ? { candidate_offers } : {}),
+      ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses },
+    });
   });
 
   const lifecycleDate = z.object({ date: z.string().datetime().nullable().optional(), evidence_status: z.enum(["verified", "estimated", "unknown"]) });

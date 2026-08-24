@@ -60,13 +60,19 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [705, "Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes\nPromotion Inventory: complete\nPromotion: id=save10; type=coupon; code=SAVE10; application=applied; amount=$10.00; affects advertised price=yes; eligibility=complete; obligations=none; stacking=verified\nDiscount: -$10.00\nOrder Total: $96.00"],
     [1101, "Order Receipt: complete\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nPurchased At: 2026-08-01T12:00:00.000Z\nDelivered At: 2026-08-05T12:00:00.000Z\nCurrency: USD\nItem Price: $100.00\nOrder Shipping: $0.00\nOrder Total: $100.00\nSeller: Example Shop\nMerchant of record: Example Shop"],
     [1102, "Event Evidence: complete\nCase Event: merchant_contacted\nEvent At: 2026-08-06T12:00:00.000Z\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nEvent Reference: message-44\nEvent Counterparty: Example Shop"],
+    [1201, "Brand: Acme\nModel: Camera 101\nCurrent Price: $79.00\nSold by: Fixture Store 101\nIn stock\nCondition: new"],
+    [1203, "Brand: Acme\nModel: Camera 103\nCurrent Price: $79.00\nSold by: Fixture Store 103\nIn stock\nCondition: new"],
     [502, "Brand: Acme\nModel: Drive X"],
     [503, "Brand: Sony\nProduct Line: WH-1000XM5\nModel: WH-1000XM5"],
     [504, "Brand: SONY\nProduct Line: WH 1000XM5\nModel: WH1000XM5\nCondition: new\nSold by: Audio Shop"],
     [505, "Brand: Acme\nModel: Camera X"],
     [601, "CPSC Recall Search\nAuthority: CPSC\nJurisdiction: US\nProduct Category: cameras\nProduct Key: camera-x\nSearch Status: complete\nNo recalls found"],
   ]);
-  const snapshotUrl = new Map([[601, "https://www.cpsc.gov/Recalls"]]);
+  const snapshotUrl = new Map([
+    [601, "https://www.cpsc.gov/Recalls"],
+    [1201, "https://fixture.example/products/camera-101?utm_source=detail"],
+    [1203, "https://fixture.example/products/camera-103"],
+  ]);
   const panelPosts = [];
   const mockBridge = http.createServer((request, response) => {
     let body = "";
@@ -478,6 +484,26 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(listingCandidates.structuredContent.candidates.length, 2);
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
+  const detailSnapshots = await client.callTool({ name: "browser_snapshot_batch", arguments: { pages: [{ tabId: 1201 }, { tabId: 1203 }] } });
+  const detailIds = detailSnapshots.structuredContent.results.map((item) => item.snapshot.snapshotId);
+  const candidateByUrl = new Map(listingCandidates.structuredContent.candidates.map((candidate) => [candidate.url, candidate]));
+  const hydrated = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    requests: [
+      { candidate_id: candidateByUrl.get("https://fixture.example/products/camera-101").id, snapshot_id: detailIds[0], page_kind: "retailer_listing" },
+      { candidate_id: candidateByUrl.get("https://fixture.example/products/camera-103").id, snapshot_id: detailIds[1], page_kind: "retailer_listing" },
+    ],
+  } });
+  assert.equal(hydrated.isError, undefined, JSON.stringify(hydrated));
+  assert.match(hydrated.structuredContent.candidate_offers.artifact_attestation, /^v1\.candidate_offers\./);
+  assert.equal(hydrated.structuredContent.candidate_offers.offers.length, 2);
+  assert.equal(hydrated.structuredContent.candidate_offers.offers[0].url_binding.status, "exact_listing");
+  const mismatchedHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    requests: [{ candidate_id: candidateByUrl.get("https://fixture.example/products/camera-101").id, snapshot_id: detailIds[1], page_kind: "retailer_listing" }],
+  } });
+  assert.equal(mismatchedHydration.isError, true);
+  assert.match(mismatchedHydration.content[0].text, /shopping_candidate_snapshot_mismatch/);
   const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Best observed match.",
     kind: "products",
@@ -506,7 +532,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   ] } });
   assert.equal(evidenceBatch.isError, undefined, JSON.stringify(evidenceBatch));
   assert.equal(evidenceBatch.structuredContent.artifacts.length, 4);
-  assert.deepEqual(evidenceBatch.structuredContent.ledger, { entries: 2, reused: 2, extracted: 2 });
+  assert.deepEqual(evidenceBatch.structuredContent.ledger, { entries: 4, reused: 2, extracted: 2 });
   assert.equal(evidenceBatch.structuredContent.artifacts[0].facts.seller.value, "Camera Store A");
   assert.equal(evidenceBatch.structuredContent.artifacts[1].facts.seller.value, "Camera Store B");
 

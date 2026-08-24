@@ -13,7 +13,7 @@ Ask at most one product question, and only if a missing fact would change what t
 1. Call `browser_panel_status` directly with `summary`: what you will search and which constraint matters. Never route it through `tool_call`.
 2. `shopping_request_intake` when you need a signed request.
 3. Unless they named one store, open two independent retailer/search tabs concurrently; add a third only if coverage is weak.
-4. Use `browser_snapshot_batch`, then call `shopping_listing_candidates` once with all `snapshot_ids` and the user's query to get one source-diverse exact-card set. Use the same IDs with `shopping_page_evidence_batch`. Keep each snapshot ≤8000 chars. Code grades; you judge which listings match.
+4. Use `browser_snapshot_batch`, then call `shopping_listing_candidates` once with all search `snapshot_ids` and the user's query to get one source-diverse exact-card set. Open the 1-5 shortlisted candidate URLs, snapshot those product pages in parallel, and call `shopping_page_evidence_batch` with `candidate_set_id` plus each `{candidate_id, snapshot_id}`. Compare only the returned signed `candidate_offers`. Keep each snapshot ≤8000 chars. Code grades; you judge which listings match.
 5. A spin-off is a different product. EDP = Eau de Parfum (same for EDT/EDC). 2.02 oz = 60 ml, 3.4 oz = 100 ml.
 6. `shopping_evaluator_batch` (max_result_chars 20000) then `shopping_decision_dossier`.
 7. `browser_panel_post` with `kind=products`, the `candidate_set_id`, and 1-5 chosen `candidate_ids`; never copy or rewrite card fields. No signed candidate = do not name that product. Use `kind=question` for one product ask, `kind=none` if nothing matched. Close every tab you opened.

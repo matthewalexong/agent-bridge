@@ -498,6 +498,7 @@ registerShoppingTools({
   asText,
   resolveBrowserSnapshot: (snapshotId, options) => browserEvidenceRegistry.resolve(snapshotId, options),
   storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
+  resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");
     const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);
