@@ -504,7 +504,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       offer_id: decisionContext.offer_id || undefined,
       applicability: decisionContext.applicability,
     }, { require_stage_attestations: true, require_decision_context: true });
-    const recommendation_ref = typeof storeShoppingRecommendation === "function" ? storeShoppingRecommendation(dossier) : null;
+    const recommendation_ref = typeof storeShoppingRecommendation === "function" ? storeShoppingRecommendation(dossier, stages) : null;
     return asText({ ...dossier, recommendation_ref });
   });
 

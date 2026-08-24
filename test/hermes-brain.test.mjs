@@ -42,6 +42,7 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /unknown reference after a process\s+restart.*fails closed/is);
   assert.match(skill, /call `browser_panel_post` with `kind=products` and `recommendation_state=provisional`/i);
   assert.match(skill, /final winner requires `recommendation_state=verified`.*`recommendation_ref`/is);
+  assert.match(skill, /Verified posts automatically append a bounded process-derived detail line.*landed total.*delivery window.*return window.*counterfeit-risk status/is);
   assert.match(skill, /unhydrated candidates are rejected and unknown facts remain explicit/i);
   assert.doesNotMatch(skill, /show it as a LINK CARD via the `links` parameter/i);
   assert.match(skill, /at most one job for each evaluator stage/i);

@@ -48,6 +48,20 @@ test("adapters fail closed on ambiguous or mismatched evaluator subjects", () =>
   assert.throws(() => adaptShoppingEvaluatorResult({ tool: "shopping_identity_resolve", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: {}, result: identityResult, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW }), { code: "shopping_dossier_stage_source_invalid" });
 });
 
+test("offer stages preserve bounded verified delivery and protection facts for final explanations", () => {
+  const decisionContext = context("offer_recommendation", "offer-a");
+  const protection = adaptShoppingEvaluatorResult({
+    tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: {}, decision_context: decisionContext, evaluated_at: NOW,
+    result: attestShoppingArtifact("protection", { evaluated_at: NOW, assessments: [{ id: "offer-a", product_id: "camera-x", status: "eligible", metrics: { return_window: 30, warranty_duration: 12, buyer_protection: 60 } }] }),
+  });
+  assert.deepEqual({ return_window_days: protection.return_window_days, warranty_duration_months: protection.warranty_duration_months, buyer_protection_days: protection.buyer_protection_days }, { return_window_days: 30, warranty_duration_months: 12, buyer_protection_days: 60 });
+  const fulfillment = adaptShoppingEvaluatorResult({
+    tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: { destination_country: "US" }, decision_context: decisionContext, evaluated_at: NOW,
+    result: { evaluated_at: NOW, assessments: [{ id: "offer-a", product_id: "camera-x", action: "eligible", fully_landed_total_usd: { low_usd: 100, expected_usd: 100, high_usd: 100 }, fully_landed_status: "verified", safe_for_offer_comparison: true, delivery: { earliest_at: "2026-08-28T00:00:00.000Z", latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true } }] },
+  });
+  assert.deepEqual({ delivery_earliest_at: fulfillment.delivery_earliest_at, delivery_latest_at: fulfillment.delivery_latest_at, tracking_available: fulfillment.tracking_available }, { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true });
+});
+
 test("dossier stage attestation detects field, stage, and subject tampering", () => {
   const stage = adaptShoppingEvaluatorResult({
     tool: "shopping_condition_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: {}, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW,

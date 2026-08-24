@@ -8,7 +8,7 @@ import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs"
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
-import { createShoppingRecommendationRegistry } from "../lib/shopping-recommendation-registry.mjs";
+import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry } from "../lib/shopping-recommendation-registry.mjs";
 import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
@@ -339,7 +339,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed. Unhydrated candidates and model-authored product links are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed, and concise available verified cost, delivery, return, protection, and risk details are appended automatically. Unhydrated candidates and model-authored product links are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
@@ -359,20 +359,21 @@ tool(
   async (input) => {
     const rejected = validatePanelPost(input);
     if (rejected) return asText({ posted: false, error: rejected });
-    if (input.kind === "products" && input.recommendation_state === "verified") {
-      input.candidate_ids.forEach((candidateId, index) => shoppingRecommendationRegistry.authorize(
+    const verifiedSummaries = input.kind === "products" && input.recommendation_state === "verified"
+      ? input.candidate_ids.map((candidateId, index) => shoppingRecommendationRegistry.authorize(
         input.recommendation_refs[index],
         candidateId,
         shoppingCandidateRegistry.binding(input.candidate_set_id, candidateId),
-      ));
-    }
+      ))
+      : [];
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
     const links = input.kind === "products"
       ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
       : input.links ?? [];
-    const text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
+    let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
       ? `Still verifying — ${input.text}`
       : input.text;
+    if (verifiedSummaries.length) text = appendShoppingRecommendationSummary(text, verifiedSummaries);
     return asText(await callBridge("panel.post", { text, links }));
   },
 );
