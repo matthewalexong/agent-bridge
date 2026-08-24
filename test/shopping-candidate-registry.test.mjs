@@ -64,3 +64,19 @@ test("candidate registry validates nested browser authority and safe card URLs",
   const unsafe = artifact({ candidates: [{ id: "listing_bbbbbbbbbbbbbbbb", title: "Unsafe", url: "javascript:alert(1)" }] });
   assert.throws(() => registry.store(unsafe), { code: "shopping_candidate_set_invalid" });
 });
+
+test("candidate registry accepts a signed fused set with several browser receipts", () => {
+  const registry = createShoppingCandidateRegistry();
+  const first = artifact();
+  const secondReceipt = attestShoppingArtifact("browser_snapshot", {
+    source_id: "snapshot-2", snapshot_id: "snapshot-2", tab_id: 2, url: "https://other.example/search",
+    captured_at: "2026-08-24T20:00:00.000Z", truncated: false, content_sha256: "c".repeat(64), elements_sha256: "d".repeat(64),
+  });
+  const fused = attestShoppingArtifact("listing_candidates", {
+    candidate_set_id: "cset_cccccccccccccccccccccccc",
+    source_receipts: [first.source_receipt, secondReceipt],
+    candidates: first.candidates,
+  });
+  assert.equal(registry.store(fused), fused.candidate_set_id);
+  assert.equal(registry.cards(fused.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].url, "https://shop.example/products/fan");
+});

@@ -470,11 +470,12 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.deepEqual(snapshotBatch.structuredContent.results.map((item) => item.status), ["complete", "complete"]);
   const [snapshotA, snapshotB] = snapshotBatch.structuredContent.results.map((item) => item.snapshot.snapshotId);
   const listingCandidates = await client.callTool({ name: "shopping_listing_candidates", arguments: {
-    snapshotId: snapshotA,
+    snapshot_ids: [snapshotA, snapshotB],
     query: "fixture camera",
   } });
   assert.equal(listingCandidates.isError, undefined, JSON.stringify(listingCandidates));
-  assert.equal(listingCandidates.structuredContent.candidates.length, 1);
+  assert.equal(listingCandidates.structuredContent.coverage.source_pages, 2);
+  assert.equal(listingCandidates.structuredContent.candidates.length, 2);
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
   const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {

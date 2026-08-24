@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createBrowserEvidenceRegistry, extractBrowserObservedListingCandidates } from "../lib/shopping-browser-evidence.mjs";
+import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
 import { verifyShoppingArtifactAttestation } from "../lib/shopping-attestation.mjs";
 
 const NOW = "2026-08-24T20:00:00.000Z";
@@ -83,4 +84,56 @@ test("missing, stale, and model-authored candidates fail closed", () => {
     snapshot_id: "snapshot-listings",
     evaluated_at: "2026-08-24T20:06:00.000Z",
   }), { code: "shopping_snapshot_receipt_stale" });
+});
+
+test("multi-source fusion preserves offers, exact-URL deduplication, and source diversity", () => {
+  const registry = createBrowserEvidenceRegistry();
+  registry.capture({ tab_id: 1, captured_at: NOW, snapshot: observedSnapshot({
+    snapshotId: "snapshot-amazon",
+    url: "https://www.amazon.com/s?k=quiet+fan",
+    elements: [
+      { ref: "e1", role: "link", name: "Whisper Fan", href: "https://www.amazon.com/Whisper/dp/B0ABCDEF12", context: "Whisper Fan $49.99" },
+      { ref: "e2", role: "link", name: "Whisper Fan Pro", href: "https://www.amazon.com/Whisper-Pro/dp/B0ABCDEF13", context: "Whisper Fan Pro $69.99" },
+    ],
+  }) });
+  registry.capture({ tab_id: 2, captured_at: NOW, snapshot: observedSnapshot({
+    snapshotId: "snapshot-walmart",
+    url: "https://www.walmart.com/search?q=quiet+fan",
+    elements: [
+      { ref: "e1", role: "link", name: "Whisper Fan", href: "https://www.walmart.com/ip/Whisper-Fan/123456789", context: "Whisper Fan $47.99" },
+      { ref: "e2", role: "link", name: "Amazon duplicate", href: "https://www.amazon.com/Whisper/dp/B0ABCDEF12?utm_source=walmart", context: "Whisper Fan $50.99" },
+    ],
+  }) });
+  const amazon = extractBrowserObservedListingCandidates(registry.resolve, { snapshot_id: "snapshot-amazon", evaluated_at: NOW, query: "quiet whisper fan" });
+  const walmart = extractBrowserObservedListingCandidates(registry.resolve, { snapshot_id: "snapshot-walmart", evaluated_at: NOW, query: "quiet whisper fan" });
+  const fused = fuseShoppingCandidateSets([amazon, walmart], { query: "quiet whisper fan", max_candidates: 3 });
+  assert.equal(verifyShoppingArtifactAttestation("listing_candidates", fused), true);
+  assert.equal(fused.coverage.source_pages, 2);
+  assert.equal(fused.coverage.input_candidates, 4);
+  assert.equal(fused.coverage.unique_candidates, 3);
+  assert.equal(fused.coverage.merchant_domains, 2);
+  assert.equal(fused.coverage.returned, 3);
+  assert.equal(new Set(fused.candidates.slice(0, 2).map((candidate) => new URL(candidate.url).hostname)).size, 2);
+  assert.equal(fused.candidates.some((candidate) => /B0ABCDEF12/.test(candidate.url)), true);
+  const repeated = fused.candidates.find((candidate) => /B0ABCDEF12/.test(candidate.url));
+  assert.equal(repeated.sources.length, 2);
+  assert.equal(fused.selects_product, false);
+});
+
+test("fusion rejects repeated and tampered source sets without collapsing lookalike titles", () => {
+  const registry = createBrowserEvidenceRegistry();
+  registry.capture({ tab_id: 1, captured_at: NOW, snapshot: observedSnapshot({ snapshotId: "source-a" }) });
+  registry.capture({ tab_id: 2, captured_at: NOW, snapshot: observedSnapshot({
+    snapshotId: "source-b",
+    url: "https://shop.example/search",
+    elements: [{ ref: "e1", role: "link", name: "Whisper Fan 20 dB", href: "https://shop.example/products/whisper-fan", context: "Whisper Fan 20 dB $48.00" }],
+  }) });
+  const a = extractBrowserObservedListingCandidates(registry.resolve, { snapshot_id: "source-a", evaluated_at: NOW });
+  const b = extractBrowserObservedListingCandidates(registry.resolve, { snapshot_id: "source-b", evaluated_at: NOW });
+  const fused = fuseShoppingCandidateSets([a, b]);
+  assert.ok(fused.candidates.filter((candidate) => /Whisper Fan 20 dB/i.test(candidate.title)).length >= 2, "same titles at different URLs remain distinct offers");
+  assert.throws(() => fuseShoppingCandidateSets([a, a]), { code: "shopping_candidate_fusion_invalid" });
+  const tampered = structuredClone(b);
+  tampered.candidates[0].url = "https://attacker.example/products/fake";
+  assert.throws(() => fuseShoppingCandidateSets([a, tampered]), { code: "shopping_candidate_fusion_invalid" });
 });

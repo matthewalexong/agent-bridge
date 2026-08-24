@@ -41,6 +41,7 @@ import { shoppingDossierStagesSchema } from "../lib/shopping-dossier-stage-schem
 import { createShoppingDecisionContext } from "../lib/shopping-decision-context.mjs";
 import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema, shoppingDecisionContextInputSchema } from "../lib/shopping-decision-context-schema.mjs";
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
+import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -476,19 +477,25 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     directory_complete: z.boolean().optional().default(false),
   };
   tool("shopping_listing_candidates", {
-    title: "Extract verified product candidates from a search page",
-    description: "Deterministically extract bounded product-card candidates from browser-observed links in a fresh snapshot. Returns normalized observed URL, title, image, nearby price, and ref with a signed source receipt. It removes tracking parameters, navigation links, duplicates, and surrounding page text but never ranks or selects a product.",
+    title: "Extract and fuse verified product candidates",
+    description: "Deterministically extract product-card candidates from one fresh browser snapshot or fuse 2-8 snapshots into one source-diverse signed set. Returns normalized observed URL, title, image, nearby price, ref, and provenance. It removes tracking, navigation, exact-URL duplicates, and surrounding text but never infers cross-retailer identity, ranks, or selects a product.",
     inputSchema: {
       snapshot_id: id.optional().describe("Snapshot receipt ID from browser_snapshot."),
       snapshotId: id.optional().describe("Compatibility alias for snapshot_id."),
+      snapshot_ids: z.array(id).min(1).max(8).optional().describe("Snapshot IDs from browser_snapshot_batch. Two or more are fused source-diversely in one call."),
+      snapshotIds: z.array(id).min(1).max(8).optional().describe("Compatibility alias for snapshot_ids."),
       query: z.string().max(300).optional().default(""),
       max_candidates: z.number().int().min(1).max(40).optional().default(20),
       max_snapshot_age_seconds: z.number().int().min(10).max(300).optional().default(300),
     },
   }, async (input) => {
-    const snapshot_id = input.snapshot_id ?? input.snapshotId;
-    if (!snapshot_id) throw Object.assign(new Error("Pass snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
-    const artifact = extractBrowserObservedListingCandidates(resolveBrowserSnapshot, { ...input, snapshot_id });
+    const requested = input.snapshot_ids ?? input.snapshotIds ?? [input.snapshot_id ?? input.snapshotId].filter(Boolean);
+    const snapshotIds = [...new Set(requested)];
+    if (snapshotIds.length === 0 || snapshotIds.length !== requested.length) throw Object.assign(new Error("Pass 1-8 unique snapshot IDs from browser_snapshot or browser_snapshot_batch"), { code: "shopping_snapshot_id_required" });
+    const sourceArtifacts = snapshotIds.map((snapshot_id) => extractBrowserObservedListingCandidates(resolveBrowserSnapshot, { ...input, snapshot_id }));
+    const artifact = sourceArtifacts.length === 1
+      ? sourceArtifacts[0]
+      : fuseShoppingCandidateSets(sourceArtifacts, input);
     if (typeof storeListingCandidateSet === "function") storeListingCandidateSet(artifact);
     return asText(artifact);
   });
