@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { attestShoppingArtifact } from "../lib/shopping-attestation.mjs";
-import { validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
+import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 
 function evidence(sourceId) {
   return attestShoppingArtifact("page_evidence", {
@@ -83,6 +83,29 @@ test("exact-offer binding rejects a modified candidate-offers artifact", () => {
     candidate_offers, decision_context: context, stage: "counterfeit", subject,
     input: { offers: [] },
   }), { code: "shopping_candidate_offers_invalid" });
+});
+
+test("exact-offer projection injects authoritative listing evidence once from the signed artifact", () => {
+  const candidate_offers = artifact();
+  const raw = { offers: [{ id: "offer-a" }, { id: "offer-b", authorization_evidence: { marker: "separate" } }] };
+  const projected = projectShoppingEvaluatorOfferInput({ candidate_offers, stage: "counterfeit", input: raw });
+  assert.equal(projected.offers[0].listing_evidence.artifact_attestation, candidate_offers.offers[0].listing_evidence.artifact_attestation);
+  assert.equal(projected.offers[1].listing_evidence.artifact_attestation, candidate_offers.offers[1].listing_evidence.artifact_attestation);
+  assert.equal(raw.offers[0].listing_evidence, undefined, "projection must not inflate or mutate the caller payload");
+});
+
+test("exact-offer projection never overwrites caller-supplied substituted evidence", () => {
+  const candidate_offers = artifact();
+  const substituted = { offers: [{ id: "offer-a", listing_evidence: candidate_offers.offers[1].listing_evidence }] };
+  const projected = projectShoppingEvaluatorOfferInput({ candidate_offers, stage: "counterfeit", input: substituted });
+  assert.equal(projected.offers[0].listing_evidence.artifact_attestation, candidate_offers.offers[1].listing_evidence.artifact_attestation);
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "counterfeit", subject, input: projected }), { code: "shopping_candidate_offer_evidence_mismatch" });
+});
+
+test("promotion projection injects its direct authoritative listing evidence", () => {
+  const candidate_offers = artifact();
+  const projected = projectShoppingEvaluatorOfferInput({ candidate_offers, stage: "promotion", input: { offer_id: "offer-a" } });
+  assert.equal(projected.listing_evidence.artifact_attestation, candidate_offers.offers[0].listing_evidence.artifact_attestation);
 });
 
 test("condition and deal stages preserve the exact signed subject ID", () => {

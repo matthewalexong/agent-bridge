@@ -43,7 +43,7 @@ import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
 import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
 import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evidence.mjs";
-import { validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
+import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -547,8 +547,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       if (typeof hydrateListingCandidateSet === "function") hydrateListingCandidateSet(candidate_offers);
     }
     return asText({
-      artifacts,
-      ...(candidate_offers ? { candidate_offers } : {}),
+      ...(candidate_offers ? { candidate_offers } : { artifacts }),
       ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses },
     });
   });
@@ -950,7 +949,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
 
   registerTool("shopping_evaluator_batch", {
     title: "Run a bounded shopping evaluator wave",
-    description: "Create a process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency in one tool round trip. Before execution, the harness rejects duplicate stages, applicability-skipped stages, product/offer subjects that differ from the context, and exact-offer jobs whose IDs or listing evidence differ from the signed candidate-offers artifact. The context binds the request revision, user-state revision, objective, constraints, destination, applicability, product, and offer. The process derives common domain evaluator bindings from signed request clauses, rejects caller-authored alternatives, and requires each job to claim its complete routed constraint set. Canonical rules and literals must appear unchanged in the evaluator's real input before execution. Every successful stage is bound to that context; altered, omitted, substituted, or mixed-context waves fail closed. Per-job duration, wave wall time, and avoided executions expose latency without weakening gates. Failures remain isolated, and shopping_decision_dossier remains mandatory.",
+    description: "Create a process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency in one tool round trip. Before production schema validation, the process injects exact listing evidence once from the signed candidate-offers artifact by candidate ID, so jobs do not resend large page artifacts. Caller-supplied substituted evidence is rejected rather than overwritten. The harness also rejects duplicate stages, applicability-skipped stages, product/offer subjects that differ from the context, and exact-offer IDs outside the signed shortlist. The context binds the request revision, user-state revision, objective, constraints, destination, applicability, product, and offer. The process derives common domain evaluator bindings from signed request clauses, rejects caller-authored alternatives, and requires each job to claim its complete routed constraint set. Canonical rules and literals must appear unchanged in the evaluator's real input before execution. Every successful stage is bound to that context; altered, omitted, substituted, or mixed-context waves fail closed. Per-job duration, wave wall time, and avoided executions expose latency without weakening gates. Failures remain isolated, and shopping_decision_dossier remains mandatory.",
     inputSchema: {
       decision_context: shoppingDecisionContextInputSchema,
       candidate_offers: candidateOffersArtifact.optional().describe("Signed output of shopping_page_evidence_batch. Required for exact-offer evidence, condition, ranking, deal, and checkout evaluators in offer and checkout phases."),
@@ -973,6 +972,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       required_stages: requiredShoppingDossierStages({ phase: decisionContext.phase, applicability: decisionContext.applicability, stages: {}, decision_context: decisionContext }),
       stage_adapter: adaptShoppingEvaluatorResult,
       constraint_validator: validateShoppingConstraintJob,
+      offer_input_projector: projectShoppingEvaluatorOfferInput,
       offer_binding_validator: validateShoppingEvaluatorOfferBinding,
     }, evaluatorRegistry));
   });

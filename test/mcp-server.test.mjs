@@ -504,6 +504,9 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   } });
   assert.equal(hydrated.isError, undefined, JSON.stringify(hydrated));
   assert.match(hydrated.structuredContent.candidate_offers.artifact_attestation, /^v1\.candidate_offers\./);
+  assert.equal("artifacts" in hydrated.structuredContent, false, "bound hydration must not duplicate page artifacts already embedded in candidate_offers");
+  const duplicatedHydrationShape = { ...hydrated.structuredContent, artifacts: hydrated.structuredContent.candidate_offers.offers.map((offer) => offer.listing_evidence) };
+  assert.ok(JSON.stringify(hydrated.structuredContent).length < JSON.stringify(duplicatedHydrationShape).length * 0.7, "bound hydration should materially reduce repeated evidence characters");
   assert.equal(hydrated.structuredContent.candidate_offers.offers.length, 2);
   assert.equal(hydrated.structuredContent.candidate_offers.offers[0].url_binding.status, "exact_listing");
   const mismatchedHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
@@ -574,7 +577,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     ] },
   })).structuredContent;
   const boundSafetyArguments = { evaluated_at: testNow, jurisdiction: "US", identity: boundIdentity, coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [
-    { id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence },
+    { id: boundCandidate.candidate_id },
   ] };
   const boundSafetyBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
     decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {

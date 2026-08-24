@@ -183,3 +183,14 @@ test("evaluator batch validates signed exact-offer bindings before executing a h
   assert.equal(result.results[0].status, "failed");
   assert.equal(result.results[0].error.code, "shopping_candidate_offer_evidence_mismatch");
 });
+
+test("evaluator batch projects process-owned offer evidence before production schema parsing", async () => {
+  let observed;
+  const registry = new Map([["shopping_counterfeit_assess", definition("counterfeit", z.object({ offers: z.array(z.object({ id: z.string(), listing_evidence: z.object({ signed: z.literal(true) }) })) }), async (input) => { observed = input; return { structuredContent: {} }; })]]);
+  const result = await runShoppingEvaluatorBatch({
+    jobs: [{ job_id: "compact", tool: "shopping_counterfeit_assess", arguments: { offers: [{ id: "offer-a" }] } }],
+    offer_input_projector: ({ input }) => ({ ...input, offers: input.offers.map((offer) => ({ ...offer, listing_evidence: { signed: true } })) }),
+  }, registry);
+  assert.equal(result.results[0].status, "complete");
+  assert.deepEqual(observed, { offers: [{ id: "offer-a", listing_evidence: { signed: true } }] });
+});

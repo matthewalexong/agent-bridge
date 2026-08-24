@@ -28,7 +28,10 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /never treat a partial batch as\s+complete/i);
   assert.match(skill, /call\s+`shopping_evaluator_batch` to run the ready independent deterministic checks/i);
   assert.match(skill, /pass its returned\s+signed `candidate_offers` unchanged to every later evaluator batch/i);
-  assert.match(skill, /deterministic in-process check and adds no model call or search round trip/i);
+  assert.match(skill, /deterministic in-process check.*adds no\s+model call or search round trip/is);
+  assert.match(skill, /intentionally omits a duplicate top-level `artifacts`\s+array/i);
+  assert.match(skill, /omit\s+`listing_evidence` from identity, promotion, safety, merchant, counterfeit/i);
+  assert.match(skill, /removes repeated payload tokens/i);
   assert.match(skill, /call `browser_panel_post` with `kind=products`, the signed `candidate_set_id`/i);
   assert.match(skill, /unhydrated candidate is rejected.*unknown exact price is omitted/is);
   assert.match(skill, /signed exact-page item price, observed seller, and availability/i);
