@@ -43,6 +43,7 @@ import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
 import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
 import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evidence.mjs";
+import { validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 import { defaultEvaluatorResultChars } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
@@ -55,6 +56,12 @@ const pageEvidenceArtifact = z.object({
   extraction_scope: z.object({ seller_query: z.string().max(200).nullable().optional(), directory_complete: z.boolean() }).passthrough(),
   facts: z.record(z.any()),
   source_receipt: z.object({ artifact_attestation: artifactAttestation("browser_snapshot"), source_id: id, snapshot_id: id, tab_id: z.number().int().nonnegative(), url: z.string().url().max(4_000), captured_at: z.string().datetime(), content_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).passthrough(),
+}).passthrough();
+const candidateOffersArtifact = z.object({
+  artifact_attestation: artifactAttestation("candidate_offers"),
+  candidate_set_id: id,
+  evaluated_at: z.string().datetime(),
+  offers: z.array(z.object({ candidate_id: id, listing_evidence: pageEvidenceArtifact }).passthrough()).min(1).max(5),
 }).passthrough();
 
 export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet }) {
@@ -942,9 +949,10 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
 
   registerTool("shopping_evaluator_batch", {
     title: "Run a bounded shopping evaluator wave",
-    description: "Create a process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency in one tool round trip. Before execution, the harness rejects duplicate stages, applicability-skipped stages, and product/offer subjects that differ from the context, avoiding wasted work and competing artifacts. The context binds the request revision, user-state revision, objective, constraints, destination, applicability, product, and offer. The process derives common domain evaluator bindings from signed request clauses, rejects caller-authored alternatives, and requires each job to claim its complete routed constraint set. Canonical rules and literals must appear unchanged in the evaluator's real input before execution. Every successful stage is bound to that context; altered, omitted, substituted, or mixed-context waves fail closed. Per-job duration, wave wall time, and avoided executions expose latency without weakening gates. Failures remain isolated, and shopping_decision_dossier remains mandatory.",
+    description: "Create a process-attested decision context and run up to 24 ready, independent, allowlisted read-only shopping evaluators with bounded concurrency in one tool round trip. Before execution, the harness rejects duplicate stages, applicability-skipped stages, product/offer subjects that differ from the context, and exact-offer jobs whose IDs or listing evidence differ from the signed candidate-offers artifact. The context binds the request revision, user-state revision, objective, constraints, destination, applicability, product, and offer. The process derives common domain evaluator bindings from signed request clauses, rejects caller-authored alternatives, and requires each job to claim its complete routed constraint set. Canonical rules and literals must appear unchanged in the evaluator's real input before execution. Every successful stage is bound to that context; altered, omitted, substituted, or mixed-context waves fail closed. Per-job duration, wave wall time, and avoided executions expose latency without weakening gates. Failures remain isolated, and shopping_decision_dossier remains mandatory.",
     inputSchema: {
       decision_context: shoppingDecisionContextInputSchema,
+      candidate_offers: candidateOffersArtifact.optional().describe("Signed output of shopping_page_evidence_batch. Required for raw exact-offer evidence evaluators in offer and checkout phases."),
       max_concurrency: z.number().int().min(1).max(8).optional().default(4),
       max_result_chars: z.number().int().min(10_000).max(500_000).optional(),
       jobs: z.array(z.object({ job_id: id, tool: z.enum(Object.keys(SHOPPING_EVALUATOR_STAGES)), subject: z.object({ product_id: id, offer_id: id.optional() }), constraint_ids: z.array(id).max(1_000).optional().default([]), arguments: z.record(z.any()) })).min(1).max(24),
@@ -960,9 +968,11 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       max_result_chars: input.max_result_chars ?? defaultEvaluatorResultChars(),
       evaluated_at: decisionContext.evaluated_at,
       decision_context: decisionContext,
+      candidate_offers: input.candidate_offers,
       required_stages: requiredShoppingDossierStages({ phase: decisionContext.phase, applicability: decisionContext.applicability, stages: {}, decision_context: decisionContext }),
       stage_adapter: adaptShoppingEvaluatorResult,
       constraint_validator: validateShoppingConstraintJob,
+      offer_binding_validator: validateShoppingEvaluatorOfferBinding,
     }, evaluatorRegistry));
   });
 }

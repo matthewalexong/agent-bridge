@@ -27,6 +27,8 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /reuses extraction only when signed content,\s+page kind, seller query, and directory-completeness scope are identical/i);
   assert.match(skill, /never treat a partial batch as\s+complete/i);
   assert.match(skill, /call\s+`shopping_evaluator_batch` to run the ready independent deterministic checks/i);
+  assert.match(skill, /pass its returned\s+signed `candidate_offers` unchanged to every later evaluator batch/i);
+  assert.match(skill, /deterministic in-process check and adds no model call or search round trip/i);
   assert.match(skill, /at most one job for each evaluator stage/i);
   assert.match(skill, /rejects all three mistakes before invoking a tool/i);
   assert.match(skill, /`wave\.wall_time_ms` to identify genuinely slow/i);

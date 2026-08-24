@@ -59,6 +59,15 @@ and dossier mutation or authority paths. Keep the default aggregate result
 budget; an oversized result fails closed instead of returning a truncated
 artifact. Rerun that evaluator alone with narrower evidence.
 
+After `shopping_page_evidence_batch` hydrates a shortlist, pass its returned
+signed `candidate_offers` unchanged to every later evaluator batch that touches
+an exact offer. Use each `candidate_id` as the evaluator item ID and reuse that
+candidate's exact `listing_evidence`; never retype an offer ID, remap a listing,
+or substitute another candidate's page artifact. In offer and checkout phases,
+identity, promotion, safety, merchant, counterfeit, protection, and fulfillment
+jobs fail before execution when this artifact is absent or mismatched. This is
+a deterministic in-process check and adds no model call or search round trip.
+
 Put at most one job for each evaluator stage in a decision-context wave. Do not
 run a stage whose applicability is explicitly skipped, and bind every subject
 to the exact context product and—when the stage is offer-scoped—the exact

@@ -554,6 +554,36 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
       { id: "B", listing_evidence: rankedListingB },
     ] },
   })).structuredContent;
+  const boundCandidate = hydrated.structuredContent.candidate_offers.offers[0];
+  const otherBoundCandidate = hydrated.structuredContent.candidate_offers.offers[1];
+  const boundIdentity = (await client.callTool({
+    name: "shopping_identity_resolve",
+    arguments: { evaluated_at: testNow, target_product_id: "camera-x", target_evidence: rankedTargetEvidence, candidates: [
+      { id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence },
+    ] },
+  })).structuredContent;
+  const boundSafetyArguments = { evaluated_at: testNow, jurisdiction: "US", identity: boundIdentity, coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [
+    { id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence },
+  ] };
+  const boundSafetyBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {
+      candidate_coverage: skipped("The exact product is already known."), performance: skipped("Not used."), value: skipped("Not used."), condition: skipped("Not used."), promotion: skipped("Not used."), review_integrity: skipped("Not used."), composition: skipped("Not used."), privacy: skipped("Not used."), compatibility: skipped("Not used."), lifecycle: skipped("Not used."), preferences: skipped("Not used."), ownership: skipped("Not used."), deal: skipped("Not used."),
+    } }),
+    candidate_offers: hydrated.structuredContent.candidate_offers,
+    jobs: [{ job_id: "bound-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundSafetyArguments }],
+  } });
+  assert.equal(boundSafetyBatch.structuredContent.results[0].error.code, "shopping_safety_identity_scope", JSON.stringify(boundSafetyBatch));
+  const substitutedSafetyArguments = structuredClone(boundSafetyArguments);
+  substitutedSafetyArguments.candidates[0].listing_evidence = otherBoundCandidate.listing_evidence;
+  const substitutedSafetyBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
+    decision_context: decisionContext({ phase: "product_recommendation", product_id: "camera-x", applicability: {
+      candidate_coverage: skipped("The exact product is already known."), performance: skipped("Not used."), value: skipped("Not used."), condition: skipped("Not used."), promotion: skipped("Not used."), review_integrity: skipped("Not used."), composition: skipped("Not used."), privacy: skipped("Not used."), compatibility: skipped("Not used."), lifecycle: skipped("Not used."), preferences: skipped("Not used."), ownership: skipped("Not used."), deal: skipped("Not used."),
+    } }),
+    candidate_offers: hydrated.structuredContent.candidate_offers,
+    jobs: [{ job_id: "substituted-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: substitutedSafetyArguments }],
+  } });
+  assert.equal(substitutedSafetyBatch.structuredContent.results[0].status, "failed");
+  assert.equal(substitutedSafetyBatch.structuredContent.results[0].error.code, "shopping_candidate_offer_evidence_mismatch");
   const exactProductApplicability = { candidate_coverage: skipped("The user specified this exact camera."), performance: skipped("No measured-performance metric is used in this fixture."), value: skipped("No normalized unit-value metric is used in this fixture."), condition: skipped("This fixture uses verified ordinary new inventory without a condition conflict."), promotion: skipped("No promotion changes price in this fixture."), review_integrity: skipped("No review-derived metric is used in this fixture."), composition: skipped("This camera fixture has no ingredient, allergen, material, or formulation dependency."), privacy: skipped("This bounded camera fixture does not assess connected data processing."), compatibility: skipped("No user-product compatibility dependency in this bounded fixture."), lifecycle: skipped("No lifecycle-sensitive dependency in this bounded fixture."), preferences: skipped("The user specified one exact product."), ownership: skipped("No material ongoing costs."), deal: skipped("Timing was not requested.") };
   const staleProfileBatch = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
     decision_context: decisionContext({ request_id: "request-stale-profile", phase: "product_recommendation", product_id: "camera-x", applicability: exactProductApplicability, profile_revision: 999 }),

@@ -1,0 +1,87 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { attestShoppingArtifact } from "../lib/shopping-attestation.mjs";
+import { validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
+
+function evidence(sourceId) {
+  return attestShoppingArtifact("page_evidence", {
+    source: { url: `https://shop.example/items/${sourceId}`, page_kind: "retailer_listing", captured_at: "2026-08-24T12:00:00.000Z" },
+    extraction_scope: { directory_complete: false },
+    facts: { title: { value: sourceId } },
+    source_receipt: { source_id: sourceId },
+  });
+}
+
+function artifact() {
+  const a = evidence("a");
+  const b = evidence("b");
+  return attestShoppingArtifact("candidate_offers", {
+    candidate_set_id: "set-1",
+    evaluated_at: "2026-08-24T12:00:00.000Z",
+    offers: [
+      { candidate_id: "offer-a", listing_evidence: a },
+      { candidate_id: "offer-b", listing_evidence: b },
+    ],
+  });
+}
+
+const context = { phase: "offer_recommendation", offer_id: "offer-a" };
+const subject = { product_id: "camera-x", offer_id: "offer-a" };
+
+test("exact-offer binding accepts signed shortlist IDs with their authoritative listing evidence", () => {
+  const candidate_offers = artifact();
+  assert.deepEqual(validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: context, stage: "counterfeit", subject,
+    input: { offers: [{ id: "offer-a", listing_evidence: candidate_offers.offers[0].listing_evidence }] },
+  }), ["offer-a"]);
+});
+
+test("exact-offer binding rejects cross-candidate evidence substitution", () => {
+  const candidate_offers = artifact();
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: context, stage: "counterfeit", subject,
+    input: { offers: [{ id: "offer-a", listing_evidence: candidate_offers.offers[1].listing_evidence }] },
+  }), { code: "shopping_candidate_offer_evidence_mismatch" });
+});
+
+test("exact-offer binding rejects unknown, duplicate, and omitted subject IDs", () => {
+  const candidate_offers = artifact();
+  const run = (offers) => validateShoppingEvaluatorOfferBinding({ candidate_offers, decision_context: context, stage: "fulfillment", subject, input: { offers } });
+  assert.throws(() => run([{ id: "offer-x", listing_evidence: candidate_offers.offers[0].listing_evidence }]), { code: "shopping_candidate_offer_id_mismatch" });
+  assert.throws(() => run([
+    { id: "offer-a", listing_evidence: candidate_offers.offers[0].listing_evidence },
+    { id: "offer-a", listing_evidence: candidate_offers.offers[0].listing_evidence },
+  ]), { code: "shopping_candidate_offer_id_duplicate" });
+  assert.throws(() => run([{ id: "offer-b", listing_evidence: candidate_offers.offers[1].listing_evidence }]), { code: "shopping_candidate_offer_subject_omitted" });
+});
+
+test("offer phases require signed candidate offers for raw listing evaluators", () => {
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({
+    candidate_offers: null, decision_context: context, stage: "merchant", subject, input: {},
+  }), { code: "shopping_candidate_offers_required" });
+  assert.doesNotThrow(() => validateShoppingEvaluatorOfferBinding({
+    candidate_offers: null, decision_context: { phase: "product_recommendation", offer_id: null }, stage: "safety", subject: { product_id: "camera-x" }, input: {},
+  }));
+});
+
+test("promotion binds its direct offer ID and listing evidence", () => {
+  const candidate_offers = artifact();
+  assert.deepEqual(validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: context, stage: "promotion", subject,
+    input: { offer_id: "offer-a", listing_evidence: candidate_offers.offers[0].listing_evidence },
+  }), ["offer-a"]);
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: context, stage: "promotion", subject,
+    input: { offer_id: "offer-b", listing_evidence: candidate_offers.offers[1].listing_evidence },
+  }), { code: "shopping_candidate_offer_id_mismatch" });
+});
+
+test("exact-offer binding rejects a modified candidate-offers artifact", () => {
+  const candidate_offers = artifact();
+  candidate_offers.offers[0].candidate_id = "offer-x";
+  assert.throws(() => validateShoppingEvaluatorOfferBinding({
+    candidate_offers, decision_context: context, stage: "counterfeit", subject,
+    input: { offers: [] },
+  }), { code: "shopping_candidate_offers_invalid" });
+});
+

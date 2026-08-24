@@ -171,3 +171,15 @@ test("offer-scoped wave jobs must bind the exact context offer before execution"
   assert.equal(result.results[0].error.code, "shopping_evaluator_subject_mismatch");
   assert.equal(result.wave.avoided_executions, 1);
 });
+
+test("evaluator batch validates signed exact-offer bindings before executing a handler", async () => {
+  let executions = 0;
+  const registry = new Map([["shopping_counterfeit_assess", definition("counterfeit", z.object({ offers: z.array(z.object({ id: z.string(), listing_evidence: z.object({ marker: z.string() }) })) }), async () => { executions++; return { structuredContent: {} }; })]]);
+  const result = await runShoppingEvaluatorBatch({
+    jobs: [{ job_id: "counterfeit", tool: "shopping_counterfeit_assess", arguments: { offers: [{ id: "offer-a", listing_evidence: { marker: "wrong" } }] } }],
+    offer_binding_validator: () => { throw Object.assign(new Error("substituted evidence"), { code: "shopping_candidate_offer_evidence_mismatch" }); },
+  }, registry);
+  assert.equal(executions, 0);
+  assert.equal(result.results[0].status, "failed");
+  assert.equal(result.results[0].error.code, "shopping_candidate_offer_evidence_mismatch");
+});
