@@ -72,15 +72,18 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
 
-export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids } = {}) {
+export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs } = {}) {
   const cards = Array.isArray(links) ? links : [];
   if (kind === "products") {
     if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
     if (!candidate_set_id || !Array.isArray(candidate_ids) || candidate_ids.length === 0) {
       return "kind=products requires candidate_set_id and candidate_ids from shopping_listing_candidates.";
     }
-  } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0)) {
-    return "candidate_set_id and candidate_ids are only valid with kind=products.";
+    if (!['provisional', 'verified'].includes(recommendation_state)) return "kind=products requires recommendation_state=provisional or verified.";
+    if (recommendation_state === "verified" && (!Array.isArray(recommendation_refs) || recommendation_refs.length !== candidate_ids.length)) return "verified product cards require one recommendation_ref per candidate_id.";
+    if (recommendation_state === "provisional" && Array.isArray(recommendation_refs) && recommendation_refs.length) return "provisional product cards cannot claim recommendation authority.";
+  } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0) || recommendation_state != null || (Array.isArray(recommendation_refs) && recommendation_refs.length > 0)) {
+    return "candidate and recommendation fields are only valid with kind=products.";
   }
   return null;
 }

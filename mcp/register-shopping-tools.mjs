@@ -80,7 +80,7 @@ const dossierStagesReference = z.object({
   stage_names: z.array(id).max(32),
 }).strict();
 
-export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet }) {
+export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet, storeShoppingRecommendation }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
@@ -493,7 +493,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     const hasStageReference = input.dossier_stages_ref != null;
     if (hasFullStages === hasStageReference) throw Object.assign(new Error("Pass exactly one of stages or dossier_stages_ref"), { code: "shopping_dossier_stages_input_invalid" });
     const stages = hasStageReference ? dossierStageRegistry.resolve(input.dossier_stages_ref, decisionContext.context_id) : input.stages;
-    return asText(composeShoppingDossier({
+    const dossier = composeShoppingDossier({
       ...input,
       decision_context: decisionContext,
       stages,
@@ -503,7 +503,9 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       product_id: decisionContext.product_id,
       offer_id: decisionContext.offer_id || undefined,
       applicability: decisionContext.applicability,
-    }, { require_stage_attestations: true, require_decision_context: true }));
+    }, { require_stage_attestations: true, require_decision_context: true });
+    const recommendation_ref = typeof storeShoppingRecommendation === "function" ? storeShoppingRecommendation(dossier) : null;
+    return asText({ ...dossier, recommendation_ref });
   });
 
   const pageEvidenceRequest = {

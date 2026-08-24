@@ -40,9 +40,9 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /pass only the returned\s+`decision_context_ref`/i);
   assert.match(skill, /avoiding repeated request-receipt, constraint, and applicability\s+tokens/i);
   assert.match(skill, /unknown reference after a process\s+restart.*fails closed/is);
-  assert.match(skill, /call `browser_panel_post` with `kind=products`, the signed `candidate_set_id`/i);
-  assert.match(skill, /unhydrated candidate is rejected.*unknown exact price is omitted/is);
-  assert.match(skill, /signed exact-page item price, observed seller, and availability/i);
+  assert.match(skill, /call `browser_panel_post` with `kind=products` and `recommendation_state=provisional`/i);
+  assert.match(skill, /final winner requires `recommendation_state=verified`.*`recommendation_ref`/is);
+  assert.match(skill, /unhydrated candidates are rejected and unknown facts remain explicit/i);
   assert.doesNotMatch(skill, /show it as a LINK CARD via the `links` parameter/i);
   assert.match(skill, /at most one job for each evaluator stage/i);
   assert.match(skill, /rejects all three mistakes before invoking a tool/i);

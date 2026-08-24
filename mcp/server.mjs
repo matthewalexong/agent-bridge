@@ -8,6 +8,7 @@ import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs"
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
+import { createShoppingRecommendationRegistry } from "../lib/shopping-recommendation-registry.mjs";
 import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
@@ -16,6 +17,7 @@ const server = new McpServer({
 });
 const browserEvidenceRegistry = createBrowserEvidenceRegistry();
 const shoppingCandidateRegistry = createShoppingCandidateRegistry();
+const shoppingRecommendationRegistry = createShoppingRecommendationRegistry();
 const mcpSurface = resolveMcpSurface();
 
 function asText(value) {
@@ -344,6 +346,8 @@ tool(
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
       candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional().describe("Short-lived set ID from shopping_listing_candidates. Required for products."),
       candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
+      recommendation_state: z.enum(["provisional", "verified"]).optional().describe("Required for products. Provisional is visibly labeled; verified requires final dossier references."),
+      recommendation_refs: z.array(z.object({ recommendation_id: z.string().regex(/^shopping_recommendation_[a-f0-9]{32}$/), dossier_id: z.string().min(1).max(160), phase: z.enum(["product_recommendation", "offer_recommendation"]), candidate_id: z.string().regex(/^listing_[a-f0-9]{16}$/) }).strict()).min(1).max(5).optional(),
       links: z.array(z.object({
         url: z.string().url(),
         title: z.string().max(200).optional(),
@@ -355,11 +359,17 @@ tool(
   async (input) => {
     const rejected = validatePanelPost(input);
     if (rejected) return asText({ posted: false, error: rejected });
+    if (input.kind === "products" && input.recommendation_state === "verified") {
+      input.candidate_ids.forEach((candidateId, index) => shoppingRecommendationRegistry.authorize(input.recommendation_refs[index], candidateId));
+    }
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
     const links = input.kind === "products"
       ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
       : input.links ?? [];
-    return asText(await callBridge("panel.post", { text: input.text, links }));
+    const text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
+      ? `Still verifying — ${input.text}`
+      : input.text;
+    return asText(await callBridge("panel.post", { text, links }));
   },
 );
 
@@ -500,6 +510,7 @@ registerShoppingTools({
   storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
   resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
   hydrateListingCandidateSet: (artifact) => shoppingCandidateRegistry.hydrate(artifact),
+  storeShoppingRecommendation: (dossier) => shoppingRecommendationRegistry.store(dossier),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");
     const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);

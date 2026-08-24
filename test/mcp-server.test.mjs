@@ -485,7 +485,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
   const unhydratedPost = await client.callTool({ name: "browser_panel_post", arguments: {
-    text: "Premature result.", kind: "products",
+    text: "Premature result.", kind: "products", recommendation_state: "provisional",
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
   } });
@@ -521,11 +521,13 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Best observed match.",
     kind: "products",
+    recommendation_state: "provisional",
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
   } });
   assert.equal(boundPost.isError, undefined, JSON.stringify(boundPost));
   assert.equal(panelPosts.length, 1);
+  assert.match(panelPosts[0].text, /^Still verifying — /);
   assert.deepEqual(panelPosts[0].links, [{
     url: "https://fixture.example/products/camera-101",
     title: "Fixture Camera 101",
@@ -645,6 +647,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const productClearance = productClearanceResponse.structuredContent;
   assert.equal(productClearance.decision.action, "recommend_product");
   assert.match(productClearance.clearance_attestation, /^v1\.[a-f0-9]{64}$/);
+  assert.equal(productClearance.recommendation_ref, null, "a non-card canonical product ID cannot authorize a listing card");
+  const unauthorizedVerifiedPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "Unverified winner.", kind: "products", recommendation_state: "verified",
+    recommendation_refs: [{ recommendation_id: `shopping_recommendation_${"0".repeat(32)}`, dossier_id: "missing", phase: "product_recommendation", candidate_id: boundCandidate.candidate_id }],
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id, candidate_ids: [boundCandidate.candidate_id],
+  } });
+  assert.equal(unauthorizedVerifiedPost.isError, true);
+  assert.match(unauthorizedVerifiedPost.content[0].text, /shopping_recommendation_reference_unknown/);
   const failedSafetyRerun = await client.callTool({ name: "shopping_evaluator_batch", arguments: {
     decision_context: productEvidenceWave.structuredContent.decision_context_ref,
     jobs: [{ job_id: "failed-safety-rerun", tool: "shopping_safety_assess", subject: { product_id: "camera-x" }, arguments: {} }],
