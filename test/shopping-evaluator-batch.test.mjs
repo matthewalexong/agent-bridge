@@ -39,6 +39,92 @@ test("evaluator batch starts independent jobs concurrently and preserves input o
   assert.equal(result.decision_context_ref, null);
 });
 
+test("evaluator dependency graph runs ready layers concurrently and binds complete upstream results", async () => {
+  const started = [];
+  const observed = {};
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({}), async () => { started.push("identity"); return { structuredContent: { artifact: "identity" } }; })],
+    ["shopping_safety_assess", definition("safety", z.object({}), async () => { started.push("safety"); return { structuredContent: { artifact: "safety" } }; })],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({ artifact: z.literal("identity") }) }), async (input) => { started.push("merchant"); observed.merchant = input; return { structuredContent: { artifact: "merchant" } }; })],
+    ["shopping_counterfeit_assess", definition("counterfeit", z.object({ identity: z.object({ artifact: z.literal("identity") }) }), async (input) => { started.push("counterfeit"); observed.counterfeit = input; return { structuredContent: { artifact: "counterfeit" } }; })],
+    ["shopping_offer_analyze", definition("offer", z.object({ merchant: z.object({ artifact: z.literal("merchant") }), counterfeit: z.object({ artifact: z.literal("counterfeit") }) }), async (input) => { started.push("offer"); observed.offer = input; return { structuredContent: { artifact: "offer" } }; })],
+  ]);
+  const subject = { product_id: "camera-x", offer_id: "offer-a" };
+  const result = await runShoppingEvaluatorBatch({
+    decision_context: subject,
+    required_stages: ["identity", "safety", "merchant", "counterfeit", "offer"],
+    max_concurrency: 4,
+    jobs: [
+      { job_id: "identity", tool: "shopping_identity_resolve", subject, arguments: {} },
+      { job_id: "safety", tool: "shopping_safety_assess", subject, arguments: {} },
+      { job_id: "merchant", tool: "shopping_merchant_trust", subject, arguments: {}, argument_bindings: [{ from_job_id: "identity", target_key: "identity" }] },
+      { job_id: "counterfeit", tool: "shopping_counterfeit_assess", subject, arguments: {}, argument_bindings: [{ from_job_id: "identity", target_key: "identity" }] },
+      { job_id: "offer", tool: "shopping_offer_analyze", subject, arguments: {}, argument_bindings: [{ from_job_id: "merchant", target_key: "merchant" }, { from_job_id: "counterfeit", target_key: "counterfeit" }] },
+    ],
+  }, registry);
+  assert.deepEqual(started.slice(0, 2).sort(), ["identity", "safety"]);
+  assert.ok(started.indexOf("merchant") > started.indexOf("identity"));
+  assert.ok(started.indexOf("counterfeit") > started.indexOf("identity"));
+  assert.ok(started.indexOf("offer") > started.indexOf("merchant"));
+  assert.ok(started.indexOf("offer") > started.indexOf("counterfeit"));
+  assert.deepEqual(observed.merchant, { identity: { artifact: "identity" } });
+  assert.deepEqual(observed.offer, { merchant: { artifact: "merchant" }, counterfeit: { artifact: "counterfeit" } });
+  assert.deepEqual(result.results.map((item) => item.status), Array(5).fill("complete"));
+  assert.deepEqual(result.results[4].dependencies, ["merchant", "counterfeit"]);
+  assert.equal(result.wave.dependency_edges, 4);
+  assert.equal(result.wave.dependency_layers, 3);
+  assert.ok(result.wave.dependency_input_chars_saved > 0);
+});
+
+test("dependency bindings use complete internal outputs even when returned results are compact", async () => {
+  let observed;
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({}), async () => ({ structuredContent: { public: "keep", signed_artifact: { complete: true } } }))],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({ signed_artifact: z.object({ complete: z.literal(true) }) }) }), async (input) => { observed = input; return { structuredContent: { ok: true } }; })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({
+    result_mode: "compact",
+    stage_adapter: ({ tool }) => ({ stage: SHOPPING_EVALUATOR_STAGES[tool] }),
+    result_compactor: ({ result }) => ({ public: result.public }),
+    jobs: [
+      { job_id: "identity", tool: "shopping_identity_resolve", arguments: {} },
+      { job_id: "merchant", tool: "shopping_merchant_trust", arguments: {}, argument_bindings: [{ from_job_id: "identity", target_key: "identity" }] },
+    ],
+  }, registry);
+  assert.deepEqual(result.results[0].result, { public: "keep" });
+  assert.deepEqual(observed, { identity: { signed_artifact: { complete: true } } });
+  assert.equal(result.results[1].status, "complete");
+  assert.ok(result.wave.dependency_input_chars_saved > JSON.stringify(result.results[0].result).length);
+});
+
+test("failed dependencies suppress downstream execution", async () => {
+  let downstreamExecutions = 0;
+  const registry = new Map([
+    ["shopping_identity_resolve", definition("identity", z.object({}), async () => { throw Object.assign(new Error("identity failed"), { code: "identity_failed" }); })],
+    ["shopping_merchant_trust", definition("merchant", z.object({ identity: z.object({}) }), async () => { downstreamExecutions++; return { structuredContent: {} }; })],
+  ]);
+  const result = await runShoppingEvaluatorBatch({ jobs: [
+    { job_id: "identity", tool: "shopping_identity_resolve", arguments: {} },
+    { job_id: "merchant", tool: "shopping_merchant_trust", arguments: {}, argument_bindings: [{ from_job_id: "identity", target_key: "identity" }] },
+  ] }, registry);
+  assert.equal(result.results[0].error.code, "identity_failed");
+  assert.equal(result.results[1].error.code, "shopping_evaluator_dependency_failed");
+  assert.equal(result.results[1].duration_ms, 0);
+  assert.equal(result.wave.avoided_executions, 1);
+  assert.equal(downstreamExecutions, 0);
+});
+
+test("dependency graph rejects unknown sources, cycles, duplicate targets, and caller overwrites", async () => {
+  const registry = new Map([["shopping_value_assess", definition("value", z.object({}), async () => ({ structuredContent: {} }))]]);
+  const job = (id, argument_bindings = [], args = {}) => ({ job_id: id, tool: "shopping_value_assess", arguments: args, argument_bindings });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a", [{ from_job_id: "missing", target_key: "value" }])] }, registry), { code: "shopping_evaluator_dependency_invalid" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a", [{ from_job_id: "b", target_key: "one" }]), job("b", [{ from_job_id: "a", target_key: "two" }])] }, registry), { code: "shopping_evaluator_dependency_cycle" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), job("b", [{ from_job_id: "a", target_key: "same" }, { from_job_id: "a", target_key: "same" }])] }, registry), { code: "shopping_evaluator_dependency_invalid" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), job("b", [{ from_job_id: "a", target_key: "value" }], { value: "caller" })] }, registry), { code: "shopping_evaluator_dependency_overwrite" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), job("b", [{ from_job_id: "a", target_key: "constructor" }])] }, registry), { code: "shopping_evaluator_dependency_invalid" });
+  await assert.rejects(() => runShoppingEvaluatorBatch({ jobs: [job("a"), { ...job("b"), argument_bindings: Array(25).fill({ from_job_id: "a", target_key: "value" }) }] }, registry), { code: "shopping_evaluator_dependency_invalid" });
+});
+
 test("evaluator batch can suppress a repeated full context while retaining its compact reference", async () => {
   const decision_context = { context_id: `shopping_context_${"a".repeat(32)}` };
   const registry = new Map([["shopping_value_assess", definition("value", z.object({}), async () => ({ structuredContent: { action: "comparable" } }))]]);

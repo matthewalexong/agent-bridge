@@ -49,11 +49,11 @@ reuse across a different page kind or scope, and never treat a partial batch as
 complete. Continue using a single fresh snapshot after an interactive action or
 when only one targeted gap remains.
 
-Once a dependency wave has all of its input evidence, call
-`shopping_evaluator_batch` to run the ready independent deterministic checks in
-one round trip instead of calling each evaluator serially. Use at most 24 jobs
-and the default concurrency of four unless the workload justifies a smaller
-bound. Every job still passes the original evaluator's production schema. The
+Once the evidence inputs exist, call `shopping_evaluator_batch` to run ready
+independent and explicitly dependent deterministic checks as one validated
+acyclic graph instead of serial evaluator waves. Use at most 24 jobs and the
+default concurrency of four unless the workload justifies a smaller bound.
+Every resolved job still passes the original evaluator's production schema. The
 batch allowlist excludes profile, watch, case, browser-action, evidence-capture,
 and dossier mutation or authority paths. Keep the default aggregate result
 budget; an oversized result fails closed instead of returning a truncated
@@ -174,18 +174,33 @@ input without changing its value, unit, currency, deadline, or operator. For
 preference constraints, include the process-returned `literal_id` and exact
 unit on each corresponding constraint input. For budgets, preserve `lt` versus
 `lte` in `max_fully_landed_operator`, `max_landed_operator`, and
-`max_total_operator`; equality must fail an `under`/`lt` budget. Only batch evaluators whose inputs already
-exist at the start of that wave may be included.
+`max_total_operator`; equality must fail an `under`/`lt` budget.
 For domain constraints, the batch verifies every `evaluator_binding` against
 the evaluator's actual requirement field before executing the evaluator. A
 matching ID with a missing or substituted real requirement fails the job; a
 metadata-only claim never counts as consumption.
-Do not pretend that one job's output is
-automatically available as another job's
-input. For example, resolve identity before a later safety/counterfeit wave;
-resolve identity before fulfillment as well; keep promotion analysis separate
-unless fulfillment accepts a process-attested promotion artifact; and obtain
-the successful product-recommendation dossier before offer analysis.
+When a job needs another job's complete process result, add
+`argument_bindings: [{from_job_id, target_key}]` and omit that top-level
+`target_key` from the dependent job's `arguments`. The harness injects the
+unchanged complete internal result before offer-evidence projection and
+production-schema validation. Do not also send a caller value at that key.
+Unknown or self dependencies, duplicate targets, unsafe target names, caller
+overwrites, and cycles reject the graph. A failed upstream job suppresses every
+dependent job without executing it; unrelated ready jobs continue. Compact
+output never becomes dependency input, so result compaction cannot strip a
+signed artifact needed downstream. `wave.dependency_edges` and
+`wave.dependency_layers` report the executed graph, while
+`wave.dependency_input_chars_saved` reports the artifact payload the main brain
+did not have to resend.
+
+Use these bindings to resolve identity once and feed it directly to safety,
+merchant, counterfeit, protection, and fulfillment jobs in parallel, then bind
+their complete results into offer analysis in the same batch. Keep a dependency
+in a later call only when its source is not an allowlisted evaluator result—for
+example, the successful product-recommendation dossier—or when the target schema
+requires a collection shape the binding does not provide. Never use a binding
+to bypass evidence capture, user consent, dossier composition, or checkout
+confirmation.
 An evaluator job marked `complete` means it executed, not that its product or
 offer cleared the evaluator. Inspect every returned action, gate, unknown, and
 failure. `not_in_wave` describes this call only and does not prove that evidence

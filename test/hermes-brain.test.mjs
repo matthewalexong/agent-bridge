@@ -26,7 +26,7 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /`shopping_page_evidence_batch` in one bounded\s+call/i);
   assert.match(skill, /reuses extraction only when signed content,\s+page kind, seller query, and directory-completeness scope are identical/i);
   assert.match(skill, /never treat a partial batch as\s+complete/i);
-  assert.match(skill, /call\s+`shopping_evaluator_batch` to run the ready independent deterministic checks/i);
+  assert.match(skill, /call `shopping_evaluator_batch` to run ready\s+independent and explicitly dependent deterministic checks as one validated\s+acyclic graph/i);
   assert.match(skill, /inspect its returned\s+signed `candidate_offers` once, then pass only its `candidate_offers_ref`/i);
   assert.match(skill, /prevents that large\s+page-evidence payload from being resent/i);
   assert.match(skill, /deterministic in-process check.*adds no\s+model call or search round trip/is);
@@ -57,8 +57,11 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /An `unknown` comparison operator stays unknown and requires clarification/i);
   assert.match(skill, /batch signs this\s+context in the same call, so it adds no separate model round trip/i);
   assert.match(skill, /changed user request,\s+profile revision, destination, constraint, applicability decision, product, or\s+offer is a new context/i);
-  assert.match(skill, /Only batch evaluators whose inputs already\s+exist at the start of that wave/i);
-  assert.match(skill, /resolve identity before a later safety\/counterfeit wave/i);
+  assert.match(skill, /`argument_bindings: \[\{from_job_id, target_key\}\]`/i);
+  assert.match(skill, /resolve identity once and feed it directly to safety,\s+merchant, counterfeit, protection, and fulfillment jobs in parallel/i);
+  assert.match(skill, /failed upstream job suppresses every\s+dependent job without executing it/i);
+  assert.match(skill, /Compact\s+output never becomes dependency input/i);
+  assert.match(skill, /`wave\.dependency_input_chars_saved` reports the artifact payload the main brain\s+did not have to resend/i);
   assert.match(skill, /job marked `complete` means it executed, not that its product or\s+offer cleared/i);
   assert.match(skill, /readiness object always leaves `recommendation_ready` and\s+`purchase_allowed` false/i);
   assert.match(skill, /call `shopping_decision_dossier` separately/i);

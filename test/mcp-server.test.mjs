@@ -9,6 +9,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const omitKeys = (value, keys) => Object.fromEntries(Object.entries(value).filter(([key]) => !keys.includes(key)));
 
 test("MCP server exposes the browser and analysis tool surface", async (context) => {
   const bridgeDir = await fs.mkdtemp(path.join(os.tmpdir(), "chrome-agent-bridge-test-"));
@@ -793,6 +794,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(boundOfferResponse.structuredContent.verified_decision.landed_total_usd, 80.5);
 
   const boundIdentityArguments = { evaluated_at: testNow, target_product_id: "camera-x", target_evidence: rankedTargetEvidence, candidates: [{ id: boundCandidate.candidate_id, listing_evidence: boundCandidate.listing_evidence }] };
+  const graphSafetyArguments = { evaluated_at: testNow, jurisdiction: "US", coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [{ id: boundCandidate.candidate_id }] };
   const boundDealArguments = {
     current: { offer_id: boundCandidate.candidate_id, product_key: "camera-x", condition: "new", landed_total_usd: 80.5, landed_price_verified: true, exact_identity: true, stock: "in_stock", risk_status: "low" },
     observations: [100, 95, 90, 85, 82].map((landed_total_usd, index) => ({ product_key: "camera-x", condition: "new", landed_total_usd, verified: true, observed_at: new Date(Date.parse(testNow) - (5 - index) * 10 * 86_400_000).toISOString(), source: { id: `bound-history-${index}`, source_type: "history_provider", url: "https://history.example/camera-x" } })),
@@ -804,18 +806,21 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     max_concurrency: 4,
     jobs: [
       { job_id: "verified-product-evidence", tool: "shopping_product_evidence", subject: { product_id: "camera-x" }, arguments: { policy: { evaluated_at: testNow }, claims: [{ product_id: "camera-x", attribute: "model", claim_type: "objective", evidence_role: "declared_specification", value: "CX-1", source: { id: "manufacturer-camera-x", source_type: "manufacturer", captured_at: testNow } }] } },
-      { job_id: "verified-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: { evaluated_at: testNow, jurisdiction: "US", identity: boundIdentity, coverage_evidence: [{ authority_id: "CPSC", evidence: rankedSafetyCoverage }], candidates: [{ id: boundCandidate.candidate_id }] } },
+      { job_id: "verified-safety", tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: graphSafetyArguments, argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
       { job_id: "verified-identity", tool: "shopping_identity_resolve", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundIdentityArguments },
-      { job_id: "verified-merchant", tool: "shopping_merchant_trust", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundMerchantArguments },
-      { job_id: "verified-counterfeit", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundCounterfeitArguments },
-      { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundProtectionArguments },
-      { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundFulfillmentArguments },
-      { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundOfferArguments },
+      { job_id: "verified-merchant", tool: "shopping_merchant_trust", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundMerchantArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
+      { job_id: "verified-counterfeit", tool: "shopping_counterfeit_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundCounterfeitArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
+      { job_id: "verified-protection", tool: "shopping_protection_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundProtectionArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
+      { job_id: "verified-fulfillment", tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundFulfillmentArguments, ["identity"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }] },
+      { job_id: "verified-offer", tool: "shopping_offer_analyze", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: omitKeys(boundOfferArguments, ["identity", "safety", "merchant", "counterfeit", "protection", "fulfillment"]), argument_bindings: [{ from_job_id: "verified-identity", target_key: "identity" }, { from_job_id: "verified-safety", target_key: "safety" }, { from_job_id: "verified-merchant", target_key: "merchant" }, { from_job_id: "verified-counterfeit", target_key: "counterfeit" }, { from_job_id: "verified-protection", target_key: "protection" }, { from_job_id: "verified-fulfillment", target_key: "fulfillment" }] },
       { job_id: "verified-deal", tool: "shopping_deal_quality", subject: { product_id: "camera-x", offer_id: boundCandidate.candidate_id }, arguments: boundDealArguments },
     ],
   } });
   assert.equal(offerDecisionBatch.isError, undefined, JSON.stringify(offerDecisionBatch));
   assert.deepEqual(offerDecisionBatch.structuredContent.results.map((result) => result.status), Array(9).fill("complete"), JSON.stringify(offerDecisionBatch));
+  assert.equal(offerDecisionBatch.structuredContent.wave.dependency_edges, 11);
+  assert.equal(offerDecisionBatch.structuredContent.wave.dependency_layers, 3);
+  assert.ok(offerDecisionBatch.structuredContent.wave.dependency_input_chars_saved > 1_000);
   const finalOfferDossierResponse = await client.callTool({ name: "shopping_decision_dossier", arguments: {
     decision_context: offerDecisionBatch.structuredContent.decision_context_ref,
     dossier_stages_ref: offerDecisionBatch.structuredContent.dossier_stages_ref,
