@@ -337,7 +337,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, set kind=products and choose candidate_ids from the short-lived candidate_set_id returned by shopping_listing_candidates; Agent Bridge reconstructs exact observed cards. Model-authored product links are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current product-page prices. Unhydrated candidates and model-authored product links are rejected.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
@@ -499,6 +499,7 @@ registerShoppingTools({
   resolveBrowserSnapshot: (snapshotId, options) => browserEvidenceRegistry.resolve(snapshotId, options),
   storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
   resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
+  hydrateListingCandidateSet: (artifact) => shoppingCandidateRegistry.hydrate(artifact),
   resolvePanelRequest: async (requestId) => {
     const panel = await callBridge("panel.get");
     const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);

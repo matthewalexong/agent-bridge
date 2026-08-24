@@ -64,7 +64,7 @@ const candidateOffersArtifact = z.object({
   offers: z.array(z.object({ candidate_id: id, listing_evidence: pageEvidenceArtifact }).passthrough()).min(1).max(5),
 }).passthrough();
 
-export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet }) {
+export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, resolvePanelRequest, storeListingCandidateSet, resolveListingCandidateSet, hydrateListingCandidateSet }) {
   const registerTool = tool;
   const confirmationRegistry = createShoppingConfirmationRegistry({ resolve_panel_request: resolvePanelRequest });
   const termsAcknowledgementRegistry = createShoppingTermsAcknowledgementRegistry({ resolve_panel_request: resolvePanelRequest });
@@ -544,6 +544,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
         candidate_set: resolveListingCandidateSet(input.candidate_set_id),
         bindings: input.requests.map((request, index) => ({ candidate_id: request.candidate_id, listing_evidence: artifacts[index] })),
       });
+      if (typeof hydrateListingCandidateSet === "function") hydrateListingCandidateSet(candidate_offers);
     }
     return asText({
       artifacts,

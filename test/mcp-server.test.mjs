@@ -60,7 +60,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [705, "Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes\nPromotion Inventory: complete\nPromotion: id=save10; type=coupon; code=SAVE10; application=applied; amount=$10.00; affects advertised price=yes; eligibility=complete; obligations=none; stacking=verified\nDiscount: -$10.00\nOrder Total: $96.00"],
     [1101, "Order Receipt: complete\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nPurchased At: 2026-08-01T12:00:00.000Z\nDelivered At: 2026-08-05T12:00:00.000Z\nCurrency: USD\nItem Price: $100.00\nOrder Shipping: $0.00\nOrder Total: $100.00\nSeller: Example Shop\nMerchant of record: Example Shop"],
     [1102, "Event Evidence: complete\nCase Event: merchant_contacted\nEvent At: 2026-08-06T12:00:00.000Z\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nEvent Reference: message-44\nEvent Counterparty: Example Shop"],
-    [1201, "Brand: Acme\nModel: Camera 101\nCurrent Price: $79.00\nSold by: Fixture Store 101\nIn stock\nCondition: new"],
+    [1201, "Brand: Acme\nModel: Camera 101\nCurrent Price: $74.50\nSold by: Fixture Store 101\nIn stock\nCondition: new"],
     [1203, "Brand: Acme\nModel: Camera 103\nCurrent Price: $79.00\nSold by: Fixture Store 103\nIn stock\nCondition: new"],
     [502, "Brand: Acme\nModel: Drive X"],
     [503, "Brand: Sony\nProduct Line: WH-1000XM5\nModel: WH-1000XM5"],
@@ -484,6 +484,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(listingCandidates.structuredContent.candidates.length, 2);
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
+  const unhydratedPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "Premature result.", kind: "products",
+    candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
+    candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
+  } });
+  assert.equal(unhydratedPost.isError, true);
+  assert.match(unhydratedPost.content[0].text, /shopping_candidate_not_hydrated/);
+  assert.equal(panelPosts.length, 0);
   const detailSnapshots = await client.callTool({ name: "browser_snapshot_batch", arguments: { pages: [{ tabId: 1201 }, { tabId: 1203 }] } });
   const detailIds = detailSnapshots.structuredContent.results.map((item) => item.snapshot.snapshotId);
   const candidateByUrl = new Map(listingCandidates.structuredContent.candidates.map((candidate) => [candidate.url, candidate]));
@@ -516,7 +524,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     url: "https://fixture.example/products/camera-101",
     title: "Fixture Camera 101",
     image: "https://fixture.example/images/camera-101.jpg",
-    price: "$79.00",
+    price: "$74.50",
   }]);
   const rejectedManualPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Injected card.", kind: "products", links: [{ url: "https://attacker.example/products/fake" }],

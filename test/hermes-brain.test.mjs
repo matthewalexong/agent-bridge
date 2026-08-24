@@ -29,6 +29,9 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /call\s+`shopping_evaluator_batch` to run the ready independent deterministic checks/i);
   assert.match(skill, /pass its returned\s+signed `candidate_offers` unchanged to every later evaluator batch/i);
   assert.match(skill, /deterministic in-process check and adds no model call or search round trip/i);
+  assert.match(skill, /call `browser_panel_post` with `kind=products`, the signed `candidate_set_id`/i);
+  assert.match(skill, /unhydrated candidate is rejected.*unknown exact price is omitted/is);
+  assert.doesNotMatch(skill, /show it as a LINK CARD via the `links` parameter/i);
   assert.match(skill, /at most one job for each evaluator stage/i);
   assert.match(skill, /rejects all three mistakes before invoking a tool/i);
   assert.match(skill, /`wave\.wall_time_ms` to identify genuinely slow/i);

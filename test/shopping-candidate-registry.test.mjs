@@ -28,6 +28,19 @@ function artifact(overrides = {}) {
   });
 }
 
+function hydratedArtifact(set, candidateId, priceFact = { value: 44, status: "explicit" }) {
+  const candidate = set.candidates.find((item) => item.id === candidateId);
+  const listingEvidence = attestShoppingArtifact("page_evidence", {
+    source: { url: candidate.url, page_kind: "retailer_listing", captured_at: "2026-08-24T20:00:01.000Z" },
+    facts: { price_usd: priceFact },
+  });
+  return attestShoppingArtifact("candidate_offers", {
+    candidate_set_id: set.candidate_set_id,
+    evaluated_at: "2026-08-24T20:00:01.000Z",
+    offers: [{ candidate_id: candidate.id, candidate: { title: candidate.title, url: candidate.url, image: candidate.image || null, observed_search_price: candidate.price || null }, listing_evidence: listingEvidence, url_binding: { candidate_key: candidate.url, observed_key: candidate.url, status: "exact_listing" } }],
+  });
+}
+
 test("candidate registry reconstructs exact cards in requested order", () => {
   const registry = createShoppingCandidateRegistry();
   const set = artifact({ candidates: [
@@ -35,10 +48,21 @@ test("candidate registry reconstructs exact cards in requested order", () => {
     { id: "listing_cccccccccccccccc", title: "Observed Fan Pro", url: "https://shop.example/products/fan-pro", image: "https://shop.example/pro.jpg", price: null },
   ] });
   registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_cccccccccccccccc", { value: null, status: "unknown" }));
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 44, status: "explicit" }));
   assert.deepEqual(registry.cards(set.candidate_set_id, ["listing_cccccccccccccccc", "listing_bbbbbbbbbbbbbbbb"]), [
     { url: "https://shop.example/products/fan-pro", title: "Observed Fan Pro", image: "https://shop.example/pro.jpg" },
-    { url: "https://shop.example/products/fan", title: "Observed Fan", price: "$49.99" },
+    { url: "https://shop.example/products/fan", title: "Observed Fan", price: "$44.00" },
   ]);
+});
+
+test("candidate registry refuses final cards until exact pages are hydrated", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  assert.throws(() => registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"]), { code: "shopping_candidate_not_hydrated" });
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb"));
+  assert.equal(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].price, "$44.00");
 });
 
 test("candidate registry rejects tampering, unknown IDs, duplicates, and expiry", () => {
@@ -65,6 +89,22 @@ test("candidate registry validates nested browser authority and safe card URLs",
   assert.throws(() => registry.store(unsafe), { code: "shopping_candidate_set_invalid" });
 });
 
+test("candidate hydration rejects tampering and cross-candidate registry substitution", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact({ candidates: [
+    { id: "listing_bbbbbbbbbbbbbbbb", title: "Observed Fan", url: "https://shop.example/products/fan", price: { display: "$49.99", amount_usd: 49.99 } },
+    { id: "listing_cccccccccccccccc", title: "Observed Fan Pro", url: "https://shop.example/products/fan-pro", price: null },
+  ] });
+  registry.store(set);
+  const crossed = hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb");
+  crossed.offers[0].candidate.url = set.candidates[1].url;
+  crossed.artifact_attestation = attestShoppingArtifact("candidate_offers", crossed).artifact_attestation;
+  assert.throws(() => registry.hydrate(crossed), { code: "shopping_candidate_offer_registry_mismatch" });
+  const tampered = hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb");
+  tampered.offers[0].listing_evidence.facts.price_usd.value = 1;
+  assert.throws(() => registry.hydrate(tampered), { code: "shopping_candidate_offers_invalid" });
+});
+
 test("candidate registry accepts a signed fused set with several browser receipts", () => {
   const registry = createShoppingCandidateRegistry();
   const first = artifact();
@@ -78,5 +118,6 @@ test("candidate registry accepts a signed fused set with several browser receipt
     candidates: first.candidates,
   });
   assert.equal(registry.store(fused), fused.candidate_set_id);
+  registry.hydrate(hydratedArtifact(fused, "listing_bbbbbbbbbbbbbbbb"));
   assert.equal(registry.cards(fused.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].url, "https://shop.example/products/fan");
 });
