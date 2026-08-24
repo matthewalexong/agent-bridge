@@ -1660,6 +1660,10 @@ checkout evidence remain private and must never be copied into panel links.
 The same process-owned card displays its verified landed total, delivery
 window, protections, identity, safety, and seller-authorization checks; the
 model must not restate unknown fields as verified card details.
+An exact verified landed total also displays its reconciled nonzero item,
+shipping, tax, duty, brokerage, carrier, currency, promotion-obligation, and
+discount components. Estimated landed cost is labeled as a low-to-high range
+and never receives a falsely exact component breakdown.
 
 The active Hermes or OpenClaw model is the main brain for gathering evidence,
 deciding honest stage applicability, and explaining results. Gemma may format a

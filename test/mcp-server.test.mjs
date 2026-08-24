@@ -832,13 +832,17 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.deepEqual({
     verification: panelPosts[1].links[0].verification,
     landed_total: panelPosts[1].links[0].landed_total,
+    landed_total_label: panelPosts[1].links[0].landed_total_label,
     delivery: panelPosts[1].links[0].delivery,
+    cost_breakdown: panelPosts[1].links[0].cost_breakdown,
     protections: panelPosts[1].links[0].protections,
     checks: panelPosts[1].links[0].checks,
   }, {
     verification: "Verified pick",
     landed_total: "$80.50",
+    landed_total_label: "Landed total",
     delivery: "Delivery Aug 25–Aug 27",
+    cost_breakdown: [{ label: "Item", amount: "$74.50" }, { label: "Tax", amount: "$6.00" }],
     protections: ["30-day returns", "12-month warranty"],
     checks: ["Exact item", "Safety checked", "Low counterfeit risk"],
   });

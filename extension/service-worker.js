@@ -273,8 +273,10 @@ function sanitizePanelLinks(raw) {
     if (typeof link.seller === "string" && link.seller.trim()) card.seller = link.seller.trim().slice(0, 120);
     if (["In stock", "Out of stock", "Availability unknown"].includes(link.availability)) card.availability = link.availability;
     if (link.verification === "Verified pick") card.verification = "Verified pick";
-    if (typeof link.landed_total === "string" && /^\$[0-9][0-9,]*(?:\.[0-9]{2})?$/.test(link.landed_total)) card.landed_total = link.landed_total.slice(0, 40);
+    if (typeof link.landed_total === "string" && /^\$[0-9][0-9,]*(?:\.[0-9]{2})?(?:–\$[0-9][0-9,]*(?:\.[0-9]{2})?)?$/.test(link.landed_total)) card.landed_total = link.landed_total.slice(0, 80);
+    if (["Landed total", "Estimated landed range"].includes(link.landed_total_label)) card.landed_total_label = link.landed_total_label;
     if (typeof link.delivery === "string" && /^Delivery\s/.test(link.delivery)) card.delivery = link.delivery.slice(0, 80);
+    if (Array.isArray(link.cost_breakdown)) card.cost_breakdown = link.cost_breakdown.slice(0, 9).filter((item) => item && ["Item", "Shipping", "Tax", "Duty", "Brokerage", "Carrier fee", "FX fee", "Required add-on", "Discount"].includes(item.label) && /^(?:−)?\$[0-9][0-9,]*(?:\.[0-9]{2})?$/.test(item.amount)).map((item) => ({ label: item.label, amount: item.amount.slice(0, 40) }));
     if (Array.isArray(link.protections)) card.protections = link.protections.slice(0, 3).filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim().slice(0, 80));
     if (Array.isArray(link.checks)) card.checks = link.checks.slice(0, 3).filter((item) => ["Exact item", "Safety checked", "Authorized seller", "Low counterfeit risk"].includes(item));
     out.push(card);

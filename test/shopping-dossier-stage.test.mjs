@@ -67,9 +67,27 @@ test("offer stages preserve bounded verified delivery and protection facts for f
   assert.deepEqual({ return_window_days: protection.return_window_days, warranty_duration_months: protection.warranty_duration_months, buyer_protection_days: protection.buyer_protection_days }, { return_window_days: 30, warranty_duration_months: 12, buyer_protection_days: 60 });
   const fulfillment = adaptShoppingEvaluatorResult({
     tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: { destination_country: "US" }, decision_context: decisionContext, evaluated_at: NOW,
-    result: { evaluated_at: NOW, assessments: [{ id: "offer-a", product_id: "camera-x", action: "eligible", fully_landed_total_usd: { low_usd: 100, expected_usd: 100, high_usd: 100 }, fully_landed_status: "verified", safe_for_offer_comparison: true, delivery: { earliest_at: "2026-08-28T00:00:00.000Z", latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true } }] },
+    result: { evaluated_at: NOW, assessments: [{ id: "offer-a", product_id: "camera-x", action: "eligible", fully_landed_total_usd: { low_usd: 100, expected_usd: 100, high_usd: 100 }, fully_landed_status: "verified", safe_for_offer_comparison: true, components: { item_price: { low_usd: 90, expected_usd: 90, high_usd: 90, evidence_status: "verified" }, immediate_discount: { low_usd: 0, expected_usd: 0, high_usd: 0, evidence_status: "verified" }, promotion_obligation: { low_usd: 0, expected_usd: 0, high_usd: 0, evidence_status: "verified" }, charges: Object.fromEntries(["shipping", "tax", "import_duty", "brokerage", "carrier_surcharge", "currency_conversion"].map((kind) => [kind, { low_usd: kind === "tax" ? 10 : 0, expected_usd: kind === "tax" ? 10 : 0, high_usd: kind === "tax" ? 10 : 0, evidence_status: "verified" }])) }, delivery: { earliest_at: "2026-08-28T00:00:00.000Z", latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true } }] },
   });
   assert.deepEqual({ delivery_earliest_at: fulfillment.delivery_earliest_at, delivery_latest_at: fulfillment.delivery_latest_at, tracking_available: fulfillment.tracking_available }, { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true });
+  assert.deepEqual(fulfillment.cost_breakdown, [{ kind: "item_price", amount_usd: 90 }, { kind: "tax", amount_usd: 10 }]);
+});
+
+test("cost breakdowns require exact verified components that reconcile to the landed total", () => {
+  const component = (value, evidence_status = "verified") => ({ low_usd: value, expected_usd: value, high_usd: value, evidence_status });
+  const assessment = (overrides = {}) => ({
+    id: "offer-a", product_id: "camera-x", action: "eligible",
+    fully_landed_total_usd: { low_usd: 100, expected_usd: 100, high_usd: 100 }, fully_landed_status: "verified", safe_for_offer_comparison: true,
+    components: { item_price: component(90), immediate_discount: component(0), promotion_obligation: component(0), charges: Object.fromEntries(["shipping", "tax", "import_duty", "brokerage", "carrier_surcharge", "currency_conversion"].map((kind) => [kind, component(kind === "tax" ? 10 : 0)])) },
+    delivery: {}, ...overrides,
+  });
+  const adapt = (item) => adaptShoppingEvaluatorResult({ tool: "shopping_fulfillment_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: { destination_country: "US" }, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW, result: { evaluated_at: NOW, assessments: [item] } });
+  assert.deepEqual(adapt(assessment()).cost_breakdown, [{ kind: "item_price", amount_usd: 90 }, { kind: "tax", amount_usd: 10 }]);
+  assert.deepEqual(adapt(assessment({ fully_landed_status: "estimated" })).cost_breakdown, []);
+  assert.deepEqual(adapt(assessment({ fully_landed_total_usd: { low_usd: 101, expected_usd: 101, high_usd: 101 } })).cost_breakdown, []);
+  const uncertain = assessment();
+  uncertain.components.charges.tax = component(10, "estimated");
+  assert.deepEqual(adapt(uncertain).cost_breakdown, []);
 });
 
 test("offer stages expose only sanitized public evidence links", () => {

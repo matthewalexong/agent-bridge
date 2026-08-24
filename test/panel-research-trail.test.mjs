@@ -31,10 +31,12 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(script, /✓ Verified pick/);
   assert.match(script, /Landed total/);
   assert.match(script, /card-details/);
+  assert.match(script, /card-breakdown/);
   assert.match(styles, /\.card-availability\.is-in/);
   assert.match(styles, /\.card-availability\.is-out/);
   assert.match(styles, /\.card-availability\.is-unknown/);
   assert.match(styles, /\.card-verified/);
   assert.match(styles, /\.card-landed-total/);
   assert.match(styles, /\.card-details/);
+  assert.match(styles, /\.card-breakdown/);
 });

@@ -282,6 +282,21 @@ h1 {
   color: #91f56d;
   font-size: 15px;
 }
+.card-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 9px;
+  color: #9fb1d0;
+  font-size: 9px;
+}
+.card-breakdown > span {
+  display: inline-flex;
+  gap: 3px;
+}
+.card-breakdown strong {
+  color: #dbe8f8;
+  font-weight: 700;
+}
 .card-meta {
   display: flex;
   flex-wrap: wrap;

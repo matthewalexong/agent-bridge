@@ -37,6 +37,8 @@ test("recommendation registry authorizes the exact cleared candidate", () => {
   assert.deepEqual(registry.authorize(reference, candidate, binding), {
     candidate_id: candidate,
     landed_total_usd: null,
+    landed_total_range_usd: null,
+    landed_total_status: "unknown",
     item_price_usd: 99,
     seller: "Exact Shop",
     stock: "in_stock",
@@ -51,6 +53,7 @@ test("recommendation registry authorizes the exact cleared candidate", () => {
     delivery_earliest_at: null,
     delivery_latest_at: null,
     tracking_available: null,
+    cost_breakdown: [],
     evidence_links: [],
   });
   assert.throws(() => registry.authorize(reference, "listing_bbbbbbbbbbbbbbbb", binding), { code: "shopping_recommendation_reference_mismatch" });
@@ -122,7 +125,7 @@ test("verified recommendation summaries expose only process-derived decisive fac
     protection: { status: "eligible", return_window_days: 30, warranty_duration_months: 12, buyer_protection_days: 60, evidence_links: [
       { kind: "return_policy", url: "https://shop.example/returns" }, { kind: "warranty", url: "https://maker.example/warranty" },
     ] },
-    fulfillment: { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true, evidence_links: [] },
+    fulfillment: { fully_landed_total_usd: { low_usd: 106, expected_usd: 106, high_usd: 106 }, fully_landed_status: "verified", delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true, cost_breakdown: [{ kind: "item_price", amount_usd: 99 }, { kind: "shipping", amount_usd: 7 }, { kind: "immediate_discount", amount_usd: 0 }], evidence_links: [] },
     safety: { action: "eligible", safety_cleared_for_ranking: true, evidence_links: [{ kind: "safety_authority", url: "https://regulator.example/search" }] },
   });
   const summary = registry.authorize(reference, candidate, {
@@ -136,7 +139,9 @@ test("verified recommendation summaries expose only process-derived decisive fac
   assert.deepEqual(shoppingRecommendationCardDetails(summary), {
     verification: "Verified pick",
     landed_total: "$106.00",
+    landed_total_label: "Landed total",
     delivery: "Delivery Aug 28–Aug 30",
+    cost_breakdown: [{ label: "Item", amount: "$99.00" }, { label: "Shipping", amount: "$7.00" }],
     protections: ["30-day returns", "12-month warranty", "60-day buyer protection"],
     checks: ["Exact item", "Safety checked", "Authorized seller"],
   });
@@ -145,6 +150,16 @@ test("verified recommendation summaries expose only process-derived decisive fac
     { url: "https://shop.example/returns", title: "Evidence · Return policy" },
     { url: "https://maker.example/warranty", title: "Evidence · Warranty policy" },
   ]);
+  const estimated = { ...summary, landed_total_usd: null, landed_total_range_usd: { low_usd: 101, expected_usd: 104, high_usd: 108 }, landed_total_status: "estimated", cost_breakdown: [] };
+  assert.match(formatShoppingRecommendationSummary([estimated]), /^Verified details: \$101\.00–\$108\.00 estimated landed total/);
+  assert.deepEqual(shoppingRecommendationCardDetails(estimated), {
+    verification: "Verified pick",
+    landed_total: "$101.00–$108.00",
+    landed_total_label: "Estimated landed range",
+    delivery: "Delivery Aug 28–Aug 30",
+    protections: ["30-day returns", "12-month warranty", "60-day buyer protection"],
+    checks: ["Exact item", "Safety checked", "Authorized seller"],
+  });
   const bounded = appendShoppingRecommendationSummary("x".repeat(30), [summary], 80);
   assert.ok(bounded.length <= 80);
   assert.match(bounded, /^Verified details: .*…$/);

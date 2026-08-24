@@ -140,11 +140,26 @@ function renderEntry(doc, transcript, entry) {
         const total = doc.createElement("span");
         total.className = "card-landed-total";
         const label = doc.createElement("span");
-        label.textContent = "Landed total";
+        label.textContent = link.landed_total_label === "Estimated landed range" ? "Estimated landed range" : "Landed total";
         const amount = doc.createElement("strong");
         amount.textContent = link.landed_total.trim();
         total.append(label, amount);
         info.append(total);
+      }
+      if (Array.isArray(link.cost_breakdown) && link.cost_breakdown.length > 0) {
+        const breakdown = doc.createElement("span");
+        breakdown.className = "card-breakdown";
+        for (const item of link.cost_breakdown.slice(0, 9)) {
+          if (!item || typeof item.label !== "string" || typeof item.amount !== "string") continue;
+          const component = doc.createElement("span");
+          const label = doc.createElement("span");
+          label.textContent = item.label;
+          const amount = doc.createElement("strong");
+          amount.textContent = item.amount;
+          component.append(label, amount);
+          breakdown.append(component);
+        }
+        if (breakdown.childElementCount > 0) info.append(breakdown);
       }
       if ((typeof link.seller === "string" && link.seller.trim()) || typeof link.availability === "string") {
         const meta = doc.createElement("span");

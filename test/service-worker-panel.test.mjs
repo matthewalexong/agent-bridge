@@ -265,7 +265,9 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
       availability: "In stock",
       verification: "Verified pick",
       landed_total: "$24.18",
+      landed_total_label: "Landed total",
       delivery: "Delivery Aug 26–Aug 28",
+      cost_breakdown: [{ label: "Item", amount: "$20.72" }, { label: "Shipping", amount: "$0.00" }, { label: "Tax", amount: "$3.46" }, { label: "Fake", amount: "$99.00" }, { label: "Discount", amount: "-$1.00" }],
       protections: ["30-day returns", "12-month warranty", 42, "x".repeat(100)],
       checks: ["Exact item", "Safety checked", "Invented check"],
     };
@@ -290,7 +292,9 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
     assert.equal(stored[0].availability, "In stock");
     assert.equal(stored[0].verification, "Verified pick");
     assert.equal(stored[0].landed_total, "$24.18");
+    assert.equal(stored[0].landed_total_label, "Landed total");
     assert.equal(stored[0].delivery, "Delivery Aug 26–Aug 28");
+    assert.deepEqual(stored[0].cost_breakdown, [{ label: "Item", amount: "$20.72" }, { label: "Shipping", amount: "$0.00" }, { label: "Tax", amount: "$3.46" }]);
     assert.deepEqual(stored[0].protections, ["30-day returns", "12-month warranty"]);
     assert.deepEqual(stored[0].checks, ["Exact item", "Safety checked"]);
     assert.ok(stored[1].title.length <= 200, "oversized title truncated");
