@@ -8,7 +8,7 @@ import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs"
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
-import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry } from "../lib/shopping-recommendation-registry.mjs";
+import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
 import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
 
 const server = new McpServer({
@@ -370,6 +370,7 @@ tool(
     const links = input.kind === "products"
       ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
       : input.links ?? [];
+    if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
     let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
       ? `Still verifying — ${input.text}`
       : input.text;

@@ -1651,6 +1651,13 @@ Treat future-dated, unidentified, stale, or wrong-subject artifacts as invalid.
 Report the dossier ID and the decisive gates in the final answer. The dossier's
 `purchase_allowed` and `model_override_allowed` remain false in every phase.
 
+Verified recommendation cards automatically append a bounded set of clickable
+public evidence pages from their signed safety, authorization, returns,
+warranty, certification, remediation, and repairability stages. Query strings
+and fragments are removed and duplicate URLs are collapsed. The product card
+is the listing citation; listing duplicates, buyer-protection terms, and all
+checkout evidence remain private and must never be copied into panel links.
+
 The active Hermes or OpenClaw model is the main brain for gathering evidence,
 deciding honest stage applicability, and explaining results. Gemma may format a
 small set of already-returned dossier fields. Gemma must not decide

@@ -72,6 +72,23 @@ test("offer stages preserve bounded verified delivery and protection facts for f
   assert.deepEqual({ delivery_earliest_at: fulfillment.delivery_earliest_at, delivery_latest_at: fulfillment.delivery_latest_at, tracking_available: fulfillment.tracking_available }, { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true });
 });
 
+test("offer stages expose only sanitized public evidence links", () => {
+  const stage = adaptShoppingEvaluatorResult({
+    tool: "shopping_safety_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: { jurisdiction: "US" }, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW,
+    result: attestShoppingArtifact("safety", {
+      evaluated_at: NOW,
+      assessments: [{ id: "offer-a", product_key: "camera-x", action: "eligible", safety_cleared_for_ranking: true }],
+      evidence_receipts: [
+        { offer_id: "offer-a", kind: "safety_authority", url: "https://regulator.example/search?session=private#result", captured_at: NOW, artifact_attestation: "a".repeat(64) },
+        { offer_id: "offer-a", kind: "listing", url: "https://shop.example/item?affiliate=private", captured_at: NOW, artifact_attestation: "b".repeat(64) },
+        { offer_id: "offer-a", kind: "checkout", url: "https://shop.example/checkout/private", captured_at: NOW, artifact_attestation: "c".repeat(64) },
+      ],
+    }),
+  });
+  assert.deepEqual(stage.evidence_links, [{ kind: "safety_authority", url: "https://regulator.example/search" }]);
+  assert.equal(verifyShoppingDossierStage("safety", stage), true);
+});
+
 test("dossier stage attestation detects field, stage, and subject tampering", () => {
   const stage = adaptShoppingEvaluatorResult({
     tool: "shopping_condition_assess", subject: { product_id: "camera-x", offer_id: "offer-a" }, input: {}, decision_context: context("offer_recommendation", "offer-a"), evaluated_at: NOW,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, formatShoppingRecommendationSummary } from "../lib/shopping-recommendation-registry.mjs";
+import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, formatShoppingRecommendationSummary, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
 import { attestShoppingArtifact } from "../lib/shopping-attestation.mjs";
 
 const NOW = Date.parse("2026-08-24T20:00:00.000Z");
@@ -51,6 +51,7 @@ test("recommendation registry authorizes the exact cleared candidate", () => {
     delivery_earliest_at: null,
     delivery_latest_at: null,
     tracking_available: null,
+    evidence_links: [],
   });
   assert.throws(() => registry.authorize(reference, "listing_bbbbbbbbbbbbbbbb", binding), { code: "shopping_recommendation_reference_mismatch" });
 });
@@ -117,10 +118,12 @@ test("verified recommendation summaries expose only process-derived decisive fac
   const reference = registry.store(dossier(), {
     offer: { landed_price_verified: true, landed_total_usd: 106, stock: "in_stock" },
     identity: { classification: "exact_match", safe_to_compare_offers: true },
-    safety: { action: "eligible", safety_cleared_for_ranking: true },
     counterfeit: { risk_status: "low", authorization_requirement_status: "satisfied" },
-    protection: { status: "eligible", return_window_days: 30, warranty_duration_months: 12, buyer_protection_days: 60 },
-    fulfillment: { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true },
+    protection: { status: "eligible", return_window_days: 30, warranty_duration_months: 12, buyer_protection_days: 60, evidence_links: [
+      { kind: "return_policy", url: "https://shop.example/returns" }, { kind: "warranty", url: "https://maker.example/warranty" },
+    ] },
+    fulfillment: { delivery_earliest_at: "2026-08-28T00:00:00.000Z", delivery_latest_at: "2026-08-30T00:00:00.000Z", tracking_available: true, evidence_links: [] },
+    safety: { action: "eligible", safety_cleared_for_ranking: true, evidence_links: [{ kind: "safety_authority", url: "https://regulator.example/search" }] },
   });
   const summary = registry.authorize(reference, candidate, {
     candidate_set_id: candidateSet,
@@ -130,6 +133,11 @@ test("verified recommendation summaries expose only process-derived decisive fac
   });
   assert.equal(formatShoppingRecommendationSummary([summary]), "Verified details: $106.00 landed total · sold by Exact Shop · in stock · delivery Aug 28–Aug 30 · 30-day returns · 12-month warranty · 60-day buyer protection · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · seller authorization verified");
   assert.equal(appendShoppingRecommendationSummary("My pick.", [summary]), `My pick.\n\n${formatShoppingRecommendationSummary([summary])}`);
+  assert.deepEqual(shoppingRecommendationEvidenceCards([summary]), [
+    { url: "https://regulator.example/search", title: "Evidence · Official safety search" },
+    { url: "https://shop.example/returns", title: "Evidence · Return policy" },
+    { url: "https://maker.example/warranty", title: "Evidence · Warranty policy" },
+  ]);
   const bounded = appendShoppingRecommendationSummary("x".repeat(30), [summary], 80);
   assert.ok(bounded.length <= 80);
   assert.match(bounded, /^Verified details: .*…$/);
