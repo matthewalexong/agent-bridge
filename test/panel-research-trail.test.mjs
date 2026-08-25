@@ -25,6 +25,7 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(styles, /thinking-spinner/);
   assert.match(styles, /thinking-flash/);
   assert.match(script, /thinking-spinner/);
+  assert.match(script, /status\.phase === "decision" && !status\.next/, "a stale completed decision must not render as busy");
   assert.match(script, /card-price-label/);
   assert.match(script, /Sold by /);
   assert.match(script, /Availability unknown/);

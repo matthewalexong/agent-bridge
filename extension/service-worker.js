@@ -73,7 +73,12 @@ function setPanelStatus(input) {
       ? params.evidence.filter((item) => typeof item === "string" && item.trim()).slice(0, PANEL_MAX_PROGRESS_EVIDENCE).map((item) => progressText(item, PANEL_MAX_PROGRESS_EVIDENCE_TEXT))
       : [];
     const next = typeof params.next === "string" && params.next.trim() ? progressText(params.next, PANEL_MAX_PROGRESS_NEXT_TEXT) : null;
-    panelStatus = { text: summary, phase, evidence, next, at };
+    const status = { text: summary, phase, evidence, next, at };
+    // A final decision milestone belongs in the durable research trail, but it
+    // is not active work. Keeping it as panelStatus makes the UI flash forever
+    // when a caller finishes without a following panel.post (for example, a
+    // failed delivery or a diagnostic run).
+    panelStatus = phase === "decision" && next === null ? null : status;
     if (params.persist !== false) {
       const progress = { phase, summary, evidence, next, at };
       const previous = panelProgress[panelProgress.length - 1];

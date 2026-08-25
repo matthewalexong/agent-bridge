@@ -621,7 +621,10 @@ test("panel skill treats stored watches, scheduling, alerts, and purchase as sep
 function runBrain(cfgPath, input, env = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [BRAIN], {
-      env: { ...process.env, HERMES_BRAIN_CONFIG_FILE: cfgPath, ...env },
+      // Unit tests must never publish progress into the user's live extension.
+      // Point bridge discovery at this test's isolated temporary directory;
+      // explicit scenario overrides (such as the full-loop E2E) still win.
+      env: { ...process.env, HERMES_BRAIN_CONFIG_FILE: cfgPath, CHROME_AGENT_BRIDGE_DIR: path.dirname(cfgPath), ...env },
       stdio: ["pipe", "pipe", "pipe"],
     });
     let stdout = "", stderr = "";

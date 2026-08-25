@@ -224,6 +224,31 @@ test("panel.status sets a transient thinking status, broadcasts it, and clears",
   }
 });
 
+test("terminal decision milestones never leave an animated busy status", async () => {
+  const harness = await loadHarness();
+  try {
+    const active = await harness.dispatch("decision-active", "panel.status", {
+      text: "Comparing the finalists.", phase: "decision", next: "Post the verified answer",
+    });
+    assert.equal(active.result.status.phase, "decision", "an unfinished decision remains active");
+
+    const finished = await harness.dispatch("decision-finished", "panel.status", {
+      text: "Finished the bounded search and prepared the answer.", phase: "decision",
+      evidence: ["3 architectures checked"], next: null,
+    });
+    assert.equal(finished.result.status, null, "a completed decision cannot drive the thinking bubble");
+    assert.equal(finished.result.progress.at(-1).phase, "decision", "the milestone remains available for the research trail");
+
+    const state = await harness.dispatch("decision-state", "panel.get", {});
+    assert.equal(state.result.status, null);
+    assert.equal(state.result.progress.at(-1).summary, "Finished the bounded search and prepared the answer.");
+    const updates = harness.broadcasts.filter((message) => message.type === "panel.update");
+    assert.equal(updates.at(-1).status, null, "open panels are told to stop animating immediately");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("structured progress is bounded, deduplicated, and attached to the final answer", async () => {
   const harness = await loadHarness();
   try {

@@ -247,7 +247,11 @@ function renderAll(doc, transcript, entries) {
 let thinkingBubble = null;
 function setThinking(doc, transcript, status, progress = []) {
   const text = status?.text ?? status;
-  if (text && String(text).trim()) {
+  // Defensive compatibility with an older cached service worker that may have
+  // persisted a completed decision as a status. Only unfinished decision
+  // updates are busy; a terminal decision is retained in the research trail.
+  const terminalDecision = status && typeof status === "object" && status.phase === "decision" && !status.next;
+  if (!terminalDecision && text && String(text).trim()) {
     if (!thinkingBubble || !thinkingBubble.isConnected) {
       thinkingBubble = doc.createElement("div");
       thinkingBubble.className = "msg agent thinking";
