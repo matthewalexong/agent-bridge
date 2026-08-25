@@ -7,15 +7,18 @@ import {
   selectionRecord,
 } from "../lib/shopping-model.mjs";
 
-test("shopping catalog recommends the current balanced Token Plan model", () => {
+test("shopping catalog recommends the stronger Token Plan planning model", () => {
   const catalog = loadShoppingModelCatalog();
-  assert.equal(catalog.recommended, "qwen-plus");
+  assert.equal(catalog.recommended, "qwen-max");
   assert.ok(catalog.presets["grok-4.3"]);
   assert.ok(catalog.presets["qwen-plus"]);
+  assert.ok(catalog.presets["qwen-max"]);
   assert.ok(catalog.presets["deepseek-v4-pro"]);
   assert.equal(catalog.presets["grok-4.3"].needs_env, "XAI_API_KEY");
   assert.equal(catalog.presets["qwen-flash"].provider, "alibaba");
   assert.equal(catalog.presets["qwen-plus"].model, "qwen3.7-plus");
+  assert.equal(catalog.presets["qwen-max"].model, "qwen3.8-max");
+  assert.equal(catalog.presets["qwen-max"].max_turns, 28);
   assert.equal(catalog.presets["qwen-plus"].base_url, "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1");
   assert.equal(catalog.presets["qwen-plus"].billing, "token-plan-credits");
   assert.equal(catalog.presets["qwen-flash"].model, "qwen3.6-flash");

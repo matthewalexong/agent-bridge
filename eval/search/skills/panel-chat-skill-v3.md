@@ -262,6 +262,13 @@ item, shipping, applicable tax or duty, fees, and required add-ons. Do not name
 a cheapest offer or final pick until the exact-offer evaluators and final dossier
 finish successfully.
 
+For broad local-AI memory requests, the initial discovery plan must reserve
+separate current-market lanes for Apple Silicon, AMD Ryzen AI Max/Strix Halo,
+and NVIDIA GB10/Grace Blackwell systems. Those names seed discovery rather than
+preselect winners. A lane may be omitted from the final cards only after it was
+actually searched and its exclusion or unresolved status is reported. Never
+infer that an architecture has no viable products from Apple-only results.
+
 For broad category requests, expand the user's requirement into current,
 brand-neutral architecture and product-family terms before opening retailer
 lanes. Generic terms such as unified, shared, coherent, or CPU/GPU-addressable

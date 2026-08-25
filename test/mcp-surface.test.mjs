@@ -66,6 +66,7 @@ test("product posts without link cards are rejected", () => {
   assert.equal(validatePanelPost({ kind: "products", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), null);
   assert.match(validatePanelPost({ kind: "products", recommendation_state: "verified", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /recommendation_ref/);
   assert.match(validatePanelPost({ kind: "none", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /only valid/);
+  assert.match(validatePanelPost({ text: "Apple is the only practical path. $4,999 in stock.", kind: "none", source_snapshot_ids: ["snapshot-1"] }), /Source-only cards cannot publish/i);
 });
 
 test("tool payloads are compact JSON", () => {
@@ -80,6 +81,7 @@ test("product copy cannot outrun signed price and availability evidence", () => 
   assert.match(validatePanelProductClaims({ text: "This is in stock for pickup today.", links: unknown, recommendation_state: "provisional" }), /availability.*unknown/i);
   assert.match(validatePanelProductClaims({ text: "The true price is $99.", links: unknown, recommendation_state: "provisional" }), /verified landed total/i);
   assert.match(validatePanelProductClaims({ text: "This is the cheapest and best option.", links: unknown, recommendation_state: "provisional" }), /cannot name a winner/i);
+  assert.match(validatePanelProductClaims({ text: "No other architecture is comparable.", links: unknown, recommendation_state: "verified" }), /market-exclusivity/i);
   assert.equal(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), null);
   assert.equal(validatePanelProductClaims({ text: "Verified in stock at an $108 landed total.", links: [{ ...unknown[0], availability: "In stock", landed_total: "$108.00" }], recommendation_state: "verified" }), null);
 });

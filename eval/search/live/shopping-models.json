@@ -1,7 +1,7 @@
 {
   "profile": "shopping",
   "webhook_port": 8645,
-  "recommended": "qwen-plus",
+  "recommended": "qwen-max",
   "presets": {
     "grok-4.6": {
       "provider": "xai",
@@ -37,6 +37,19 @@
       "vision": true,
       "approx_usd_per_million": { "input": 0.4, "output": 1.2 },
       "notes": "Balanced Qwen Token Plan model with vision and tool calling. Main brain for shopping; Token Plan Credits vary with tokens, thinking, and tools."
+    },
+    "qwen-max": {
+      "provider": "alibaba",
+      "model": "qwen3.8-max",
+      "base_url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+      "reasoning_effort": "low",
+      "max_turns": 28,
+      "tier": "accuracy-efficient",
+      "billing": "token-plan-credits",
+      "needs_env": "DASHSCOPE_API_KEY",
+      "vision": true,
+      "approx_usd_per_million": { "input": 0.8, "output": 2.4 },
+      "notes": "Stronger Token Plan main brain for current-market planning, architecture coverage, and reliable multi-tool research. Keep Qwen Flash limited to auxiliary chores."
     },
     "qwen-flash": {
       "provider": "alibaba",

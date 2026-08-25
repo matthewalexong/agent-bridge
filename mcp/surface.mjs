@@ -72,7 +72,7 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
 
-export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
+export function validatePanelPost({ text, kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
   const cards = Array.isArray(links) ? links : [];
   if (kind === "products") {
     if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
@@ -86,12 +86,18 @@ export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids
   } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0) || recommendation_state != null || (Array.isArray(recommendation_refs) && recommendation_refs.length > 0)) {
     return "candidate and recommendation fields are only valid with kind=products.";
   }
+  if (kind === "none" && Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0 && /(?:[$£€]\s?\d|\b(?:best|cheapest|winner|buy now|in stock|sold out|pre-?order|no other architecture|only (?:true|practical|viable|new) (?:path|option|architecture))\b)/i.test(String(text || ""))) {
+    return "Source-only cards cannot publish a product shortlist, current price or stock, winner, or market-exclusivity claim; use signed product candidates or state that offer verification is incomplete.";
+  }
   return null;
 }
 
 export function validatePanelProductClaims({ text, links, recommendation_state } = {}) {
   const copy = String(text || "");
   const cards = Array.isArray(links) ? links : [];
+  if (/\b(?:no other architecture|only (?:true|practical|viable) (?:path|option|architecture)|nothing else (?:qualifies|compares|is comparable))\b/i.test(copy)) {
+    return "Offer cards cannot support an absolute market-exclusivity claim; report the researched alternatives and remaining scope instead.";
+  }
   if (recommendation_state === "provisional" && /\b(?:cheapest|lowest(?:\s+(?:price|cost))?|best(?:\s+(?:option|pick|offer|value|match))?|winner|buy now)\b/i.test(copy)) {
     return "Provisional product cards cannot name a winner or make a lowest-price claim; complete the final dossier first.";
   }

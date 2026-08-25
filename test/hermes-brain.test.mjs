@@ -20,17 +20,20 @@ test("panel skill uses live progress instead of a final Why block", async () => 
 
 test("live panel shopping does not collapse broad technical categories to one brand and preserves source links", async () => {
   const skill = await fs.readFile(LIVE_PANEL_SKILL, "utf8");
-  assert.match(skill, /brand-neutral queries/i);
+  assert.match(skill, /Start brand-neutral and include current\/new terms/i);
   assert.match(skill, /unified, shared, coherent, or CPU\/GPU-addressable memory is not an Apple constraint/i);
-  assert.match(skill, /at least two materially different architectures and three product families/i);
-  assert.match(skill, /Never treat two pages about one brand as market coverage/i);
-  assert.match(skill, /candidate extraction returns zero.*broaden the third search/is);
-  assert.match(skill, /pass up to five fresh snapshot IDs from source or product pages actually opened in `source_snapshot_ids`/i);
-  assert.match(skill, /every named product, current price, or availability claim needs a corresponding card/i);
-  assert.match(skill, /Bare domains in text do not count as links/i);
+  assert.match(skill, /cover at least two architectures and three families/i);
+  assert.match(skill, /Never treat one brand as market coverage/i);
+  assert.match(skill, /required architecture lane has no viable candidate.*report that searched lane and uncertainty/is);
+  assert.match(skill, /`kind=none` may only say verification failed and link opened sources/i);
+  assert.match(skill, /product shortlist must use signed candidates/i);
   assert.match(skill, /“Exists” is not available/i);
   assert.match(skill, /True price is landed total.*shipping.*tax\/duty\/fees.*required add-ons/i);
   assert.match(skill, /navigate `\{tabId,url\}`.*snapshots `\{pages:.*hydration `\{candidate_set_id,requests:/i);
+  assert.match(skill, /Always call `shopping_request_intake`/i);
+  assert.match(skill, /AMD Ryzen AI Max\/Strix Halo.*NVIDIA GB10\/Grace Blackwell/i);
+  assert.match(skill, /Never treat one brand as market coverage or declare an architecture absent without searching its lane/i);
+  assert.match(skill, /product shortlist must use signed candidates.*never bypass extraction with source cards/i);
 });
 
 test("panel skill batches evidence domains without making local models architectural", async () => {
