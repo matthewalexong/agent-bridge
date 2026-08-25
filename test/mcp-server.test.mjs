@@ -521,7 +521,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(mismatchedHydration.isError, true);
   assert.match(mismatchedHydration.content[0].text, /shopping_candidate_snapshot_mismatch/);
   const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {
-    text: "Best observed match.",
+    text: "Observed match under verification.",
     kind: "products",
     recommendation_state: "provisional",
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,

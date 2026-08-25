@@ -12,6 +12,7 @@ import {
   shouldRegisterMcpTool,
   shouldSlimPanelSchema,
   validatePanelPost,
+  validatePanelProductClaims,
 } from "../mcp/surface.mjs";
 
 test("live MCP surface defaults to panel", () => {
@@ -72,6 +73,15 @@ test("tool payloads are compact JSON", () => {
   const compact = serializeToolPayload({ a: 1, b: ["x"] });
   assert.equal(compact, '{"a":1,"b":["x"]}');
   assert.ok(compact.length < pretty.length);
+});
+
+test("product copy cannot outrun signed price and availability evidence", () => {
+  const unknown = [{ title: "Example", price: "$99.00", price_label: "Item price", availability: "Availability unknown" }];
+  assert.match(validatePanelProductClaims({ text: "This is in stock for pickup today.", links: unknown, recommendation_state: "provisional" }), /availability.*unknown/i);
+  assert.match(validatePanelProductClaims({ text: "The true price is $99.", links: unknown, recommendation_state: "provisional" }), /verified landed total/i);
+  assert.match(validatePanelProductClaims({ text: "This is the cheapest and best option.", links: unknown, recommendation_state: "provisional" }), /cannot name a winner/i);
+  assert.equal(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), null);
+  assert.equal(validatePanelProductClaims({ text: "Verified in stock at an $108 landed total.", links: [{ ...unknown[0], availability: "In stock", landed_total: "$108.00" }], recommendation_state: "verified" }), null);
 });
 
 test("panel snapshots keep the evidence handle without duplicating element metadata", () => {

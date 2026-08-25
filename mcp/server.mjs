@@ -9,7 +9,7 @@ import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
 import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, shoppingRecommendationCardDetails, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
-import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost } from "./surface.mjs";
+import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost, validatePanelProductClaims } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
@@ -379,6 +379,8 @@ tool(
       : [...sourceLinks, ...(input.links ?? [])].filter((link, index, all) => all.findIndex((item) => item.url === link.url) === index).slice(0, 5);
     for (let index = 0; index < verifiedSummaries.length; index += 1) Object.assign(links[index], shoppingRecommendationCardDetails(verifiedSummaries[index]));
     if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
+    const claimRejected = input.kind === "products" ? validatePanelProductClaims({ text: input.text, links, recommendation_state: input.recommendation_state }) : null;
+    if (claimRejected) return asText({ posted: false, error: claimRejected });
     let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
       ? `Still verifying — ${input.text}`
       : input.text;

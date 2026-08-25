@@ -88,3 +88,18 @@ export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids
   }
   return null;
 }
+
+export function validatePanelProductClaims({ text, links, recommendation_state } = {}) {
+  const copy = String(text || "");
+  const cards = Array.isArray(links) ? links : [];
+  if (recommendation_state === "provisional" && /\b(?:cheapest|lowest(?:\s+(?:price|cost))?|best(?:\s+(?:option|pick|offer|value|match))?|winner|buy now)\b/i.test(copy)) {
+    return "Provisional product cards cannot name a winner or make a lowest-price claim; complete the final dossier first.";
+  }
+  if (cards.some((card) => card?.availability === "Availability unknown") && /\b(?:in stock|sold out|out of stock|available now|(?:same[- ]day )?pick-?up|ships? (?:today|tomorrow|by)|arrives? (?:today|tomorrow|by))\b/i.test(copy)) {
+    return "The reply makes a current availability claim for cards whose signed availability is unknown.";
+  }
+  if (cards.some((card) => !card?.landed_total) && /\b(?:true price|landed total|all[- ]in (?:price|cost)|total after (?:tax|shipping|fees))\b/i.test(copy)) {
+    return "The reply makes a total-price claim without a verified landed total for every displayed card.";
+  }
+  return null;
+}

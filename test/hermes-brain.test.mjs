@@ -28,6 +28,9 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /pass up to five fresh snapshot IDs from source or product pages actually opened in `source_snapshot_ids`/i);
   assert.match(skill, /every named product, current price, or availability claim needs a corresponding card/i);
   assert.match(skill, /Bare domains in text do not count as links/i);
+  assert.match(skill, /“Exists” is not available/i);
+  assert.match(skill, /True price is landed total.*shipping.*tax\/duty\/fees.*required add-ons/i);
+  assert.match(skill, /navigate `\{tabId,url\}`.*snapshots `\{pages:.*hydration `\{candidate_set_id,requests:/i);
 });
 
 test("panel skill batches evidence domains without making local models architectural", async () => {

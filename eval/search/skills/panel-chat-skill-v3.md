@@ -251,6 +251,17 @@ product verification should focus on viable contenders, followed by exact-offer
 verification only for finalists. Never call a provisional candidate the winner
 or bypass a gate merely to reduce latency.
 
+Once broad discovery establishes three viable product families, stop expanding
+and narrow to two to four exact, purchasable configurations. A product's
+existence is not evidence of availability. State in-stock, pickup, shipping,
+backorder, or sold-out status only from fresh signed evidence for the displayed
+configuration and observed seller; when the card says availability unknown, the
+reply must also leave it unknown. Treat an item price as an item price, not the
+true cost. A true or all-in price requires a verified landed total covering the
+item, shipping, applicable tax or duty, fees, and required add-ons. Do not name
+a cheapest offer or final pick until the exact-offer evaluators and final dossier
+finish successfully.
+
 For broad category requests, expand the user's requirement into current,
 brand-neutral architecture and product-family terms before opening retailer
 lanes. Generic terms such as unified, shared, coherent, or CPU/GPU-addressable
