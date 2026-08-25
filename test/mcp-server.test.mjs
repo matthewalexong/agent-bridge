@@ -545,6 +545,17 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(rejectedManualPost.structuredContent.posted, false);
   assert.match(rejectedManualPost.structuredContent.error, /rejects model-authored links/);
   assert.equal(panelPosts.length, 1);
+  const sourceFallbackPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "No signed listing survived; use the inspected source page.",
+    kind: "none",
+    source_snapshot_ids: [snapshotA],
+  } });
+  assert.equal(sourceFallbackPost.isError, undefined, JSON.stringify(sourceFallbackPost));
+  assert.deepEqual(panelPosts.at(-1).links, [{
+    url: "https://fixture.example/101",
+    title: "Fixture 101",
+  }]);
+  panelPosts.pop();
   const evidenceBatch = await client.callTool({ name: "shopping_page_evidence_batch", arguments: { requests: [
     { snapshot_id: snapshotA, page_kind: "retailer_listing" },
     { snapshot_id: snapshotB, page_kind: "retailer_listing" },

@@ -339,7 +339,7 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed, and concise available verified cost, delivery, return, protection, and risk details are appended automatically. Unhydrated candidates and model-authored product links are rejected.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed, and concise available verified cost, delivery, return, protection, and risk details are appended automatically. Unhydrated candidates and model-authored product links are rejected. If no product candidate survives, source_snapshot_ids reconstruct clickable cards from fresh pages actually opened.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
@@ -348,6 +348,7 @@ tool(
       candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
       recommendation_state: z.enum(["provisional", "verified"]).optional().describe("Required for products. Provisional is visibly labeled; verified requires final dossier references."),
       recommendation_refs: z.array(z.object({ recommendation_id: z.string().regex(/^shopping_recommendation_[a-f0-9]{32}$/), dossier_id: z.string().min(1).max(160), phase: z.enum(["product_recommendation", "offer_recommendation"]), candidate_id: z.string().regex(/^listing_[a-f0-9]{16}$/) }).strict()).min(1).max(5).optional(),
+      source_snapshot_ids: z.array(z.string().min(1).max(160)).min(1).max(5).optional().describe("For question/none replies only: fresh snapshot IDs from pages actually opened. Agent Bridge reconstructs safe clickable source cards."),
       links: z.array(z.object({
         url: z.string().url(),
         title: z.string().max(200).optional(),
@@ -367,9 +368,15 @@ tool(
       ))
       : [];
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
+    const sourceLinks = input.kind === "products" ? [] : (input.source_snapshot_ids ?? []).map((snapshotId) => {
+      const { receipt } = browserEvidenceRegistry.resolve(snapshotId);
+      const url = new URL(receipt.url);
+      if (!["http:", "https:"].includes(url.protocol)) throw Object.assign(new Error("Source cards require a fresh HTTP(S) browser snapshot"), { code: "panel_source_snapshot_invalid" });
+      return { url: url.href, title: String(receipt.title || url.hostname).slice(0, 200) };
+    });
     const links = input.kind === "products"
       ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
-      : input.links ?? [];
+      : [...sourceLinks, ...(input.links ?? [])].filter((link, index, all) => all.findIndex((item) => item.url === link.url) === index).slice(0, 5);
     for (let index = 0; index < verifiedSummaries.length; index += 1) Object.assign(links[index], shoppingRecommendationCardDetails(verifiedSummaries[index]));
     if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
     let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)

@@ -60,6 +60,7 @@ test("product posts without link cards are rejected", () => {
   assert.equal(validatePanelPost({ kind: "none" }), null);
   assert.match(validatePanelPost({ kind: "products" }), /requires candidate_set_id/);
   assert.match(validatePanelPost({ kind: "products", links: [{ url: "https://www.amazon.com/dp/B0EXAMPLE" }] }), /rejects model-authored links/);
+  assert.match(validatePanelPost({ kind: "products", source_snapshot_ids: ["snapshot-1"], candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /rejects source snapshot cards/);
   assert.match(validatePanelPost({ kind: "products", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /recommendation_state/);
   assert.equal(validatePanelPost({ kind: "products", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), null);
   assert.match(validatePanelPost({ kind: "products", recommendation_state: "verified", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /recommendation_ref/);

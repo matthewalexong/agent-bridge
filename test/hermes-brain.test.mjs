@@ -10,11 +10,24 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BRAIN = path.join(root, "eval/search/live/hermes-brain.mjs");
 const PANEL_SKILL = path.join(root, "eval/search/skills/panel-chat-skill-v3.md");
+const LIVE_PANEL_SKILL = path.join(root, "eval/search/skills/agent-bridge-panel.md");
 
 test("panel skill uses live progress instead of a final Why block", async () => {
   const skill = await fs.readFile(PANEL_SKILL, "utf8");
   assert.match(skill, /panel shows live progress/i);
   assert.doesNotMatch(skill, /add a short reasoning summary/i);
+});
+
+test("live panel shopping does not collapse broad technical categories to one brand and preserves source links", async () => {
+  const skill = await fs.readFile(LIVE_PANEL_SKILL, "utf8");
+  assert.match(skill, /brand-neutral queries/i);
+  assert.match(skill, /unified, shared, coherent, or CPU\/GPU-addressable memory is not an Apple constraint/i);
+  assert.match(skill, /at least two materially different architectures and three product families/i);
+  assert.match(skill, /Never treat two pages about one brand as market coverage/i);
+  assert.match(skill, /candidate extraction returns zero.*broaden the third search/is);
+  assert.match(skill, /pass up to five fresh snapshot IDs from source or product pages actually opened in `source_snapshot_ids`/i);
+  assert.match(skill, /every named product, current price, or availability claim needs a corresponding card/i);
+  assert.match(skill, /Bare domains in text do not count as links/i);
 });
 
 test("panel skill batches evidence domains without making local models architectural", async () => {
@@ -83,6 +96,10 @@ test("panel skill batches evidence domains without making local models architect
   assert.match(skill, /Surface a provisional candidate set as soon as discovery yields exact-scope\s+leads/i);
   assert.match(skill, /Never call a provisional candidate the winner\s+or bypass a gate merely to reduce latency/i);
   assert.match(skill, /No Gemma or other local model is a\s+component, lane, scheduler, router, cache, source of truth, or prerequisite/i);
+  assert.match(skill, /Generic terms such as unified, shared, coherent, or CPU\/GPU-addressable\s+memory are technical requirements, not synonyms for Apple/i);
+  assert.match(skill, /Two pages about\s+one brand never establish market coverage/i);
+  assert.match(skill, /post `kind=none` with up to five fresh snapshot IDs from source or product pages actually opened in `source_snapshot_ids`/i);
+  assert.match(skill, /bare domain written in the reply is not a link card/i);
 });
 
 test("panel skill requires a bounded evidence-based research trail without chain-of-thought", async () => {

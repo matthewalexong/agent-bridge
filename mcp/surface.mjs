@@ -72,10 +72,11 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
 
-export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs } = {}) {
+export function validatePanelPost({ kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
   const cards = Array.isArray(links) ? links : [];
   if (kind === "products") {
     if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
+    if (Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0) return "kind=products rejects source snapshot cards; product cards come from signed candidate evidence.";
     if (!candidate_set_id || !Array.isArray(candidate_ids) || candidate_ids.length === 0) {
       return "kind=products requires candidate_set_id and candidate_ids from shopping_listing_candidates.";
     }
