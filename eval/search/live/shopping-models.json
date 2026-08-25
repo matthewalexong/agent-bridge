@@ -1,7 +1,7 @@
 {
   "profile": "shopping",
   "webhook_port": 8645,
-  "recommended": "grok-4.3",
+  "recommended": "qwen-plus",
   "presets": {
     "grok-4.6": {
       "provider": "xai",
@@ -27,25 +27,29 @@
     },
     "qwen-plus": {
       "provider": "alibaba",
-      "model": "qwen-plus",
+      "model": "qwen3.7-plus",
+      "base_url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
       "reasoning_effort": "none",
       "max_turns": 24,
       "tier": "cheap-capable",
+      "billing": "token-plan-credits",
       "needs_env": "DASHSCOPE_API_KEY",
-      "vision": false,
+      "vision": true,
       "approx_usd_per_million": { "input": 0.4, "output": 1.2 },
-      "notes": "DashScope key already present. Strong Chinese tool-calling midtier. Verify edition/variant matching on one live query before trusting it."
+      "notes": "Balanced Qwen Token Plan model with vision and tool calling. Main brain for shopping; Token Plan Credits vary with tokens, thinking, and tools."
     },
     "qwen-flash": {
       "provider": "alibaba",
-      "model": "qwen-flash",
+      "model": "qwen3.6-flash",
+      "base_url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
       "reasoning_effort": "none",
       "max_turns": 20,
       "tier": "cheapest-available",
+      "billing": "token-plan-credits",
       "needs_env": "DASHSCOPE_API_KEY",
-      "vision": false,
+      "vision": true,
       "approx_usd_per_million": { "input": 0.05, "output": 0.4 },
-      "notes": "Cheapest model on a key you already have. Highest risk of listing mixups. Code still grades; the model still judges matches."
+      "notes": "Fast Token Plan model for auxiliary chores, not shopping judgment. Token Plan Credits vary with tokens, thinking, and tools."
     },
     "deepseek-v4-pro": {
       "provider": "deepseek",

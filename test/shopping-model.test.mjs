@@ -7,18 +7,23 @@ import {
   selectionRecord,
 } from "../lib/shopping-model.mjs";
 
-test("shopping catalog has a recommended balanced preset and key-gated cheap ones", () => {
+test("shopping catalog recommends the current balanced Token Plan model", () => {
   const catalog = loadShoppingModelCatalog();
-  assert.equal(catalog.recommended, "grok-4.3");
+  assert.equal(catalog.recommended, "qwen-plus");
   assert.ok(catalog.presets["grok-4.3"]);
   assert.ok(catalog.presets["qwen-plus"]);
   assert.ok(catalog.presets["deepseek-v4-pro"]);
   assert.equal(catalog.presets["grok-4.3"].needs_env, "XAI_API_KEY");
   assert.equal(catalog.presets["qwen-flash"].provider, "alibaba");
+  assert.equal(catalog.presets["qwen-plus"].model, "qwen3.7-plus");
+  assert.equal(catalog.presets["qwen-plus"].base_url, "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1");
+  assert.equal(catalog.presets["qwen-plus"].billing, "token-plan-credits");
+  assert.equal(catalog.presets["qwen-flash"].model, "qwen3.6-flash");
   assert.equal(catalog.presets["deepseek-v4-flash"].needs_env, "DEEPSEEK_API_KEY");
   assert.equal(catalog.presets["deepseek-v4-pro"].vision, false);
   assert.equal(catalog.presets["deepseek-v4-flash-vision"].vision, true);
   assert.equal(catalog.presets["grok-4.3"].vision, true);
+  assert.equal(catalog.presets["qwen-plus"].vision, true);
 });
 
 test("unknown shopping preset fails closed", () => {

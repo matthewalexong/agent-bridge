@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Apply a shopping-only model preset to a dedicated Hermes profile.
-// Desktop chat stays on grok-4.6. Panel traffic moves to the shopping profile
-// webhook (default port 8645) only after this script writes the selection.
+// The default Hermes profile is left untouched. Panel traffic moves to the
+// shopping profile webhook (default port 8645) after this writes the selection.
 
 import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -77,8 +77,11 @@ if (args[0] === "--list") {
   for (const [name, preset] of Object.entries(catalog.presets)) {
     const rec = name === catalog.recommended ? " [recommended]" : "";
     const price = preset.approx_usd_per_million;
+    const cost = preset.billing === "token-plan-credits"
+      ? "Token Plan Credits (usage-dependent)"
+      : `~$${price.input}/$${price.output} per 1M`;
     console.log(`${name}${rec}
-  ${preset.provider}/${preset.model}  ${preset.tier}  ~$${price.input}/$${price.output} per 1M
+  ${preset.provider}/${preset.model}  ${preset.tier}  ${cost}
   needs ${preset.needs_env}
   ${preset.notes}
 `);
@@ -96,12 +99,6 @@ Wrote ${path}`);
 }
 
 const preset = resolveShoppingPreset(args[0], catalog);
-const required = process.env[preset.needs_env];
-if (!required) {
-  console.error(`Preset ${preset.name} needs ${preset.needs_env} in the environment.`);
-  process.exit(2);
-}
-
 const profiles = spawnSync("hermes", ["profile", "list"], { encoding: "utf8" });
 if (!String(profiles.stdout || "").includes(` ${preset.profile} `) && !String(profiles.stdout || "").includes(`\n  ${preset.profile} `)) {
   const created = spawnSync("hermes", [
@@ -115,9 +112,17 @@ if (!String(profiles.stdout || "").includes(` ${preset.profile} `) && !String(pr
   }
 }
 
+const pooled = hermes(preset.profile, ["auth", "list", preset.provider], { allowFail: true });
+const hasPooledCredential = /\b\d+ credentials?\b|^\s*#\d+/m.test(String(pooled.stdout || ""));
+if (!process.env[preset.needs_env] && !hasPooledCredential) {
+  console.error(`Preset ${preset.name} needs ${preset.needs_env} or a pooled ${preset.provider} credential.`);
+  process.exit(2);
+}
+
 hermes(preset.profile, ["config", "set", "model.provider", preset.provider]);
 hermes(preset.profile, ["config", "set", "model.default", preset.model]);
-hermes(preset.profile, ["config", "set", "agent.reasoning_effort", preset.reasoning_effort || "low"]);
+if (preset.base_url) hermes(preset.profile, ["config", "set", "model.base_url", preset.base_url]);
+else hermes(preset.profile, ["config", "unset", "model.base_url"], { allowFail: true });
 hermes(preset.profile, ["config", "set", "agent.max_turns", String(preset.max_turns || 24)]);
 hermes(preset.profile, ["config", "set", "memory.memory_enabled", "false"]);
 hermes(preset.profile, ["config", "set", "memory.user_profile_enabled", "false"]);
@@ -148,4 +153,4 @@ Selection file: ${path}
 Start or restart the shopping gateway from Terminal.app:
   hermes -p ${preset.profile} gateway install
   hermes -p ${preset.profile} gateway restart
-Desktop chat stays on grok-4.6.`);
+The default Hermes profile is unchanged.`);
