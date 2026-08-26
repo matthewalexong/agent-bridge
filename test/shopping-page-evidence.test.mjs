@@ -99,6 +99,25 @@ test("explicit retailer shipping date is current availability evidence", () => {
   assert.match(result.facts.stock.evidence[0].excerpt, /Shipping Get it by Fri, Aug 28/i);
 });
 
+test("relative retailer delivery windows are current availability evidence", () => {
+  const newegg = extractShoppingPageEvidence({
+    page_kind: "retailer_listing",
+    url: "https://www.newegg.com/p/example",
+    page_text: "BOSGAME M5 AI 128GB\nCurrent Price: $3,599.99\nSold & shipped by BOSGAME DIRECT\nAdd to cart\nFastest delivery in 3 days",
+  });
+  assert.equal(newegg.facts.stock.value, "in_stock");
+  assert.equal(newegg.facts.seller.value, "BOSGAME DIRECT");
+  assert.match(newegg.facts.stock.evidence[0].excerpt, /Fastest delivery in 3 days/i);
+
+  const framework = extractShoppingPageEvidence({
+    page_kind: "retailer_listing",
+    url: "https://frame.work/products/desktop/configuration/new",
+    page_text: "Framework Desktop 128GB\nPrice: $3,449.00\nShips within 5 business days",
+  });
+  assert.equal(framework.facts.stock.value, "in_stock");
+  assert.match(framework.facts.stock.evidence[0].excerpt, /Ships within 5 business days/i);
+});
+
 test("checkout and policy text preserve merchant, processor, and return recipient roles", () => {
   const result = extractShoppingPageEvidence({
     page_kind: "checkout",

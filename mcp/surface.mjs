@@ -195,7 +195,7 @@ export function validatePanelProductClaims({ text, links, recommendation_state, 
   if (/\b(?:no other architecture|only (?:true|practical|viable) (?:path|option|architecture)|nothing else (?:qualifies|compares|is comparable))\b/i.test(copy)) {
     return "Offer cards cannot support an absolute market-exclusivity claim; report the researched alternatives and remaining scope instead.";
   }
-  if (recommendation_state === "provisional" && /\b(?:cheapest|lowest(?:\s+(?:price|cost))?|best(?:\s+(?:option|pick|offer|value|match))?|winner|buy now)\b/i.test(copy)) {
+  if (recommendation_state === "provisional" && /\b(?:cheapest|lowest(?:\s+(?:price|cost))?|best\s+(?:option|pick|offer|value|match)|winner|buy now)\b/i.test(copy)) {
     return "Provisional product cards cannot name a winner or make a lowest-price claim; complete the final dossier first.";
   }
   if (cards.some((card) => card?.availability === "Availability unknown") && /\b(?:in stock|sold out|out of stock|available now|(?:same[- ]day )?pick-?up|ships? (?:today|tomorrow|by)|arrives? (?:today|tomorrow|by))\b/i.test(copy)) {

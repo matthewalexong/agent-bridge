@@ -172,12 +172,14 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     params: { text: concreteSummary, phase: "compare", evidence: ["2 of 3 listings match the requested size"], next: "Verify stock", persist: true },
   }, port);
   await flush();
-  const marker = `webhook:panel_message:${received.body.conversation_id}`;
+  const concreteStatusAt = broadcasts.filter((m) => m.type === "panel.update").at(-1).status.at;
+  const marker = `webhook:panel_message:${deliveryId}`;
   await fs.appendFile(fakeGatewayLog,
     `2026-08-21 17:00:01,000 INFO gateway.platforms.webhook: [webhook] Response for ${marker}: ⏳ Working — 3 min — iteration 14/500, vision_analyze\n`);
   await new Promise((resolve) => setTimeout(resolve, 3_500));
   const afterHeartbeat = broadcasts.filter((m) => m.type === "panel.update").at(-1);
   assert.equal(afterHeartbeat.status.text, concreteSummary);
+  assert.notEqual(afterHeartbeat.status.at, concreteStatusAt, "a live heartbeat refreshes the expiry without changing the useful status text");
 
   // --- 4. Write the completion line; status must clear. ---
   await fs.appendFile(fakeGatewayLog,
@@ -215,7 +217,8 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     runtimeMessage.listener({ type: "panel.send", text: "search deeper" }, sender, resolve);
   });
   await waitFor(() => received?.body?.text === "search deeper" && received, 10_000, "second webhook delivery");
-  const exhaustedMarker = `webhook:panel_message:${received.body.conversation_id}`;
+  const exhaustedDeliveryId = received.headers["x-request-id"];
+  const exhaustedMarker = `webhook:panel_message:${exhaustedDeliveryId}`;
   await fs.appendFile(fakeGatewayLog,
     `2026-08-21 17:10:01,000 INFO gateway.platforms.webhook: [webhook] Response for ${exhaustedMarker}: ⚠️ Iteration budget exhausted (28/28) — asking model to summarise\n` +
     `2026-08-21 17:10:02,000 INFO gateway.run: response ready: platform=webhook chat=${exhaustedMarker} time=300.0s api_calls=28 response=500 chars\n`);
@@ -224,5 +227,6 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
     const entry = update?.transcript?.at(-1);
     return entry?.role === "agent" && /Would you like me to keep going/i.test(entry.text) ? entry : null;
   }, 20_000, `continuation prompt after safety budget. host stderr: ${hostStderr.slice(-300)}`);
-  assert.match(continuation.text, /initial research pass reached its safety limit/i);
+  assert.match(continuation.text, /initial research pass complete/i);
+  assert.match(continuation.text, /no search is currently running/i);
 });

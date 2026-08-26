@@ -344,10 +344,33 @@ function pushPanelStatus(text, options = {}) {
     });
 }
 
+async function refreshCurrentPanelStatus(deliveryId) {
+  if (!activeStatusTails.has(deliveryId)) return;
+  try {
+    const panel = await forwardToExtension("panel.get", {});
+    const status = panel?.status;
+    if (!status?.text || !activeStatusTails.has(deliveryId)) return;
+    await forwardToExtension("panel.status", {
+      text: status.text,
+      phase: status.phase,
+      evidence: status.evidence,
+      next: status.next,
+      persist: false,
+    });
+    log(`thinking-status: activity refreshed for ${deliveryId}`);
+  } catch (error) {
+    log(`thinking-status: activity refresh failed (${error?.message ?? error})`);
+  }
+}
+
 function startTurnStatusTail(deliveryId, conversationId) {
   if (activeStatusTails.has(deliveryId)) return;
   log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
-  const chatMarker = `webhook:panel_message:${conversationId || deliveryId}`;
+  // Hermes identifies webhook turns in gateway log lines by the HTTP delivery
+  // id (x-request-id), even when conversation_id is supplied for session
+  // continuity. Matching the conversation id leaves the terminal line unseen,
+  // so the panel status never clears and the max-turn continuation never posts.
+  const chatMarker = `webhook:panel_message:${deliveryId}`;
   let offset = 0;
   try {
     offset = statSync(GATEWAY_LOG_FILE).size;
@@ -385,6 +408,12 @@ function startTurnStatusTail(deliveryId, conversationId) {
     stream.on("end", () => {
       for (const line of chunk.split("\n")) {
         if (!line.includes(chatMarker)) continue;
+        if (line.includes("⏳ Working")) {
+          // A heartbeat proves Hermes is alive. Refresh the expiry without
+          // replacing the useful, agent-authored summary with generic text.
+          void refreshCurrentPanelStatus(deliveryId);
+          continue;
+        }
         if (line.includes("Iteration budget exhausted")) {
           state.budgetExhausted = true;
           continue;
@@ -407,10 +436,14 @@ function startTurnStatusTail(deliveryId, conversationId) {
 async function postContinuationPromptIfNeeded(initialAgentId) {
   try {
     const panel = await forwardToExtension("panel.get", {});
-    const latestAgentId = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent")?.id ?? null;
-    if (latestAgentId !== initialAgentId) return;
+    const latestAgent = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent") ?? null;
+    if (latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length >= 4) return;
+    if (/would you like me to (?:keep going|continue)/i.test(String(latestAgent?.text || ""))) return;
+    const hasPartialResults = latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length > 0;
     await forwardToExtension("panel.post", {
-      text: "The initial research pass reached its safety limit before I found enough verified results. Would you like me to keep going with a deeper search?",
+      text: hasPartialResults
+        ? "Initial research pass complete. I stopped at the research safety limit, and the verified offers above are a partial result rather than an active search. Some intended market coverage remains. Would you like me to keep going with a deeper search?"
+        : "Initial research pass complete. I stopped at the research safety limit before finding enough verified offers; no search is currently running. Would you like me to keep going with a deeper search?",
       links: [],
     });
     log("panel continuation prompt posted after iteration budget exhaustion");
