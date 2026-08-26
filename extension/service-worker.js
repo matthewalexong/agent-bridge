@@ -313,6 +313,23 @@ function recordPanelEntry(role, text, links, research) {
   return entry;
 }
 
+async function submitPanelMessage(rawText) {
+  const text = panelText(rawText);
+  panelProgress = [];
+  setPanelStatus({ text: "Working…", phase: "working", persist: false });
+  const entry = recordPanelEntry("user", text);
+  const turn = await nextConversationTurn();
+  emitBrowserEvent("panel.message", {
+    role: "user",
+    text,
+    messageId: entry.id,
+    conversationId: turn.conversationId,
+    resume: turn.resume,
+  });
+  broadcastPanel();
+  return { entry, conversationId: turn.conversationId, resume: turn.resume };
+}
+
 // Sanitize link cards so a malicious/buggy agent cannot inject script: URLs
 // or unbounded payloads into the panel transcript.
 function sanitizePanelLinks(raw) {
@@ -1792,6 +1809,8 @@ async function dispatch(method, params) {
       return detachRawSession(params);
     case "panel.get":
       return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, capabilities: PANEL_CAPABILITIES };
+    case "panel.send":
+      return submitPanelMessage(params.text);
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
@@ -1855,20 +1874,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "panel.send") {
     void (async () => {
       try {
-        const text = panelText(message.text);
-        panelProgress = [];
-        setPanelStatus({ text: "Working…", phase: "working", persist: false });
-        const entry = recordPanelEntry("user", text);
-        const turn = await nextConversationTurn();
-        emitBrowserEvent("panel.message", {
-          role: "user",
-          text,
-          messageId: entry.id,
-          conversationId: turn.conversationId,
-          resume: turn.resume,
-        });
-        broadcastPanel();
-        sendResponse({ ok: true, result: { entry, conversationId: turn.conversationId, resume: turn.resume } });
+        sendResponse({ ok: true, result: await submitPanelMessage(message.text) });
       } catch (error) {
         sendResponse({ ok: false, error: errorPayload(error) });
       }

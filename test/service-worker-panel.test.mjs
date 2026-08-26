@@ -129,6 +129,32 @@ test("panel messages reach the agent event stream and replies land in the transc
   }
 });
 
+test("authenticated bridge panel.send uses the same conversation event path as the panel UI", async () => {
+  const harness = await loadHarness();
+  try {
+    const sent = await harness.dispatch("diagnostic-send", "panel.send", {
+      text: "find current 128GB unified-memory local AI machines",
+    });
+    assert.equal(sent.ok, true);
+    assert.equal(sent.result.entry.role, "user");
+    assert.equal(sent.result.resume, false);
+    assert.match(sent.result.conversationId, /^c[a-f0-9]{32}$/);
+
+    const panelEvent = harness.nativeMessages.find((message) =>
+      message.type === "event" && message.event === "panel.message");
+    assert.ok(panelEvent);
+    assert.equal(panelEvent.data.text, "find current 128GB unified-memory local AI machines");
+    assert.equal(panelEvent.data.messageId, sent.result.entry.id);
+    assert.equal(panelEvent.data.conversationId, sent.result.conversationId);
+
+    const state = await harness.dispatch("diagnostic-state", "panel.get", {});
+    assert.equal(state.result.transcript.at(-1).text, panelEvent.data.text);
+    assert.equal(state.result.status?.text, "Working…");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("one Hermes conversation lasts until the side panel closes", async () => {
   const harness = await loadHarness();
   try {

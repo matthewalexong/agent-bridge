@@ -12,6 +12,7 @@
     "install-host": "node scripts/install-host.mjs",
     "uninstall-host": "node scripts/uninstall-host.mjs",
     "build:extension": "node scripts/build-extension-zip.mjs",
+    "audit:live-shopping": "node scripts/audit-live-shopping-panel.mjs",
     "eval:shopping": "node eval/shopping/run-purchase-eval.mjs --skill eval/shopping/skills/purchase-decision-v7.md --model-tier frontier --runs 2",
     "eval:shopping-sufficiency": "node eval/shopping/sufficiency/run-eval.mjs --skill eval/shopping/sufficiency/skills/main-shopping-policy-v2.md --model-tier main --runs 1",
     "eval:shopping-counterfeit": "node eval/shopping/counterfeit/run-eval.mjs --skill eval/shopping/counterfeit/skills/main-risk-policy-v2.md --model-tier main",
