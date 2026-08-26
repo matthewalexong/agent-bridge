@@ -537,7 +537,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   } });
   assert.equal(boundPost.isError, undefined, JSON.stringify(boundPost));
   assert.equal(panelPosts.length, 1);
-  assert.match(panelPosts[0].text, /^Still verifying — /);
+  assert.match(panelPosts[0].text, /^Provisional results — /);
   assert.deepEqual(panelPosts[0].links, [{
     url: "https://fixture.example/products/camera-101",
     title: "Fixture Camera 101",

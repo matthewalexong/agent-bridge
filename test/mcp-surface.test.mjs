@@ -136,6 +136,7 @@ test("product copy cannot outrun signed price and availability evidence", () => 
   assert.match(validatePanelProductClaims({ text: "This is in stock for pickup today.", links: unknown, recommendation_state: "provisional" }), /availability.*unknown/i);
   assert.match(validatePanelProductClaims({ text: "The true price is $99.", links: unknown, recommendation_state: "provisional" }), /verified landed total/i);
   assert.match(validatePanelProductClaims({ text: "This is the cheapest and best option.", links: unknown, recommendation_state: "provisional" }), /cannot name a winner/i);
+  assert.equal(validatePanelProductClaims({ text: "This is a market map, not a winner.", links: [{ ...unknown[0], availability: "In stock" }], recommendation_state: "provisional" }), null, "a negated ranking claim is explanatory, not recommendation authority");
   assert.equal(validatePanelProductClaims({ text: "ASUS GX10 at Best Buy; availability is verified below.", links: [{ ...unknown[0], availability: "In stock" }], recommendation_state: "provisional" }), null, "the retailer name Best Buy is not a ranking claim");
   assert.match(validatePanelProductClaims({ text: "No other architecture is comparable.", links: unknown, recommendation_state: "verified" }), /market-exclusivity/i);
   assert.match(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), /in-stock shortlist/i);

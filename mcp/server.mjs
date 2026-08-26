@@ -408,8 +408,8 @@ tool(
     const claimRejected = input.kind === "products" ? validatePanelProductClaims({ text: input.text, links, recommendation_state: input.recommendation_state, availability_requirement: input.availability_requirement }) : null;
     if (claimRejected) return asText({ posted: false, error: claimRejected });
     if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
-    let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
-      ? `Still verifying — ${input.text}`
+    let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^provisional results\b/i.test(input.text)
+      ? `Provisional results — ${input.text}`
       : input.text;
     if (verifiedSummaries.length) text = appendShoppingRecommendationSummary(text, verifiedSummaries);
     return asText(await callBridge("panel.post", { text, links }));
