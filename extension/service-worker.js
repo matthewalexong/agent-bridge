@@ -351,7 +351,7 @@ function sanitizePanelLinks(raw) {
     if (typeof link.price === "string") card.price = link.price.slice(0, 40);
     if (link.price_label === "Item price") card.price_label = "Item price";
     if (typeof link.seller === "string" && link.seller.trim()) card.seller = link.seller.trim().slice(0, 120);
-    if (["In stock", "Out of stock", "Availability unknown"].includes(link.availability)) card.availability = link.availability;
+    if (["In stock", "Out of stock", "Pre-order", "Availability unknown"].includes(link.availability)) card.availability = link.availability;
     if (["Verified pick", "Verified offer"].includes(link.verification)) card.verification = link.verification;
     if (typeof link.landed_total === "string" && /^\$[0-9][0-9,]*(?:\.[0-9]{2})?(?:–\$[0-9][0-9,]*(?:\.[0-9]{2})?)?$/.test(link.landed_total)) card.landed_total = link.landed_total.slice(0, 80);
     if (["Landed total", "Estimated landed range"].includes(link.landed_total_label)) card.landed_total_label = link.landed_total_label;
@@ -506,6 +506,7 @@ function snapshotPage(maxChars) {
 
   const implicitRole = (element) => {
     const tag = element.tagName.toLowerCase();
+    if (tag === "label" && element.control) return implicitRole(element.control);
     if (tag === "a" && element.hasAttribute("href")) return "link";
     if (tag === "button" || tag === "summary") return "button";
     if (tag === "select") return element.multiple || element.size > 1 ? "listbox" : "combobox";
@@ -560,7 +561,7 @@ function snapshotPage(maxChars) {
 
   const roleSelector = [...interactiveRoles].map((role) => `[role="${role}"]`).join(",");
   const interactiveSelector = [
-    "a[href]", "button", "summary", "input:not([type='hidden'])", "select", "textarea",
+    "a[href]", "button", "summary", "input:not([type='hidden'])", "label", "select", "textarea",
     "[contenteditable='true']", "[tabindex]:not([tabindex='-1'])", roleSelector,
   ].join(",");
   const roleNameCounts = new Map();
@@ -578,8 +579,11 @@ function snapshotPage(maxChars) {
     roleNameCounts.set(countKey, nth + 1);
     const ref = `e${elements.length + 1}`;
     const selector = selectorFor(element);
-    const disabled = Boolean(element.disabled || element.getAttribute("aria-disabled") === "true");
-    const checked = typeof element.checked === "boolean" ? element.checked : undefined;
+    const control = element instanceof HTMLLabelElement ? element.control : null;
+    if (element instanceof HTMLLabelElement && !control) continue;
+    const disabled = Boolean(element.disabled || control?.disabled || element.getAttribute("aria-disabled") === "true");
+    const checkedSource = control || element;
+    const checked = typeof checkedSource.checked === "boolean" ? checkedSource.checked : undefined;
     const selected = element.getAttribute("aria-selected") === "true" ||
       (element instanceof HTMLOptionElement ? element.selected : undefined);
     const expandedValue = element.getAttribute("aria-expanded");
@@ -645,6 +649,7 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
   };
   const implicitRole = (element) => {
     const tag = element.tagName.toLowerCase();
+    if (tag === "label" && element.control) return implicitRole(element.control);
     if (tag === "a" && element.hasAttribute("href")) return "link";
     if (tag === "button" || tag === "summary") return "button";
     if (tag === "select") return element.multiple || element.size > 1 ? "listbox" : "combobox";
@@ -676,7 +681,7 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
     ).slice(0, 160);
   };
   const candidateSelector = [
-    "a[href]", "button", "summary", "input:not([type='hidden'])", "select", "textarea",
+    "a[href]", "button", "summary", "input:not([type='hidden'])", "label", "select", "textarea",
     "[contenteditable='true']", "[tabindex]:not([tabindex='-1'])",
     ...[...interactiveRoles].map((role) => `[role="${role}"]`),
   ].join(",");
@@ -706,7 +711,7 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
   if (!isVisible(element)) {
     return { error: { code: "element_not_visible", message: "The action target is not visible. Take a fresh snapshot." } };
   }
-  if (element.disabled || element.getAttribute("aria-disabled") === "true") {
+  if (element.disabled || (element instanceof HTMLLabelElement && element.control?.disabled) || element.getAttribute("aria-disabled") === "true") {
     return { error: { code: "element_disabled", message: "The action target is disabled." } };
   }
   if (kind === "click") {

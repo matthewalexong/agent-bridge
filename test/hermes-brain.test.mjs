@@ -39,6 +39,9 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /broad request with no best\/fastest\/cheapest objective asks for a market map/i);
   assert.match(skill, /shared memory and any GPU-addressable limit.*storage.*item price.*stock\/delivery/i);
   assert.match(skill, /never declare a lane absent without searching it/i);
+  assert.match(skill, /For Apple, configure one current Mac Studio.*chip, CPU\/GPU, memory, then storage/is);
+  assert.match(skill, /Never splice a base Mac price or generic pickup FAQ/i);
+  assert.match(skill, /do not merely say Apple was checked/i);
   assert.match(skill, /availability_requirement=in_stock_only.*signed page says In stock/i);
   assert.match(skill, /Reddit questions.*recent dated community threads/i);
   assert.match(skill, /Community evidence informs fit, never price(?: or |\/)stock/i);

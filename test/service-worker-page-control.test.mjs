@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
+import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 globalThis.crypto ??= webcrypto;
+
+test("semantic snapshots expose visible labels for custom configurator radios", async () => {
+  const script = await fs.readFile(path.join(root, "extension/service-worker.js"), "utf8");
+  assert.match(script, /tag === "label" && element\.control/);
+  assert.match(script, /"input:not\(\[type='hidden'\]\)", "label", "select"/);
+  assert.match(script, /element instanceof HTMLLabelElement && element\.control\?\.disabled/);
+});
 
 function event() {
   return { listener: null, addListener(listener) { this.listener = listener; } };

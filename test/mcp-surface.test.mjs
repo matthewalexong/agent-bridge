@@ -142,6 +142,15 @@ test("product copy cannot outrun signed price and availability evidence", () => 
   assert.match(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), /in-stock shortlist/i);
   assert.equal(validatePanelProductClaims({ text: "Availability unverified — this is a research lead.", links: unknown, recommendation_state: "provisional", availability_requirement: "allow_unknown" }), null);
   assert.equal(validatePanelProductClaims({ text: "Verified in stock at an $108 landed total.", links: [{ ...unknown[0], availability: "In stock", landed_total: "$108.00" }], recommendation_state: "verified" }), null);
+
+  const localAiMap = [
+    { title: "BOSGAME AMD Ryzen AI Max+ 395 128GB", availability: "In stock", price: "$3,599", seller: "BOSGAME" },
+    { title: "NIMO AMD Ryzen AI Max+ 395 128GB", availability: "In stock", price: "$4,699", seller: "NIMO" },
+    { title: "ASUS Ascent GX10 NVIDIA GB10 128GB", availability: "In stock", price: "$3,999", seller: "Best Buy" },
+    { title: "NVIDIA DGX Spark GB10 128GB", availability: "In stock", price: "$5,299", seller: "Best Buy" },
+  ];
+  assert.match(validatePanelProductClaims({ text: "Apple was checked, but no offer was verified.", links: localAiMap, recommendation_state: "provisional" }), /cannot vaguely omit Apple/i);
+  assert.equal(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards.", links: localAiMap, recommendation_state: "provisional" }), null);
 });
 
 test("panel snapshots keep the evidence handle without duplicating element metadata", () => {

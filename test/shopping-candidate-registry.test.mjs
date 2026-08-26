@@ -131,6 +131,19 @@ test("candidate cards expose out-of-stock while withholding unsupported seller t
   assert.equal(card.availability, "Out of stock");
 });
 
+test("candidate cards preserve explicit preorder separately from unknown stock", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 5399, status: "explicit" }, {
+    seller: { value: "Apple", status: "derived" },
+    stock: { value: "preorder", status: "explicit" },
+  }));
+  const card = registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0];
+  assert.equal(card.seller, "Apple");
+  assert.equal(card.availability, "Pre-order");
+});
+
 test("candidate registry rejects tampering, unknown IDs, duplicates, and expiry", () => {
   let clock = 1_000;
   const registry = createShoppingCandidateRegistry({ max_age_ms: 500, now: () => clock });

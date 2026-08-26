@@ -272,6 +272,16 @@ and NVIDIA GB10/Grace Blackwell systems. Those names seed discovery rather than
 preselect winners. A lane may be omitted from the final cards only after it was
 actually searched and its exclusion or unresolved status is reported. Never
 infer that an architecture has no viable products from Apple-only results.
+Apple's configure-to-order page is not an excuse to drop that lane. Configure
+one current Mac Studio to the requested memory in dependency order (chip,
+processor/GPU, memory, then storage), taking a fresh snapshot after every
+selection. Hydrate only the resulting configuration-specific URL and selected
+summary; never combine the base-page price or generic pickup FAQ with the
+selected memory. If the qualifying Mac is preorder, backordered, unavailable,
+or otherwise not currently in stock, name the exact generation, memory,
+storage, configured item price, and concrete state with its exact page. Do not
+count it toward the four-to-five in-stock cards, but do not replace that result
+with vague language such as “Apple was checked” or “no Apple offer verified.”
 The NVIDIA lane must separately inspect current ASUS Ascent GX10 and NVIDIA DGX
 Spark exact offers; one cannot stand in for the other. An in-stock shortlist
 contains only signed exact-product cards whose observed availability is
@@ -332,7 +342,7 @@ the bounded third lane on a broadened architecture/vendor query before stopping.
 - Lead with the answer (1-2 sentences), then give supporting details if helpful.
 - Do not append a separate "Why:" or reasoning-summary block. The panel shows live progress while the agent works; the final reply should contain only the answer and any facts needed to support it.
 - When citing a product, use its signed candidate ID and the current exact-page price returned after hydration; never present a search-snippet price as current after the exact page disagrees or leaves price unknown.
-- When discovery first yields useful exact-page-hydrated candidates, call `browser_panel_post` with `kind=products` and `recommendation_state=provisional`; the process visibly prefixes “Still verifying.” A final winner requires `recommendation_state=verified` plus one fresh process-owned `recommendation_ref` from a successful final dossier for each exact candidate ID. That authority is bound to the same signed candidate-offer and exact-page evidence used by the evaluator context; a changed price, seller, stock state, candidate set, or later rehydration requires fresh evaluation. Missing, altered, expired, restarted-process, unresolved, different-candidate, or different-evidence authority fails closed. Verified posts automatically append a bounded process-derived detail line from the signed exact-subject stages: available landed total, seller, stock, delivery window, return window, warranty, buyer protection, tracking, identity, safety, and counterfeit-risk status; unknown fields are omitted. Never supply product `links` or rewrite URL, title, image, price, seller, or availability fields. The process reconstructs each card from the signed candidate set; unhydrated candidates are rejected and unknown facts remain explicit.
+- When discovery first yields useful exact-page-hydrated candidates, call `browser_panel_post` with `kind=products` and `recommendation_state=provisional`; the process visibly prefixes “Provisional results.” A final winner requires `recommendation_state=verified` plus one fresh process-owned `recommendation_ref` from a successful final dossier for each exact candidate ID. That authority is bound to the same signed candidate-offer and exact-page evidence used by the evaluator context; a changed price, seller, stock state, candidate set, or later rehydration requires fresh evaluation. Missing, altered, expired, restarted-process, unresolved, different-candidate, or different-evidence authority fails closed. Verified posts automatically append a bounded process-derived detail line from the signed exact-subject stages: available landed total, seller, stock, delivery window, return window, warranty, buyer protection, tracking, identity, safety, and counterfeit-risk status; unknown fields are omitted. Never supply product `links` or rewrite URL, title, image, price, seller, or availability fields. The process reconstructs each card from the signed candidate set; unhydrated candidates are rejected and unknown facts remain explicit.
 - When no signed product survives, post `kind=none` with up to five fresh snapshot IDs from source or product pages actually opened in `source_snapshot_ids`; the process reconstructs safe clickable cards from those signed pages. Every named product, current price, or availability claim must have a corresponding clickable card. A bare domain written in the reply is not a link card. If neither a signed product card nor an opened source-page card supports a claim, omit it.
 - If a search returns no results, say so honestly rather than guessing.
 - Keep the whole reply under ~700 characters (link cards are shown separately and don't count).

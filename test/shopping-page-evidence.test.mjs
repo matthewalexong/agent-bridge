@@ -118,6 +118,47 @@ test("relative retailer delivery windows are current availability evidence", () 
   assert.match(framework.facts.stock.evidence[0].excerpt, /Ships within 5 business days/i);
 });
 
+test("Apple configure-to-order evidence binds the selected Mac and ignores footer false positives", () => {
+  const exactUrl = "https://www.apple.com/shop/buy-mac/mac-studio/m5-max-chip-18-core-cpu-40-core-gpu-128gb-memory-1tb-storage";
+  const result = extractShoppingPageEvidence({
+    page_kind: "retailer_listing",
+    url: exactUrl,
+    page_text: [
+      "Pre-order Mac Studio",
+      "Available starting 9.22.",
+      "Buy from $2,499",
+      "Free shipping",
+      "Your new Mac Studio.",
+      "Mac Studio with M5 Max chip",
+      "18-core CPU, 40-core GPU, 16-core Neural Engine",
+      "128GB unified memory",
+      "1TB storage",
+      "Buy for $5,399.00",
+      "Still deciding?",
+      "Frequently Asked Questions",
+      "Available for pickup varies by location.",
+      "Footnotes",
+      "Insurance is sold by AppleCare Service Company, Inc.",
+    ].join("\n"),
+  });
+  assert.equal(result.facts.offer_title.value, "Apple Mac Studio M5 Max, 18-core CPU, 40-core GPU, 128GB unified memory, 1TB storage");
+  assert.equal(result.facts.configuration.memory_gb.value, 128);
+  assert.equal(result.facts.price_usd.value, 5399);
+  assert.equal(result.facts.seller.value, "Apple");
+  assert.equal(result.facts.seller.status, "derived");
+  assert.equal(result.facts.stock.value, "preorder");
+  assert.match(result.facts.stock.evidence[0].excerpt, /Pre-order/i);
+
+  const generic = extractShoppingPageEvidence({
+    page_kind: "retailer_listing",
+    url: "https://www.apple.com/shop/buy-mac/mac-studio",
+    page_text: "Buy from $2,499\nFrequently Asked Questions\nAvailable for pickup varies by location.\nFootnotes\nInsurance is sold by AppleCare Service Company, Inc.",
+  });
+  assert.equal(generic.facts.price_usd.status, "unknown", "a base configurator price is not an exact configured offer price");
+  assert.equal(generic.facts.seller.status, "unknown", "AppleCare footer language is not the computer seller");
+  assert.equal(generic.facts.stock.status, "unknown", "FAQ pickup language is not current offer availability");
+});
+
 test("checkout and policy text preserve merchant, processor, and return recipient roles", () => {
   const result = extractShoppingPageEvidence({
     page_kind: "checkout",

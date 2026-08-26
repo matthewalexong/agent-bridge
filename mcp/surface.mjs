@@ -193,6 +193,16 @@ export function validatePanelProductClaims({ text, links, recommendation_state, 
   const copy = String(text || "");
   const affirmativeCopy = copy.replace(/\b(?:not|isn't|is not)\s+(?:a\s+|the\s+)?(?:cheapest|lowest(?:\s+(?:price|cost))?|best\s+(?:option|pick|offer|value|match)|winner|buy now)\b/gi, "");
   const cards = Array.isArray(links) ? links : [];
+  const cardCopy = cards.map((card) => `${card?.title || ""} ${card?.url || ""}`).join("\n");
+  const broadLocalAiMap = cards.length >= 4 && /\b128\s*GB\b/i.test(cardCopy) &&
+    /\b(?:AMD|Ryzen AI Max|Strix Halo)\b/i.test(cardCopy) &&
+    /\b(?:NVIDIA|GB10|DGX Spark|Ascent GX10)\b/i.test(cardCopy);
+  const hasAppleCard = /\b(?:Apple|Mac Studio|M\d+\s+(?:Max|Ultra))\b/i.test(cardCopy);
+  const namesExactAppleLane = /(?:\bMac Studio\b[^.\n]{0,160}\bM\d+\s+(?:Max|Ultra)\b|\bM\d+\s+(?:Max|Ultra)\b[^.\n]{0,160}\bMac Studio\b)/i.test(copy);
+  const givesConcreteAppleState = /\b(?:pre-?order|back-?order|out of stock|unavailable|available starting|in stock|ships? by|delivery by)\b/i.test(copy);
+  if (broadLocalAiMap && !hasAppleCard && !(namesExactAppleLane && givesConcreteAppleState)) {
+    return "A broad 128GB local-AI market map cannot vaguely omit Apple: include an exact signed Apple card, or name the exact current Mac Studio generation/configuration and its concrete availability state.";
+  }
   if (/\b(?:no other architecture|only (?:true|practical|viable) (?:path|option|architecture)|nothing else (?:qualifies|compares|is comparable))\b/i.test(copy)) {
     return "Offer cards cannot support an absolute market-exclusivity claim; report the researched alternatives and remaining scope instead.";
   }

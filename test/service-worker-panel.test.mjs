@@ -386,12 +386,13 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
         goodLink,
         { url: "javascript:alert(1)", title: "evil scheme" }, // stripped: non-http
         { url: "https://ok.example.com", title: "t".repeat(500), seller: "s".repeat(500), availability: "Definitely available", price_label: "Free" }, // bounded metadata
+        { url: "https://www.apple.com/shop/buy-mac/mac-studio/example", title: "Mac Studio", availability: "Pre-order" },
         { url: "not a url", title: "garbage" }, // stripped: unparseable
       ],
     });
     assert.equal(posted.ok, true);
     const stored = posted.result.entry.links;
-    assert.equal(stored.length, 2, "only http(s) links survive sanitization");
+    assert.equal(stored.length, 3, "only http(s) links survive sanitization");
     assert.equal(stored[0].url, goodLink.url);
     assert.equal(stored[0].title, goodLink.title);
     assert.equal(stored[0].image, goodLink.image);
@@ -413,12 +414,13 @@ test("panel.post link cards are stored, sanitized, and reported in panel.get", a
     assert.ok(stored[1].title.length <= 200, "oversized title truncated");
     assert.equal(stored[1].seller.length, 120, "oversized seller truncated");
     assert.equal(stored[1].availability, undefined, "unknown availability literals are dropped");
+    assert.equal(stored[2].availability, "Pre-order", "explicit preorder remains distinct from in-stock availability");
     assert.equal(stored[1].price_label, undefined, "unknown price labels are dropped");
     assert.equal(stored[1].verification, undefined, "unverified cards cannot invent the badge");
 
     // panel.get surfaces the links so the panel page can render cards.
     const got = await harness.dispatch("links-get", "panel.get", {});
-    assert.equal(got.result.transcript[0].links.length, 2);
+    assert.equal(got.result.transcript[0].links.length, 3);
 
     // Capabilities probe is present (lets a stale panel detect an old SW).
     assert.ok(Array.isArray(got.result.capabilities), "panel.get reports capabilities");
