@@ -9,7 +9,7 @@ import { registerShoppingTools } from "./register-shopping-tools.mjs";
 import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
 import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
 import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, shoppingRecommendationCardDetails, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
-import { advertisedDescription, compactPanelSnapshot, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost, validatePanelProductClaims } from "./surface.mjs";
+import { advertisedDescription, compactPanelRead, compactPanelSnapshot, compactPanelStatusResult, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost, validatePanelProductClaims } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
@@ -220,7 +220,8 @@ tool(
       "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
-      kind: z.enum(["click", "fill", "press", "select"]),
+      kind: z.enum(["click", "fill", "press", "select"]).optional(),
+      action: z.enum(["click", "fill", "press", "select"]).optional().describe("Compatibility alias for kind."),
       ref: z.string().regex(/^e\d+$/).optional().describe("Short-lived ref from the latest browser_snapshot on the same tab."),
       selector: z.string().min(1).max(2_000).optional().describe("Compatibility fallback when no snapshot ref is available."),
       value: z.string().max(100_000).optional().describe("Required for fill; accepted as one value for select."),
@@ -233,7 +234,12 @@ tool(
         .describe("Set true only after explicit user confirmation for a potentially submitting click."),
     },
   },
-  async (input) => asText(await callBridge("page.act", input)),
+  async (input) => {
+    const kind = input.kind ?? input.action;
+    if (!kind) throw Object.assign(new Error("Pass kind (or compatibility alias action)"), { code: "browser_action_invalid" });
+    const { action: _action, ...rest } = input;
+    return asText(await callBridge("page.act", { ...rest, kind }));
+  },
 );
 
 tool(
@@ -291,7 +297,7 @@ tool(
       "Read the current side panel transcript (user and agent messages) plus which agent is identified. Use to hydrate context before replying to panel.message events.",
     inputSchema: {},
   },
-  async () => asText(await callBridge("panel.get")),
+  async () => asPanelText(compactPanelRead(await callBridge("panel.get"), mcpSurface)),
 );
 
 tool(
@@ -316,22 +322,22 @@ tool(
     description:
       "Publish a bounded user-visible research update. Call directly, never through tool_call. For non-trivial panel requests, call early with the plan and again after meaningful evidence or decisions. State actions, concrete evidence, conclusions, and the next step—never hidden chain-of-thought, private scratch work, or generic 'thinking'. Updates appear live and are attached to the final answer as a collapsible research trail.",
     inputSchema: {
-      summary: z.string().min(1).max(300).optional().describe(
+      summary: z.string().min(1).max(1_000).optional().describe(
         "Cumulative progress summary, ideally using short 'Doing / Found / Next' phrases. Include concrete sources, counts, constraints, or decisions when known.",
       ),
-      text: z.string().min(1).max(300).optional().describe("Compatibility alias for summary."),
+      text: z.string().min(1).max(1_000).optional().describe("Compatibility alias for summary."),
       phase: z.enum(["plan", "search", "inspect", "verify", "compare", "decision", "working"]).optional().default("working"),
       evidence: z.array(z.string().min(1).max(160)).max(5).optional().default([]).describe("Short externally supportable facts, source names, counts, prices, or gate results; no hidden reasoning."),
       next: z.string().min(1).max(200).optional().describe("The next concrete action or unresolved question."),
     },
   },
-  async (input) => asText(await callBridge("panel.status", {
-    text: input.summary ?? input.text ?? "Researching current options…",
+  async (input) => asPanelText(compactPanelStatusResult(await callBridge("panel.status", {
+    text: (input.summary ?? input.text ?? "Researching current options…").slice(0, 300),
     phase: input.phase,
     evidence: input.evidence,
     next: input.next,
     persist: true,
-  })),
+  }), mcpSurface)),
 );
 
 tool(
@@ -347,6 +353,7 @@ tool(
       candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional().describe("Short-lived set ID from shopping_listing_candidates. Required for products."),
       candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
       recommendation_state: z.enum(["provisional", "verified"]).optional().describe("Required for products. Provisional is visibly labeled; verified requires final dossier references."),
+      availability_requirement: z.enum(["in_stock_only", "allow_unknown"]).optional().default("in_stock_only").describe("Product cards default to explicit signed in-stock offers. Use allow_unknown only for a clearly labeled research lead, never an in-stock shortlist."),
       recommendation_refs: z.array(z.object({ recommendation_id: z.string().regex(/^shopping_recommendation_[a-f0-9]{32}$/), dossier_id: z.string().min(1).max(160), phase: z.enum(["product_recommendation", "offer_recommendation"]), candidate_id: z.string().regex(/^listing_[a-f0-9]{16}$/) }).strict()).min(1).max(5).optional(),
       source_snapshot_ids: z.array(z.string().min(1).max(160)).min(1).max(5).optional().describe("For question/none replies only: fresh snapshot IDs from pages actually opened. Agent Bridge reconstructs safe clickable source cards."),
       links: z.array(z.object({
@@ -358,6 +365,26 @@ tool(
     },
   },
   async (input) => {
+    if (input.kind === "products" && Array.isArray(input.links) && input.links.length > 0) {
+      let inferred;
+      try {
+        inferred = shoppingCandidateRegistry.matchHydratedLinks(input.links);
+      } catch {
+        return asText({ posted: false, error: "kind=products rejects model-authored links unless every URL exactly matches one current signed hydrated candidate set; pass candidate_set_id and candidate_ids." });
+      }
+      if (input.candidate_set_id != null && input.candidate_set_id !== inferred.candidate_set_id) {
+        return asText({ posted: false, error: "Product links conflict with candidate_set_id." });
+      }
+      if (Array.isArray(input.candidate_ids) && JSON.stringify(input.candidate_ids) !== JSON.stringify(inferred.candidate_ids)) {
+        return asText({ posted: false, error: "Product links conflict with candidate_ids." });
+      }
+      input = {
+        ...input,
+        ...inferred,
+        recommendation_state: input.recommendation_state ?? "provisional",
+        links: [],
+      };
+    }
     const rejected = validatePanelPost(input);
     if (rejected) return asText({ posted: false, error: rejected });
     const verifiedSummaries = input.kind === "products" && input.recommendation_state === "verified"
@@ -378,9 +405,9 @@ tool(
       ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
       : [...sourceLinks, ...(input.links ?? [])].filter((link, index, all) => all.findIndex((item) => item.url === link.url) === index).slice(0, 5);
     for (let index = 0; index < verifiedSummaries.length; index += 1) Object.assign(links[index], shoppingRecommendationCardDetails(verifiedSummaries[index]));
-    if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
-    const claimRejected = input.kind === "products" ? validatePanelProductClaims({ text: input.text, links, recommendation_state: input.recommendation_state }) : null;
+    const claimRejected = input.kind === "products" ? validatePanelProductClaims({ text: input.text, links, recommendation_state: input.recommendation_state, availability_requirement: input.availability_requirement }) : null;
     if (claimRejected) return asText({ posted: false, error: claimRejected });
+    if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
     let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^still verifying\b/i.test(input.text)
       ? `Still verifying — ${input.text}`
       : input.text;

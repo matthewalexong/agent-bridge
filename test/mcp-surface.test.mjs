@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   advertisedDescription,
+  compactPanelHydrationResult,
+  compactPanelRead,
   compactPanelSnapshot,
+  compactPanelStatusResult,
   defaultEvaluatorResultChars,
   MCP_SURFACE_FULL,
   MCP_SURFACE_PANEL,
@@ -19,6 +22,58 @@ test("live MCP surface defaults to panel", () => {
   assert.equal(resolveMcpSurface({}), MCP_SURFACE_PANEL);
   assert.equal(resolveMcpSurface({ AB_MCP_SURFACE: "panel" }), MCP_SURFACE_PANEL);
   assert.equal(resolveMcpSurface({ AB_MCP_SURFACE: "FULL" }), MCP_SURFACE_FULL);
+});
+
+test("panel hydration keeps actionable offer facts without returning signed evidence trees", () => {
+  const result = compactPanelHydrationResult({
+    candidate_offers: {
+      candidate_set_id: "cset_1234567890abcdef12345678",
+      offers: [{
+        candidate_id: "listing_1",
+        candidate: { title: "Example 128GB system", url: "https://shop.example/item" },
+        listing_evidence: {
+          source: { url: "https://shop.example/item", captured_at: "2026-08-25T12:00:00.000Z" },
+          facts: {
+            price_usd: { status: "explicit", value: 3999.99 },
+            stock: { status: "explicit", value: "in_stock" },
+            seller: { status: "explicit", value: "Example Shop" },
+          },
+          source_receipt: { page_text: "x".repeat(20_000) },
+          artifact_attestation: `v1.page_evidence.${"a".repeat(64)}`,
+        },
+      }],
+    },
+    candidate_offers_ref: { candidate_offers_id: `candidate_offers_${"b".repeat(32)}` },
+    ledger: { entries: 1, reused: 0, extracted: 1 },
+  }, MCP_SURFACE_PANEL);
+  assert.equal(result.candidate_offers_summary[0].price_usd.value, 3999.99);
+  assert.equal(result.candidate_offers_summary[0].stock.value, "in_stock");
+  assert.equal("candidate_offers" in result, false);
+  assert.ok(JSON.stringify(result).length < 2_000);
+});
+
+test("panel conversation tools omit accumulated research trails from model responses", () => {
+  const state = {
+    agent: "Hermes",
+    status: { text: "Verifying exact offers" },
+    progress: [{ summary: "x".repeat(10_000) }],
+    transcript: [{
+      id: "panel_1",
+      role: "user",
+      text: "Find a machine",
+      at: "2026-08-25T12:00:00.000Z",
+      research: [{ summary: "x".repeat(10_000) }],
+    }],
+  };
+  const compact = compactPanelRead(state, MCP_SURFACE_PANEL);
+  assert.equal(compact.transcript[0].text, "Find a machine");
+  assert.equal("research" in compact.transcript[0], false);
+  assert.equal("progress" in compact, false);
+  assert.ok(JSON.stringify(compact).length < 500);
+  assert.deepEqual(compactPanelStatusResult({ status: state.status, progress: state.progress }, MCP_SURFACE_PANEL), {
+    updated: true,
+    status: state.status,
+  });
 });
 
 test("panel surface keeps hubs and hides analysis/checkout tools", () => {
@@ -82,7 +137,8 @@ test("product copy cannot outrun signed price and availability evidence", () => 
   assert.match(validatePanelProductClaims({ text: "The true price is $99.", links: unknown, recommendation_state: "provisional" }), /verified landed total/i);
   assert.match(validatePanelProductClaims({ text: "This is the cheapest and best option.", links: unknown, recommendation_state: "provisional" }), /cannot name a winner/i);
   assert.match(validatePanelProductClaims({ text: "No other architecture is comparable.", links: unknown, recommendation_state: "verified" }), /market-exclusivity/i);
-  assert.equal(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), null);
+  assert.match(validatePanelProductClaims({ text: "This is a lead; price and availability still need verification.", links: unknown, recommendation_state: "provisional" }), /in-stock shortlist/i);
+  assert.equal(validatePanelProductClaims({ text: "Availability unverified — this is a research lead.", links: unknown, recommendation_state: "provisional", availability_requirement: "allow_unknown" }), null);
   assert.equal(validatePanelProductClaims({ text: "Verified in stock at an $108 landed total.", links: [{ ...unknown[0], availability: "In stock", landed_total: "$108.00" }], recommendation_state: "verified" }), null);
 });
 
@@ -90,14 +146,21 @@ test("panel snapshots keep the evidence handle without duplicating element metad
   const snapshot = {
     snapshotId: "snapshot-1",
     snapshot: '- link "Product" [ref=e1]',
+    url: "https://www.google.com/search?q=product",
     text: "Product $20",
-    elements: Array.from({ length: 500 }, (_, index) => ({ ref: `e${index + 1}`, selector: `#item-${index}` })),
+    elements: Array.from({ length: 500 }, (_, index) => ({
+      ref: `e${index + 1}`,
+      selector: `#item-${index}`,
+      ...(index === 0 ? { name: "Product", href: "https://shop.example/product" } : {}),
+    })),
     evidence_receipt: { snapshot_id: "snapshot-1" },
   };
   const compact = compactPanelSnapshot(snapshot, MCP_SURFACE_PANEL);
   assert.equal(compact.snapshotId, "snapshot-1");
   assert.equal(compact.evidence_receipt.snapshot_id, "snapshot-1");
   assert.equal("elements" in compact, false);
+  assert.equal("text" in compact, false);
+  assert.deepEqual(compact.links, [{ ref: "e1", name: "Product", href: "https://shop.example/product" }]);
   assert.ok(JSON.stringify(compact).length < JSON.stringify(snapshot).length / 4);
   assert.equal(compactPanelSnapshot(snapshot, MCP_SURFACE_FULL), snapshot);
 });

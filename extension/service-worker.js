@@ -54,6 +54,33 @@ let panelStatus = null;
 let panelProgress = [];
 const panelLifecyclePorts = new Set();
 let panelCloseTimer = null;
+const PANEL_STATUS_STALE_MS = 5 * 60 * 1000;
+let panelStatusExpiryTimer = null;
+
+function clearPanelStatusExpiry() {
+  if (panelStatusExpiryTimer) clearTimeout(panelStatusExpiryTimer);
+  panelStatusExpiryTimer = null;
+}
+
+function schedulePanelStatusExpiry(status) {
+  clearPanelStatusExpiry();
+  if (!status?.at) return;
+  const marker = status.at;
+  panelStatusExpiryTimer = setTimeout(() => {
+    panelStatusExpiryTimer = null;
+    if (panelStatus?.at !== marker) return;
+    recordPanelEntry(
+      "agent",
+      "Research paused because no update arrived for five minutes. Send “keep going” if you want me to continue the search.",
+      [],
+      panelProgress,
+    );
+    panelProgress = [];
+    panelStatus = null;
+    broadcastPanel();
+  }, PANEL_STATUS_STALE_MS);
+  panelStatusExpiryTimer?.unref?.();
+}
 
 function progressText(value, max) {
   const text = String(value ?? "").trim().slice(0, max);
@@ -88,6 +115,7 @@ function setPanelStatus(input) {
       }
     }
   }
+  schedulePanelStatusExpiry(panelStatus);
   broadcastPanel();
   return panelStatus;
 }
@@ -233,6 +261,7 @@ async function resetPanelConversation() {
 }
 
 async function closePanelSession() {
+  clearPanelStatusExpiry();
   panelTranscript.length = 0;
   panelProgress = [];
   panelStatus = null;
@@ -1773,6 +1802,7 @@ async function dispatch(method, params) {
       const entry = recordPanelEntry("agent", text, links, panelProgress);
       panelProgress = [];
       panelStatus = null;
+      clearPanelStatusExpiry();
       broadcastPanel();
       return { posted: true, entry };
     }
@@ -1805,6 +1835,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "panel.clear") {
     void (async () => {
+      clearPanelStatusExpiry();
       panelTranscript.length = 0;
       panelProgress = [];
       panelStatus = null;

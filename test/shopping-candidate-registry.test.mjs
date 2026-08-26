@@ -79,6 +79,27 @@ test("candidate cards carry only signed exact-page seller and availability facts
   });
 });
 
+test("candidate registry resolves model-supplied URLs only through exact hydrated matches", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact({ candidates: [
+    { id: "listing_bbbbbbbbbbbbbbbb", title: "Observed Fan", url: "https://shop.example/products/fan", price: null },
+    { id: "listing_cccccccccccccccc", title: "Observed Fan Pro", url: "https://shop.example/products/fan-pro", price: null },
+  ] });
+  registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb"));
+  registry.hydrate(hydratedArtifact(set, "listing_cccccccccccccccc"));
+  assert.deepEqual(registry.matchHydratedLinks([
+    { url: "https://shop.example/products/fan-pro" },
+    { url: "https://shop.example/products/fan?utm_source=search" },
+  ]), {
+    candidate_set_id: set.candidate_set_id,
+    candidate_ids: ["listing_cccccccccccccccc", "listing_bbbbbbbbbbbbbbbb"],
+  });
+  assert.throws(() => registry.matchHydratedLinks([{ url: "https://attacker.example/products/fan" }]), {
+    code: "shopping_candidate_links_not_hydrated",
+  });
+});
+
 test("candidate registry exposes the exact signed card binding and replaces it on rehydration", () => {
   const registry = createShoppingCandidateRegistry();
   const set = artifact();

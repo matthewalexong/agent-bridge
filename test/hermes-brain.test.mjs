@@ -21,7 +21,7 @@ test("panel skill uses live progress instead of a final Why block", async () => 
 test("live panel shopping does not collapse broad technical categories to one brand and preserves source links", async () => {
   const skill = await fs.readFile(LIVE_PANEL_SKILL, "utf8");
   assert.match(skill, /Start brand-neutral and include current\/new terms/i);
-  assert.match(skill, /unified, shared, coherent, or CPU\/GPU-addressable memory is not an Apple constraint/i);
+  assert.match(skill, /Unified\/shared\/coherent memory is not Apple-only/i);
   assert.match(skill, /cover at least two architectures and three families/i);
   assert.match(skill, /Never treat one brand as market coverage/i);
   assert.match(skill, /required architecture lane has no viable candidate.*report that searched lane and uncertainty/is);
@@ -29,10 +29,19 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /product shortlist must use signed candidates/i);
   assert.match(skill, /“Exists” is not available/i);
   assert.match(skill, /True price is landed total.*shipping.*tax\/duty\/fees.*required add-ons/i);
-  assert.match(skill, /navigate `\{tabId,url\}`.*snapshots `\{pages:.*hydration `\{candidate_set_id,requests:/i);
+  assert.match(skill, /hydration once as `\{snapshots:.*navigate `\{tabId,url\}`.*snapshots `\{pages:.*act `\{tabId,kind,ref\}`/i);
   assert.match(skill, /Always call `shopping_request_intake`/i);
   assert.match(skill, /AMD Ryzen AI Max\/Strix Halo.*NVIDIA GB10\/Grace Blackwell/i);
-  assert.match(skill, /Never treat one brand as market coverage or declare an architecture absent without searching its lane/i);
+  assert.match(skill, /ASUS Ascent GX10 and DGX Spark exact offers/i);
+  assert.match(skill, /Harvest ≥2 distinct current families per lane/i);
+  assert.match(skill, /4-5 exact buy pages for a broad request/i);
+  assert.match(skill, /As soon as 2 exact in-stock pages exist.*post those provisional cards before continuing/i);
+  assert.match(skill, /broad request with no best\/fastest\/cheapest objective asks for a market map/i);
+  assert.match(skill, /shared memory and any GPU-addressable limit.*storage.*item price.*stock\/delivery/i);
+  assert.match(skill, /never declare a lane absent without searching it/i);
+  assert.match(skill, /availability_requirement=in_stock_only.*signed page says In stock/i);
+  assert.match(skill, /Reddit questions.*recent dated community threads/i);
+  assert.match(skill, /Community evidence informs fit, never price(?: or |\/)stock/i);
   assert.match(skill, /product shortlist must use signed candidates.*never bypass extraction with source cards/i);
 });
 

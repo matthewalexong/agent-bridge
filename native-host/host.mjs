@@ -9,7 +9,7 @@ import {
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
-import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
+import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 
@@ -331,7 +331,7 @@ async function endPanelConversation(conversationId) {
 // The agent publishes meaningful progress through browser_panel_status. The
 // gateway log is tailed only to clear that transient status when the turn ends;
 // its generic heartbeats must never overwrite the agent's concrete summary.
-const GATEWAY_LOG_FILE = process.env.AB_GATEWAY_LOG_FILE || join(homedir(), ".hermes", "logs", "gateway.log");
+const GATEWAY_LOG_FILE = resolvePanelGatewayLogFile();
 const STATUS_POLL_MS = 3_000;
 const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
 const activeStatusTails = new Map(); // deliveryId -> { timer }
@@ -355,6 +355,13 @@ function startTurnStatusTail(deliveryId, conversationId) {
     /* no gateway log — status updates simply won't appear */
   }
   const startedAt = Date.now();
+  const state = { timer: null, initialAgentId: null, budgetExhausted: false };
+  activeStatusTails.set(deliveryId, state);
+  void forwardToExtension("panel.get", {})
+    .then((panel) => {
+      state.initialAgentId = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent")?.id ?? null;
+    })
+    .catch(() => {});
   pushPanelStatus("Planning the approach…", { phase: "plan", persist: false });
   const timer = setInterval(() => {
     if (Date.now() - startedAt > STATUS_MAX_MS) {
@@ -378,18 +385,38 @@ function startTurnStatusTail(deliveryId, conversationId) {
     stream.on("end", () => {
       for (const line of chunk.split("\n")) {
         if (!line.includes(chatMarker)) continue;
+        if (line.includes("Iteration budget exhausted")) {
+          state.budgetExhausted = true;
+          continue;
+        }
         if (line.includes("response ready") || (line.includes("Response for ") && !line.includes("⏳"))) {
           // Turn finished — the agent's panel.post reply lands on its own;
           // drop the thinking bubble.
           stopTurnStatusTail(deliveryId);
           pushPanelStatus(null, { persist: false });
+          if (state.budgetExhausted) void postContinuationPromptIfNeeded(state.initialAgentId);
           return;
         }
       }
     });
     stream.on("error", () => {});
   }, STATUS_POLL_MS);
-  activeStatusTails.set(deliveryId, { timer });
+  state.timer = timer;
+}
+
+async function postContinuationPromptIfNeeded(initialAgentId) {
+  try {
+    const panel = await forwardToExtension("panel.get", {});
+    const latestAgentId = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent")?.id ?? null;
+    if (latestAgentId !== initialAgentId) return;
+    await forwardToExtension("panel.post", {
+      text: "The initial research pass reached its safety limit before I found enough verified results. Would you like me to keep going with a deeper search?",
+      links: [],
+    });
+    log("panel continuation prompt posted after iteration budget exhaustion");
+  } catch (error) {
+    log(`panel continuation prompt failed (${error?.message ?? error})`);
+  }
 }
 
 function stopTurnStatusTail(deliveryId) {

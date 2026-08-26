@@ -207,4 +207,22 @@ test("live thinking status flows: panel msg -> webhook accept -> log tail -> sta
   assert.equal(finalUpdate.transcript[1].research.length, 1);
   assert.equal(finalUpdate.transcript[1].research[0].evidence[0], "2 of 3 listings match the requested size");
   assert.equal(finalUpdate.progress.length, 0);
+
+  // --- 7. A later run that exhausts its finite safety budget without posting
+  // a result clears the bubble and asks before spending another research pass.
+  received = null;
+  await new Promise((resolve) => {
+    runtimeMessage.listener({ type: "panel.send", text: "search deeper" }, sender, resolve);
+  });
+  await waitFor(() => received?.body?.text === "search deeper" && received, 10_000, "second webhook delivery");
+  const exhaustedMarker = `webhook:panel_message:${received.body.conversation_id}`;
+  await fs.appendFile(fakeGatewayLog,
+    `2026-08-21 17:10:01,000 INFO gateway.platforms.webhook: [webhook] Response for ${exhaustedMarker}: ⚠️ Iteration budget exhausted (28/28) — asking model to summarise\n` +
+    `2026-08-21 17:10:02,000 INFO gateway.run: response ready: platform=webhook chat=${exhaustedMarker} time=300.0s api_calls=28 response=500 chars\n`);
+  const continuation = await waitFor(async () => {
+    const update = broadcasts.filter((message) => message.type === "panel.update").at(-1);
+    const entry = update?.transcript?.at(-1);
+    return entry?.role === "agent" && /Would you like me to keep going/i.test(entry.text) ? entry : null;
+  }, 20_000, `continuation prompt after safety budget. host stderr: ${hostStderr.slice(-300)}`);
+  assert.match(continuation.text, /initial research pass reached its safety limit/i);
 });

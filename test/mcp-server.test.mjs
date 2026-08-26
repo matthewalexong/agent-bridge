@@ -347,8 +347,8 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(pageAct.inputSchema.properties.ref.pattern, "^e\\d+$");
 
   const panelStatus = tools.find((tool) => tool.name === "browser_panel_status");
-  assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 300);
-  assert.equal(panelStatus.inputSchema.properties.text.maxLength, 300);
+  assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 1000);
+  assert.equal(panelStatus.inputSchema.properties.text.maxLength, 1000);
   assert.equal(panelStatus.inputSchema.required?.includes("summary") ?? false, false);
   assert.deepEqual(panelStatus.inputSchema.properties.phase.enum, ["plan", "search", "inspect", "verify", "compare", "decision", "working"]);
   assert.equal(panelStatus.inputSchema.properties.evidence.maxItems, 5);
@@ -496,6 +496,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(panelPosts.length, 0);
   const detailSnapshots = await client.callTool({ name: "browser_snapshot_batch", arguments: { pages: [{ tabId: 1201 }, { tabId: 1203 }] } });
   const detailIds = detailSnapshots.structuredContent.results.map((item) => item.snapshot.snapshotId);
+  const directHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
+    snapshots: detailIds.map((snapshot_id) => ({ snapshot_id })),
+    query: "fixture camera",
+  } });
+  assert.equal(directHydration.isError, undefined, JSON.stringify(directHydration));
+  assert.match(directHydration.structuredContent.candidate_set_id, /^cset_[a-f0-9]{24}$/);
+  assert.equal(directHydration.structuredContent.candidate_ids.length, 2);
+  assert.equal(directHydration.structuredContent.candidate_offers.offers.length, 2);
   const candidateByUrl = new Map(listingCandidates.structuredContent.candidates.map((candidate) => [candidate.url, candidate]));
   const hydrated = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,

@@ -46,8 +46,105 @@ export function serializeToolPayload(value) {
 
 export function compactPanelSnapshot(snapshot, surface = resolveMcpSurface()) {
   if (surface !== MCP_SURFACE_PANEL || !snapshot || typeof snapshot !== "object") return snapshot;
-  const { elements: _elements, ...compact } = snapshot;
-  return compact;
+  // `snapshot` already contains the bounded semantic page text the model
+  // needs. Keep a small destination map so search results can be navigated by
+  // exact href instead of brittle overlay-prone clicks. The plain `text` field
+  // repeats the page, while full elements remain in the signed registry.
+  const { elements = [], text: _text, ...compact } = snapshot;
+  let pageHost = "";
+  try { pageHost = new URL(snapshot.url || "").hostname.toLowerCase(); } catch {}
+  const isSearchPage = /(?:^|\.)(?:google\.[a-z.]+|bing\.com|duckduckgo\.com|search\.yahoo\.com)$/.test(pageHost);
+  const seen = new Set();
+  const links = [];
+  let linkChars = 0;
+  if (isSearchPage) for (const element of elements) {
+    if (typeof element?.href !== "string" || !/^https?:\/\//i.test(element.href)) continue;
+    let href;
+    let host;
+    try {
+      const parsed = new URL(element.href);
+      parsed.hash = "";
+      href = parsed.toString();
+      host = parsed.hostname.toLowerCase();
+    } catch { continue; }
+    if (host === pageHost || host.endsWith(`.${pageHost}`) || seen.has(href)) continue;
+    const link = { ref: element.ref, name: element.name || null, href };
+    const size = JSON.stringify(link).length;
+    if (links.length >= 30 || linkChars + size > 5_000) break;
+    seen.add(href);
+    links.push(link);
+    linkChars += size;
+  }
+  return links.length ? { ...compact, links } : compact;
+}
+
+function compactPanelOffer(offer) {
+  const evidence = offer?.listing_evidence || {};
+  const facts = evidence.facts || {};
+  return {
+    candidate_id: offer?.candidate_id,
+    title: offer?.candidate?.title || evidence?.source_receipt?.title || null,
+    url: offer?.candidate?.url || evidence?.source?.url || null,
+    captured_at: evidence?.source?.captured_at || null,
+    price_usd: facts.price_usd || null,
+    stock: facts.stock || null,
+    seller: facts.seller || null,
+    fulfiller: facts.fulfiller || null,
+    shipping_usd: facts.shipping_usd || null,
+    warnings: evidence.warnings || [],
+  };
+}
+
+export function compactPanelHydrationResult({ candidate_offers, candidate_offers_ref, artifacts, ledger } = {}, surface = resolveMcpSurface()) {
+  if (surface !== MCP_SURFACE_PANEL) {
+    return {
+      ...(candidate_offers ? {
+        candidate_set_id: candidate_offers.candidate_set_id,
+        candidate_ids: candidate_offers.offers.map((offer) => offer.candidate_id),
+        candidate_offers,
+        candidate_offers_ref,
+      } : { artifacts }),
+      ledger,
+    };
+  }
+  if (candidate_offers) {
+    return {
+      candidate_set_id: candidate_offers.candidate_set_id,
+      candidate_ids: candidate_offers.offers.map((offer) => offer.candidate_id),
+      candidate_offers_summary: candidate_offers.offers.map(compactPanelOffer),
+      candidate_offers_ref,
+      ledger,
+    };
+  }
+  return {
+    artifacts_summary: (artifacts || []).map((artifact) => compactPanelOffer({ listing_evidence: artifact })),
+    ledger,
+  };
+}
+
+export function compactPanelRead(result, surface = resolveMcpSurface()) {
+  if (surface !== MCP_SURFACE_PANEL || !result || typeof result !== "object") return result;
+  return {
+    agent: result.agent ?? null,
+    status: result.status ?? null,
+    transcript: (Array.isArray(result.transcript) ? result.transcript : []).slice(-20).map((entry) => ({
+      id: entry.id,
+      role: entry.role,
+      text: entry.text,
+      at: entry.at,
+      ...(Array.isArray(entry.links) && entry.links.length ? { links: entry.links.map((link) => ({
+        url: link.url,
+        title: link.title,
+        price: link.price,
+        availability: link.availability,
+      })) } : {}),
+    })),
+  };
+}
+
+export function compactPanelStatusResult(result, surface = resolveMcpSurface()) {
+  if (surface !== MCP_SURFACE_PANEL || !result || typeof result !== "object") return result;
+  return { updated: true, status: result.status ?? null };
 }
 
 const KEEP_FULL_PANEL_SCHEMA = new Set([
@@ -92,7 +189,7 @@ export function validatePanelPost({ text, kind, links, candidate_set_id, candida
   return null;
 }
 
-export function validatePanelProductClaims({ text, links, recommendation_state } = {}) {
+export function validatePanelProductClaims({ text, links, recommendation_state, availability_requirement = "in_stock_only" } = {}) {
   const copy = String(text || "");
   const cards = Array.isArray(links) ? links : [];
   if (/\b(?:no other architecture|only (?:true|practical|viable) (?:path|option|architecture)|nothing else (?:qualifies|compares|is comparable))\b/i.test(copy)) {
@@ -106,6 +203,12 @@ export function validatePanelProductClaims({ text, links, recommendation_state }
   }
   if (cards.some((card) => !card?.landed_total) && /\b(?:true price|landed total|all[- ]in (?:price|cost)|total after (?:tax|shipping|fees))\b/i.test(copy)) {
     return "The reply makes a total-price claim without a verified landed total for every displayed card.";
+  }
+  if (availability_requirement === "in_stock_only" && cards.some((card) => !/^in stock$/i.test(String(card?.availability || "")))) {
+    return "An in-stock shortlist can contain only cards with explicit signed In stock availability; verify another seller or omit the card.";
+  }
+  if (availability_requirement === "allow_unknown" && cards.some((card) => /^availability unknown$/i.test(String(card?.availability || ""))) && !/^availability unverified\b/i.test(copy)) {
+    return "Unknown-availability research leads must begin with 'Availability unverified' and cannot be presented as an in-stock shortlist.";
   }
   return null;
 }

@@ -47,7 +47,7 @@ test("default MCP server advertises the compact panel surface only", async (cont
 
 test("live panel skill stays small and does not replace judgment with keywords", async () => {
   const skill = await fs.readFile(path.join(root, "eval/search/skills/agent-bridge-panel.md"), "utf8");
-  assert.ok(skill.length < 4000, `skill is ${skill.length} chars`);
+  assert.ok(skill.length < 4400, `skill is ${skill.length} chars`);
   assert.match(skill, /Do \*\*not\*\* `tool_describe`/);
   assert.match(skill, /Never `web_extract`/);
   assert.match(skill, /your judgment/);

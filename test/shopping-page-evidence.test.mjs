@@ -88,6 +88,17 @@ test("real accessible product text supports standalone price without inventing d
   assert.ok(result.warnings.includes("shipping_unresolved"));
 });
 
+test("explicit retailer shipping date is current availability evidence", () => {
+  const result = extractShoppingPageEvidence({
+    page_kind: "retailer_listing",
+    url: "https://retailer.example/product/ai-box",
+    page_text: "AI Box 128GB\nCurrent Price: $3,999.99\nSold by Best Buy\nShipping Get it by Fri, Aug 28\nAdd to cart",
+  });
+  assert.equal(result.facts.stock.status, "explicit");
+  assert.equal(result.facts.stock.value, "in_stock");
+  assert.match(result.facts.stock.evidence[0].excerpt, /Shipping Get it by Fri, Aug 28/i);
+});
+
 test("checkout and policy text preserve merchant, processor, and return recipient roles", () => {
   const result = extractShoppingPageEvidence({
     page_kind: "checkout",

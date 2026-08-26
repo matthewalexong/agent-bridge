@@ -49,6 +49,10 @@ reuse across a different page kind or scope, and never treat a partial batch as
 complete. Continue using a single fresh snapshot after an interactive action or
 when only one targeted gap remains.
 
+When a snapshot returns a compact `links` map, use `browser_navigate` with the
+search result's exact `href`. Do not click a result ref when its href is
+available; direct navigation avoids overlays and ambiguous new tabs.
+
 Once the evidence inputs exist, call `shopping_evaluator_batch` to run ready
 independent and explicitly dependent deterministic checks as one validated
 acyclic graph instead of serial evaluator waves. Use at most 24 jobs and the
@@ -268,6 +272,49 @@ and NVIDIA GB10/Grace Blackwell systems. Those names seed discovery rather than
 preselect winners. A lane may be omitted from the final cards only after it was
 actually searched and its exclusion or unresolved status is reported. Never
 infer that an architecture has no viable products from Apple-only results.
+The NVIDIA lane must separately inspect current ASUS Ascent GX10 and NVIDIA DGX
+Spark exact offers; one cannot stand in for the other. An in-stock shortlist
+contains only signed exact-product cards whose observed availability is
+explicitly in stock. Unknown, preorder, backorder, and sold-out cards stay out
+while the agent tries another seller. Unknown-availability leads may be shown
+only as a clearly labeled incomplete research update, never as the requested
+result.
+
+When a broad request has no fastest, cheapest, best, portability, OS, or other
+optimization objective, interpret it as a request for a market map rather than
+silently choosing a winner. Return four to five representative exact in-stock
+configurations spanning materially different architectures and price points.
+For each option, annotate only sourced facts from its exact page: exact model
+and chip, installed shared/unified memory, any distinct GPU-addressable limit,
+storage, observed item price, seller, stock or delivery state, and the relevant
+software-stack distinction. Do not rank these options. After showing the map,
+ask which tradeoff the user wants to optimize for the next pass.
+
+Architecture coverage is not product-family coverage. Before narrowing a broad
+request, inventory at least two distinct current product families per required
+lane when the market contains them. If the first query yields fewer, run one
+bounded second query using the current year, release/new terms, and another
+source type; do not merely inspect more results from the same brand. For a
+broad multi-lane request, inspect four to five exact buy pages in one bounded
+batch before ranking. Report the named families found, the exact pages checked,
+and any sparse lane so the user can see the actual coverage boundary.
+
+Do not hold useful exact offers hostage to the entire coverage pass. As soon as
+two exact pages have signed in-stock evidence, hydrate that small batch and post
+its provisional cards, then continue the remaining lanes and replace or extend
+the shortlist after the broader bounded batch. This is an early evidence result,
+not permission to call a winner or skip required checks.
+
+When the user asks what is best “right now,” asks for community consensus, or
+names Reddit/forums, add a bounded community-evidence lane. Search at least two
+recent, dated, independent discussion threads and preserve their dates and
+URLs. Distinguish firsthand ownership or benchmarks from hearsay, repeated
+claims, and vendor promotion; summarize agreement and disagreement instead of
+turning votes or search rank into a consensus score. Community evidence may
+inform practical fit, software friction, noise, thermals, and reliability, but
+it never verifies current price, stock, seller, or delivery. Those claims still
+require a fresh signed exact retailer page. Do not add this lane to simple
+availability requests unless it would materially change the recommendation.
 
 For broad category requests, expand the user's requirement into current,
 brand-neutral architecture and product-family terms before opening retailer

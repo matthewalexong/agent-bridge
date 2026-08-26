@@ -42,14 +42,14 @@ import { createShoppingDecisionContext } from "../lib/shopping-decision-context.
 import { createShoppingDecisionContextRegistry } from "../lib/shopping-decision-context-registry.mjs";
 import { shoppingApplicabilityEntrySchema, shoppingDecisionContextArtifactSchema, shoppingDecisionContextInputSchema } from "../lib/shopping-decision-context-schema.mjs";
 import { issueShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
-import { fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
+import { createShoppingExactPageCandidateSet, fuseShoppingCandidateSets } from "../lib/shopping-listing-candidates.mjs";
 import { bindShoppingCandidateOffers } from "../lib/shopping-candidate-offer-evidence.mjs";
 import { projectShoppingEvaluatorOfferInput, validateShoppingEvaluatorOfferBinding } from "../lib/shopping-evaluator-offer-binding.mjs";
 import { compactShoppingEvaluatorResult } from "../lib/shopping-evaluator-result-compact.mjs";
 import { createShoppingDossierStageRegistry } from "../lib/shopping-dossier-stage-registry.mjs";
 import { createShoppingCandidateOffersRegistry } from "../lib/shopping-candidate-offers-registry.mjs";
 import { createShoppingPriceHistoryLedger } from "../lib/shopping-price-history.mjs";
-import { defaultEvaluatorResultChars } from "./surface.mjs";
+import { compactPanelHydrationResult, defaultEvaluatorResultChars, MCP_SURFACE_PANEL, resolveMcpSurface } from "./surface.mjs";
 
 const id = z.string().min(1).max(160);
 const money = z.number().finite().nonnegative().max(10_000_000).nullable().optional();
@@ -563,14 +563,18 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
     description: "Convert 1-20 fresh snapshots into signed page evidence. With candidate_set_id, bind 1-5 shortlisted candidate IDs to their own fresh retailer product pages using canonical retailer URL identity and return one signed candidate-offer artifact. Cross-listing evidence, stale sets, mismatched redirects, and model-authored URLs fail closed.",
     inputSchema: {
       candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional(),
-      requests: z.array(z.object(pageEvidenceRequest)).min(1).max(20),
+      requests: z.array(z.object(pageEvidenceRequest)).min(1).max(20).optional(),
+      snapshots: z.array(z.object({ ...pageEvidenceRequest, max_chars: z.number().int().positive().optional() })).min(1).max(20).optional().describe("Compatibility alias for requests. Exact retailer pages automatically become one hydrated candidate set."),
+      query: z.string().max(300).optional().default(""),
     },
   }, async (input) => {
-    if (input.candidate_set_id && input.requests.length > 5) throw Object.assign(new Error("Hydrate at most 5 shortlisted candidates"), { code: "shopping_candidate_binding_invalid" });
-    if (!input.candidate_set_id && input.requests.some((request) => request.candidate_id != null)) throw Object.assign(new Error("candidate_id requires candidate_set_id"), { code: "shopping_candidate_binding_invalid" });
-    if (input.candidate_set_id && input.requests.some((request) => !request.candidate_id)) throw Object.assign(new Error("Every bound request needs candidate_id"), { code: "shopping_candidate_binding_invalid" });
+    if (Boolean(input.requests) === Boolean(input.snapshots)) throw Object.assign(new Error("Pass exactly one of requests or snapshots"), { code: "shopping_page_evidence_batch_invalid" });
+    const requests = input.requests ?? input.snapshots;
+    if (input.candidate_set_id && requests.length > 5) throw Object.assign(new Error("Hydrate at most 5 shortlisted candidates"), { code: "shopping_candidate_binding_invalid" });
+    if (!input.candidate_set_id && requests.some((request) => request.candidate_id != null)) throw Object.assign(new Error("candidate_id requires candidate_set_id"), { code: "shopping_candidate_binding_invalid" });
+    if (input.candidate_set_id && requests.some((request) => !request.candidate_id)) throw Object.assign(new Error("Every bound request needs candidate_id"), { code: "shopping_candidate_binding_invalid" });
     const before = pageEvidenceLedger.stats();
-    const artifacts = await Promise.all(input.requests.map(async (request) => {
+    const artifacts = await Promise.all(requests.map(async (request) => {
       const snapshot_id = request.snapshot_id ?? request.snapshotId;
       if (!snapshot_id) throw Object.assign(new Error("Each request needs snapshot_id from browser_snapshot"), { code: "shopping_snapshot_id_required" });
       return pageEvidenceLedger.extract({ ...request, snapshot_id });
@@ -581,15 +585,25 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
       if (typeof resolveListingCandidateSet !== "function") throw Object.assign(new Error("Candidate set resolution is unavailable"), { code: "shopping_candidate_set_not_found" });
       candidate_offers = bindShoppingCandidateOffers({
         candidate_set: resolveListingCandidateSet(input.candidate_set_id),
-        bindings: input.requests.map((request, index) => ({ candidate_id: request.candidate_id, listing_evidence: artifacts[index] })),
+        bindings: requests.map((request, index) => ({ candidate_id: request.candidate_id, listing_evidence: artifacts[index] })),
+      });
+      if (typeof hydrateListingCandidateSet === "function") hydrateListingCandidateSet(candidate_offers);
+    } else if ((input.snapshots || resolveMcpSurface() === MCP_SURFACE_PANEL) && artifacts.every((artifact) => artifact?.source?.page_kind === "retailer_listing")) {
+      const candidateSet = createShoppingExactPageCandidateSet({ page_evidence: artifacts, query: input.query });
+      if (typeof storeListingCandidateSet === "function") storeListingCandidateSet(candidateSet);
+      candidate_offers = bindShoppingCandidateOffers({
+        candidate_set: candidateSet,
+        bindings: candidateSet.candidates.map((candidate, index) => ({ candidate_id: candidate.id, listing_evidence: artifacts[index] })),
       });
       if (typeof hydrateListingCandidateSet === "function") hydrateListingCandidateSet(candidate_offers);
     }
     const candidate_offers_ref = candidate_offers ? candidateOffersRegistry.store(candidate_offers) : null;
-    return asText({
-      ...(candidate_offers ? { candidate_offers, candidate_offers_ref } : { artifacts }),
+    return asText(compactPanelHydrationResult({
+      candidate_offers,
+      candidate_offers_ref,
+      artifacts,
       ledger: { entries: after.entries, reused: after.hits - before.hits, extracted: after.misses - before.misses },
-    });
+    }));
   });
 
   const lifecycleDate = z.object({ date: z.string().datetime().nullable().optional(), evidence_status: z.enum(["verified", "estimated", "unknown"]) });
