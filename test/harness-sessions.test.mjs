@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { archiveHarnessSession, listHarnessSessions, loadHarnessSession, promptHarnessSession } from "../lib/harness-sessions.mjs";
+import { archiveHarnessSession, listHarnessSessions, loadHarnessSession, promptHarnessSession, renameHarnessSession, titleFromUserPrompt } from "../lib/harness-sessions.mjs";
 
 function reply(value) {
   return { ok: true, async json() { return { result: { ok: true, value } }; } };
@@ -32,6 +32,20 @@ test("removing a session uses the harness archive boundary and requires its ackn
   assert.equal(request.method, "workspace.archiveSession");
   assert.deepEqual(request.payload, { sessionId: "session-shop" });
   assert.deepEqual(result, { sessionId: "session-shop", archived: true });
+});
+
+test("a first user prompt becomes a concise session title and can be pinned through the harness", async () => {
+  assert.equal(titleFromUserPrompt("  Compare   128 GB local AI machines across the current market. Then show tradeoffs."), "Compare 128 GB local AI machines across the current market.");
+  assert.equal(titleFromUserPrompt("Find every current 128 GB unified-memory local AI workstation that can run very large models without spending a fortune"), "Find every current 128 GB unified-memory local AI workstation that can…");
+  let request;
+  const fetchImpl = async (_url, options) => {
+    request = JSON.parse(options.body);
+    return reply({ title: "Local AI landscape", seq: 3 });
+  };
+  const result = await renameHarnessSession("session-shop", "  Local   AI landscape  ", { fetchImpl });
+  assert.equal(request.method, "session.rename");
+  assert.deepEqual(request.payload, { sessionId: "session-shop", title: "Local AI landscape" });
+  assert.deepEqual(result, { sessionId: "session-shop", title: "Local AI landscape" });
 });
 
 test("harness history projects display messages without reasoning or tool traffic", async () => {

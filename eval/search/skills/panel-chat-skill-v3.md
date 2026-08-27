@@ -272,6 +272,13 @@ and NVIDIA GB10/Grace Blackwell systems. Those names seed discovery rather than
 preselect winners. A lane may be omitted from the final cards only after it was
 actually searched and its exclusion or unresolved status is reported. Never
 infer that an architecture has no viable products from Apple-only results.
+In `explore_category` or `define_requirements`, establish these architecture
+families before praising individual machines. Explain that DGX Spark is one
+GB10/Grace Blackwell implementation among multiple OEM/partner systems (for
+example ASUS Ascent GX10), and that Ryzen AI Max+ 395/Strix Halo is likewise a
+multi-vendor family with multiple systems, often at lower price points. Stop at
+the family level and ask which lane matters most; do not enumerate every box or
+pretend one named product represents the landscape.
 Treat Ryzen AI Max+ 395 with 128GB as a multi-vendor Strix Halo ecosystem, not
 an exhaustive vendor checklist. A broad map should show one or two
 representative exact offers, explain that many machines share essentially this

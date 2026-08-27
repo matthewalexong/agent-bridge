@@ -127,6 +127,17 @@ test("product posts without link cards are rejected", () => {
   assert.match(validatePanelPost({ text: "Apple is the only practical path. $4,999 in stock.", kind: "none", source_snapshot_ids: ["snapshot-1"] }), /Source-only cards cannot publish/i);
 });
 
+test("early broad local-AI guidance maps platform ecosystems before narrowing", () => {
+  const appleAndDgxOnly = "For 128 GB local AI, the Apple Mac Studio is excellent and NVIDIA DGX Spark is the other strong option. Which matters more?";
+  assert.match(validatePanelPost({ text: appleAndDgxOnly, kind: "question", shopping_phase: "explore_category" }), /must cover Apple Silicon.*NVIDIA.*AMD/i);
+
+  const namedButNarrow = "For 128 GB local AI, consider Apple Silicon, NVIDIA DGX Spark/GB10, and AMD Ryzen AI Max+ 395/Strix Halo. Which matters most?";
+  assert.match(validatePanelPost({ text: namedButNarrow, kind: "question", shopping_phase: "define_requirements" }), /multiple partner or vendor systems/i);
+
+  const landscape = "The 128 GB local AI landscape has three main lanes: Apple Silicon Mac Studio; NVIDIA DGX Spark/GB10-class hardware sold in multiple OEM and partner systems such as ASUS Ascent GX10; and AMD Ryzen AI Max+ 395/Strix Halo, a multi-vendor family used in many systems that can be cheaper. Which matters most: CUDA compatibility, maximum model size, portability, or price?";
+  assert.equal(validatePanelPost({ text: landscape, kind: "question", shopping_phase: "explore_category" }), null);
+});
+
 test("tool payloads are compact JSON", () => {
   const pretty = JSON.stringify({ a: 1, b: ["x"] }, null, 2);
   const compact = serializeToolPayload({ a: 1, b: ["x"] });

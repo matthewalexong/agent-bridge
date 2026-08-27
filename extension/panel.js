@@ -241,7 +241,7 @@ function renderAll(doc, transcript, entries) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-function renderSessions(select, removeButton, sessions, selectedSessionId) {
+function renderSessions(select, renameButton, removeButton, sessions, selectedSessionId) {
   const selected = selectedSessionId || "";
   select.replaceChildren();
   const doc = select.ownerDocument;
@@ -259,6 +259,7 @@ function renderSessions(select, removeButton, sessions, selectedSessionId) {
   }
   select.value = selected;
   const selectedSession = (Array.isArray(sessions) ? sessions : []).find((session) => session.id === selected);
+  renameButton.disabled = !selectedSession;
   removeButton.disabled = !selectedSession || Boolean(selectedSession.running);
   removeButton.title = selectedSession?.running ? "Active sessions cannot be removed" : "Remove selected session";
 }
@@ -318,6 +319,7 @@ export function startPanel(doc = document) {
   const clearButton = doc.querySelector("#clear");
   const sessionsSelect = doc.querySelector("#sessions");
   const refreshSessionsButton = doc.querySelector("#refresh-sessions");
+  const renameSessionButton = doc.querySelector("#rename-session");
   const removeSessionButton = doc.querySelector("#remove-session");
 
   let connected = false;
@@ -343,7 +345,7 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, message.transcript ?? []);
       setThinking(doc, transcript, message.status ?? null, message.progress ?? []);
       agentName = message.agent?.name ?? null;
-      renderSessions(sessionsSelect, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null);
+      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null);
       setStatus();
     }
   });
@@ -409,6 +411,21 @@ export function startPanel(doc = document) {
   refreshSessionsButton.addEventListener("click", () => {
     void send({ type: "panel.sessions.refresh" });
   });
+  renameSessionButton.addEventListener("click", async () => {
+    const session = [...sessionsSelect.options].find((option) => option.value === sessionsSelect.value);
+    if (!session || !session.value) return;
+    const currentTitle = session.textContent.split(" · ")[0];
+    const title = window.prompt("Rename session", currentTitle)?.replace(/\s+/g, " ").trim();
+    if (!title || title === currentTitle) return;
+    renameSessionButton.disabled = true;
+    try {
+      await send({ type: "panel.session.rename", sessionId: session.value, title });
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.className = "status error";
+      renameSessionButton.disabled = false;
+    }
+  });
   removeSessionButton.addEventListener("click", async () => {
     const session = [...sessionsSelect.options].find((option) => option.value === sessionsSelect.value);
     if (!session || !session.value) return;
@@ -431,7 +448,7 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, result.transcript ?? []);
       setThinking(doc, transcript, result.status ?? null, result.progress ?? []);
       agentName = result.agent?.name ?? null;
-      renderSessions(sessionsSelect, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null);
+      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null);
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,

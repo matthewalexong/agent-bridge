@@ -12,7 +12,7 @@ import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.
 import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
-import { archiveHarnessSession, listHarnessSessions, loadHarnessSession, promptHarnessSession } from "../lib/harness-sessions.mjs";
+import { archiveHarnessSession, listHarnessSessions, loadHarnessSession, promptHarnessSession, renameHarnessSession, titleFromUserPrompt } from "../lib/harness-sessions.mjs";
 
 let authState = await loadOrCreateAuthState();
 const pending = new Map();
@@ -238,6 +238,7 @@ function recordEvent(event, data) {
   if (event === "panel.sessions.list") void publishHarnessSessions(data?.requestId);
   if (event === "panel.session.select" && data?.sessionId) void publishHarnessSession(data.sessionId, data?.requestId);
   if (event === "panel.session.archive" && data?.sessionId) void archivePanelHarnessSession(data.sessionId, data?.requestId);
+  if (event === "panel.session.rename" && data?.sessionId) void renamePanelHarnessSession(data.sessionId, data?.title, data?.requestId);
 }
 
 async function publishHarnessSessions(requestId) {
@@ -269,6 +270,16 @@ async function archivePanelHarnessSession(sessionId, requestId) {
   } catch (error) {
     log(`harness sessions: archive failed (${error?.message ?? error})`);
     await forwardToExtension("panel.session.archived", { requestId, sessionId, error: "That session could not be removed from the list." }).catch(() => {});
+  }
+}
+
+async function renamePanelHarnessSession(sessionId, title, requestId) {
+  try {
+    const renamed = await renameHarnessSession(sessionId, title);
+    await forwardToExtension("panel.session.renamed", { requestId, ...renamed });
+  } catch (error) {
+    log(`harness sessions: rename failed (${error?.message ?? error})`);
+    await forwardToExtension("panel.session.renamed", { requestId, sessionId, error: "That session could not be renamed." }).catch(() => {});
   }
 }
 
@@ -360,6 +371,25 @@ async function forwardPanelMessageToHermes(data) {
     if (!result) return;
     log(`panel→hermes: forwarded (HTTP ${result.status}) ${result.text}`);
     if (result.status >= 200 && result.status < 300 && result.text.includes('"accepted"')) {
+      if (!data.resume) {
+        let harnessSessionId = null;
+        try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
+        if (harnessSessionId) {
+          const fallbackTitle = titleFromUserPrompt(data.text);
+          let title = fallbackTitle;
+          try {
+            title = (await renameHarnessSession(harnessSessionId, fallbackTitle)).title;
+          } catch (error) {
+            log(`panel→harness: automatic title failed (${error?.message ?? error})`);
+          }
+          await forwardToExtension("panel.session.started", {
+            sessionId: harnessSessionId,
+            title,
+            updatedAt: new Date().toISOString(),
+            running: true,
+          }).catch(() => {});
+        }
+      }
       startTurnStatusTail(deliveryId, conversationId);
     }
   } catch (error) {

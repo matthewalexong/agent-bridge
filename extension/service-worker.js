@@ -34,7 +34,7 @@ const PANEL_CLOSE_GRACE_MS = 300;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1", "harness-session-remove:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1", "harness-session-remove:v1", "harness-session-rename:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -226,7 +226,7 @@ function emitBrowserEvent(event, data) {
   }
 }
 
-const conversationMemory = { id: null, started: false };
+const conversationMemory = { id: null, started: false, harnessSession: false };
 
 async function readStoredConversation() {
   try {
@@ -237,12 +237,13 @@ async function readStoredConversation() {
   } catch {
     // session storage is optional; in-memory is enough for one SW lifetime
   }
-  return { id: conversationMemory.id, started: conversationMemory.started, harnessSession: Boolean(panelSessionSelection) };
+  return { id: conversationMemory.id, started: conversationMemory.started, harnessSession: conversationMemory.harnessSession };
 }
 
 async function writeStoredConversation(id, started, harnessSession = false) {
   conversationMemory.id = id;
   conversationMemory.started = started;
+  conversationMemory.harnessSession = Boolean(harnessSession);
   try {
     await chrome.storage?.session?.set?.({ panelConversationId: id, panelConversationStarted: started, panelHarnessSession: harnessSession });
   } catch {
@@ -253,9 +254,10 @@ async function writeStoredConversation(id, started, harnessSession = false) {
 async function resetPanelConversation() {
   const stored = await readStoredConversation();
   const previousId = conversationMemory.id || stored.id;
-  const wasHarnessSession = Boolean(panelSessionSelection || stored.harnessSession);
+  const wasHarnessSession = Boolean(stored.harnessSession);
   conversationMemory.id = null;
   conversationMemory.started = false;
+  conversationMemory.harnessSession = false;
   try {
     await chrome.storage?.session?.remove?.(["panelConversationId", "panelConversationStarted", "panelHarnessSession"]);
   } catch {
@@ -328,6 +330,16 @@ function requestHarnessSessionArchive(rawSessionId) {
   const requestId = `sessions-${crypto.randomUUID()}`;
   emitBrowserEvent("panel.session.archive", { requestId, sessionId });
   return { requested: true, requestId, sessionId };
+}
+
+function requestHarnessSessionRename(rawSessionId, rawTitle) {
+  const sessionId = String(rawSessionId || "").trim();
+  if (!panelSessions.some((session) => session.id === sessionId)) throw codedError("invalid_request", "Choose a session from the connected harness.");
+  const title = String(rawTitle || "").replace(/\s+/g, " ").trim().slice(0, 100);
+  if (!title) throw codedError("invalid_request", "Enter a session name.");
+  const requestId = `sessions-${crypto.randomUUID()}`;
+  emitBrowserEvent("panel.session.rename", { requestId, sessionId, title });
+  return { requested: true, requestId, sessionId, title };
 }
 
 function recordPanelEntry(role, text, links, research) {
@@ -1860,6 +1872,19 @@ async function dispatch(method, params) {
       panelSessions = Array.isArray(params.sessions) ? params.sessions.slice(0, 30) : [];
       broadcastPanel();
       return { updated: true, sessions: panelSessions, error: params.error ?? null };
+    case "panel.session.started": {
+      const session = {
+        id: String(params.sessionId || ""),
+        title: String(params.title || "New session").slice(0, 100),
+        updatedAt: params.updatedAt || new Date().toISOString(),
+        running: params.running !== false,
+      };
+      if (!session.id) return { started: false };
+      panelSessions = [session, ...panelSessions.filter((candidate) => candidate.id !== session.id)].slice(0, 30);
+      panelSessionSelection = session.id;
+      broadcastPanel();
+      return { started: true, sessionId: session.id };
+    }
     case "panel.session.loaded":
       if (params.sessionId !== panelSessionSelection) return { loaded: false, stale: true };
       if (params.error) {
@@ -1888,6 +1913,15 @@ async function dispatch(method, params) {
       }
       broadcastPanel();
       return { archived: true, sessionId: params.sessionId };
+    case "panel.session.renamed":
+      if (params.error) {
+        recordPanelEntry("system", params.error);
+        broadcastPanel();
+        return { renamed: false, sessionId: params.sessionId, error: params.error };
+      }
+      panelSessions = panelSessions.map((session) => session.id === params.sessionId ? { ...session, title: params.title } : session);
+      broadcastPanel();
+      return { renamed: true, sessionId: params.sessionId, title: params.title };
     case "panel.post": {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
@@ -1941,6 +1975,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "panel.session.remove") {
     try {
       sendResponse({ ok: true, result: requestHarnessSessionArchive(message.sessionId) });
+    } catch (error) {
+      sendResponse({ ok: false, error: errorPayload(error) });
+    }
+    return false;
+  }
+  if (message?.type === "panel.session.rename") {
+    try {
+      sendResponse({ ok: true, result: requestHarnessSessionRename(message.sessionId, message.title) });
     } catch (error) {
       sendResponse({ ok: false, error: errorPayload(error) });
     }

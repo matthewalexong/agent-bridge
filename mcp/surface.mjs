@@ -172,8 +172,21 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
 export function validatePanelPost({ text, kind, shopping_phase, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
   const cards = Array.isArray(links) ? links : [];
   const earlyJourney = shopping_phase === "explore_category" || shopping_phase === "define_requirements";
+  const copy = String(text || "");
+  const broadLocalAiLandscape = earlyJourney && /\b128\s*GB\b/i.test(copy) && /\b(?:local AI|unified memory|shared memory|Mac Studio|DGX Spark|GB10|Strix Halo|Ryzen AI Max)\b/i.test(copy);
   if (earlyJourney && (kind === "products" || cards.length > 0 || (Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0))) {
     return `${shopping_phase} cannot publish product cards or links; guide the user and ask one narrowing question first.`;
+  }
+  if (broadLocalAiLandscape) {
+    if (!/\b(?:Apple Silicon|Mac Studio)\b/i.test(copy) || !/\b(?:NVIDIA|GB10|Grace Blackwell|DGX Spark)\b/i.test(copy) || !/\b(?:AMD|Ryzen AI Max\+?\s*395|Strix Halo)\b/i.test(copy)) {
+      return "A broad 128GB local-AI landscape answer must cover Apple Silicon, NVIDIA DGX Spark/GB10-class systems, and AMD Ryzen AI Max+ 395/Strix Halo before narrowing.";
+    }
+    const nvidiaEcosystem = /\b(?:multiple|many|several|partner|OEM|other)\b[^.\n]{0,140}\b(?:DGX Spark|GB10|Grace Blackwell|NVIDIA)\b/i.test(copy) || /\b(?:DGX Spark|GB10|Grace Blackwell|NVIDIA)\b[^.\n]{0,140}\b(?:multiple|many|several|partner|OEM|other)\b/i.test(copy);
+    const amdEcosystem = /\b(?:multiple|many|several|range of|multi-vendor)\b[^.\n]{0,140}\b(?:Ryzen AI Max\+?\s*395|Strix Halo)\b/i.test(copy) || /\b(?:Ryzen AI Max\+?\s*395|Strix Halo)\b[^.\n]{0,140}\b(?:multiple|many|several|range of|multi-vendor)\b/i.test(copy);
+    if (!nvidiaEcosystem || !amdEcosystem) {
+      return "A broad 128GB local-AI landscape answer must explain that both DGX Spark/GB10-class and Ryzen AI Max+ 395/Strix Halo platforms appear in multiple partner or vendor systems; representative families are enough.";
+    }
+    if (!/\?\s*$/.test(copy.trim())) return "An early 128GB local-AI landscape answer must end with one focused narrowing question.";
   }
   if (kind === "products") {
     if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
@@ -188,7 +201,7 @@ export function validatePanelPost({ text, kind, shopping_phase, links, candidate
   } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0) || recommendation_state != null || (Array.isArray(recommendation_refs) && recommendation_refs.length > 0)) {
     return "candidate and recommendation fields are only valid with kind=products.";
   }
-  if (kind === "none" && Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0 && /(?:[$£€]\s?\d|\b(?:best|cheapest|winner|buy now|in stock|sold out|pre-?order|no other architecture|only (?:true|practical|viable|new) (?:path|option|architecture))\b)/i.test(String(text || ""))) {
+  if (kind === "none" && Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0 && /(?:[$£€]\s?\d|\b(?:best|cheapest|winner|buy now|in stock|sold out|pre-?order|no other architecture|only (?:true|practical|viable|new) (?:path|option|architecture))\b)/i.test(copy)) {
     return "Source-only cards cannot publish a product shortlist, current price or stock, winner, or market-exclusivity claim; use signed product candidates or state that offer verification is incomplete.";
   }
   return null;

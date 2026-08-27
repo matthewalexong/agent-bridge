@@ -245,6 +245,39 @@ test("previous harness sessions can be listed, loaded, and resumed without copyi
   }
 });
 
+test("a newly accepted harness session is titled in the picker without changing webhook follow-up routing", async () => {
+  const harness = await loadHarness();
+  try {
+    const first = await harness.sendRuntime({ type: "panel.send", text: "Map the 128 GB local AI landscape" });
+    await harness.dispatch("session-started", "panel.session.started", {
+      sessionId: "session-created",
+      title: "Map the 128 GB local AI landscape",
+      updatedAt: "2026-08-27T00:00:00.000Z",
+      running: true,
+    });
+    const state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.selectedSessionId, "session-created");
+    assert.equal(state.result.sessions[0].title, "Map the 128 GB local AI landscape");
+    assert.ok(state.result.capabilities.includes("harness-session-rename:v1"));
+
+    const followUp = await harness.sendRuntime({ type: "panel.send", text: "Tell me more about AMD" });
+    assert.equal(followUp.result.conversationId, first.result.conversationId);
+    assert.equal(followUp.result.resume, true);
+    const messageEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
+    assert.equal(messageEvent.data.harnessSession, false);
+
+    const rename = await harness.sendRuntime({ type: "panel.session.rename", sessionId: "session-created", title: "AI workstations" });
+    assert.equal(rename.ok, true);
+    const renameEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.session.rename");
+    assert.deepEqual({ sessionId: renameEvent.data.sessionId, title: renameEvent.data.title }, { sessionId: "session-created", title: "AI workstations" });
+    await harness.dispatch("session-renamed", "panel.session.renamed", { sessionId: "session-created", title: "AI workstations" });
+    const renamedState = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(renamedState.result.sessions[0].title, "AI workstations");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("active harness sessions cannot be removed", async () => {
   const harness = await loadHarness();
   try {
