@@ -203,6 +203,12 @@ export function validatePanelProductClaims({ text, links, recommendation_state, 
   if (broadLocalAiMap && !hasAppleCard && !(namesExactAppleLane && givesConcreteAppleState)) {
     return "A broad 128GB local-AI market map cannot vaguely omit Apple: include an exact signed Apple card, or name the exact current Mac Studio generation/configuration and its concrete availability state.";
   }
+  const hasAmdHaloDeveloperCard = /(?:AMD Ryzen AI Halo(?: Developer Platform)?|amd\.com\/[^\s]*ryzen-ai-halo|microcenter\.com\/[^\s]*amd-ryzen-ai-halo)/i.test(cardCopy);
+  const namesExactAmdHaloLane = /\bAMD(?:'s own)?\s+Ryzen AI Halo Developer Platform\b/i.test(copy);
+  const givesConcreteAmdHaloState = /\b(?:pre-?order|back-?order|out of stock|unavailable|available only|in stock|ships? by|delivery by|availability unverified)\b/i.test(copy);
+  if (broadLocalAiMap && !hasAmdHaloDeveloperCard && !(namesExactAmdHaloLane && givesConcreteAmdHaloState)) {
+    return "A broad 128GB local-AI market map cannot omit AMD's own Ryzen AI Halo Developer Platform: include its exact signed card, or name the exact platform and its concrete availability state.";
+  }
   if (/\b(?:no other architecture|only (?:true|practical|viable) (?:path|option|architecture)|nothing else (?:qualifies|compares|is comparable))\b/i.test(copy)) {
     return "Offer cards cannot support an absolute market-exclusivity claim; report the researched alternatives and remaining scope instead.";
   }

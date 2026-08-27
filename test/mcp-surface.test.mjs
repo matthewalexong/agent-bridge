@@ -150,7 +150,8 @@ test("product copy cannot outrun signed price and availability evidence", () => 
     { title: "NVIDIA DGX Spark GB10 128GB", availability: "In stock", price: "$5,299", seller: "Best Buy" },
   ];
   assert.match(validatePanelProductClaims({ text: "Apple was checked, but no offer was verified.", links: localAiMap, recommendation_state: "provisional" }), /cannot vaguely omit Apple/i);
-  assert.equal(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards.", links: localAiMap, recommendation_state: "provisional" }), null);
+  assert.match(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards.", links: localAiMap, recommendation_state: "provisional" }), /cannot omit AMD's own Ryzen AI Halo/i);
+  assert.equal(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards. AMD's own Ryzen AI Halo Developer Platform with 128GB is available only at Micro Center; exact local stock is availability unverified.", links: localAiMap, recommendation_state: "provisional" }), null);
 });
 
 test("panel snapshots keep the evidence handle without duplicating element metadata", () => {

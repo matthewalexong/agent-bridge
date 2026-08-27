@@ -15,6 +15,10 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const bridgeDir = await fs.mkdtemp(path.join(os.tmpdir(), "chrome-agent-bridge-test-"));
   context.after(() => fs.rm(bridgeDir, { recursive: true, force: true }));
   const testNow = new Date().toISOString();
+  const deliveryEarliest = new Date(Date.parse(testNow) + 24 * 60 * 60 * 1000).toISOString();
+  const deliveryLatest = new Date(Date.parse(testNow) + 3 * 24 * 60 * 60 * 1000).toISOString();
+  const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+  const deliveryLabel = `${shortDate.format(new Date(deliveryEarliest))}–${shortDate.format(new Date(deliveryLatest))}`;
 
   const snapshotText = new Map([
     [101, "Brand: Acme\nProduct Line: Camera X\nModel: CX-1\nCurrent Price: $89.00\nShipping: $15.00\nSold by: Camera Store A\nIn stock\nManufacturer warranty: included\n30-day returns\nCondition: new"],
@@ -56,14 +60,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [501, "Brand: Acme\nProduct Line: Camera X\nProduct Category: cameras\nModel: CX-1"],
     [701, "Offer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nMerchant of record: Camera Store B\nQuantity: 1\nUnit Price: $100.00\nStock: in stock\nReturn Policy: 30-day returns\nPayment Method: Visa ending 1234\nShipping Destination: Home ZIP 94107\nSubtotal: $100.00\nShipping: $0.00\nTax: $8.00\nFees: $0.00\nOrder total: $108.00\nArrives: Tuesday"],
     [702, "Offer ID: A\nProduct Key: camera-x\nPurchase Type: subscription\nTerms Version: terms-1\nTerms Inventory: complete\nInitial Charge: $0.00\nRecurring Charge: $20.00\nRecurring Cadence: monthly\nFirst Recurring Charge: 2026-09-22T20:00:00.000Z\nAuto Renews: yes\nMinimum Cycles: 0\nCancellation Method: online\nCancellation Terms: complete\nCancellation Deadline: Before renewal\nCancellation Fee: $0.00\nAdd-on Inventory: complete\nAdd-on: id=warranty; kind=warranty; selected=yes; optional=yes; preselected=yes; amount=$10.00\nTerm Change Inventory: complete\nUrgency Inventory: complete"],
-    [703, "Checkout\nOffer ID: A\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $89.00\nShipping: $15.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes"],
-    [704, "Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes"],
-    [705, "Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes\nPromotion Inventory: complete\nPromotion: id=save10; type=coupon; code=SAVE10; application=applied; amount=$10.00; affects advertised price=yes; eligibility=complete; obligations=none; stacking=verified\nDiscount: -$10.00\nOrder Total: $96.00"],
+    [703, `Checkout\nOffer ID: A\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $89.00\nShipping: $15.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: ${deliveryEarliest}\nDelivery Latest: ${deliveryLatest}\nTracking Available: yes`],
+    [704, `Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: ${deliveryEarliest}\nDelivery Latest: ${deliveryLatest}\nTracking Available: yes`],
+    [705, `Checkout\nOffer ID: B\nProduct Key: camera-x\nSeller: Camera Store B\nItem Price: $98.00\nShipping: $0.00\nTax: $8.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: ${deliveryEarliest}\nDelivery Latest: ${deliveryLatest}\nTracking Available: yes\nPromotion Inventory: complete\nPromotion: id=save10; type=coupon; code=SAVE10; application=applied; amount=$10.00; affects advertised price=yes; eligibility=complete; obligations=none; stacking=verified\nDiscount: -$10.00\nOrder Total: $96.00`],
     [1101, "Order Receipt: complete\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nPurchased At: 2026-08-01T12:00:00.000Z\nDelivered At: 2026-08-05T12:00:00.000Z\nCurrency: USD\nItem Price: $100.00\nOrder Shipping: $0.00\nOrder Total: $100.00\nSeller: Example Shop\nMerchant of record: Example Shop"],
     [1102, "Event Evidence: complete\nCase Event: merchant_contacted\nEvent At: 2026-08-06T12:00:00.000Z\nOrder Number: ORDER-MCP-1\nProduct Key: camera-x\nEvent Reference: message-44\nEvent Counterparty: Example Shop"],
     [1201, "Brand: Acme\nProduct Line: Camera X\nProduct Category: cameras\nModel: CX-1\nCurrent Price: $74.50\nFREE delivery\nSold by: Camera Store A\nIn stock\nManufacturer warranty: included\n30-day returns\nCondition: new"],
     [1203, "Brand: Acme\nModel: Camera 103\nCurrent Price: $79.00\nSold by: Fixture Store 103\nIn stock\nCondition: new"],
-    [1207, "Checkout\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $74.50\nShipping: $0.00\nTax: $6.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: 2026-08-25T00:00:00.000Z\nDelivery Latest: 2026-08-27T00:00:00.000Z\nTracking Available: yes"],
+    [1207, `Checkout\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $74.50\nShipping: $0.00\nTax: $6.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: ${deliveryEarliest}\nDelivery Latest: ${deliveryLatest}\nTracking Available: yes`],
     [502, "Brand: Acme\nModel: Drive X"],
     [503, "Brand: Sony\nProduct Line: WH-1000XM5\nModel: WH-1000XM5"],
     [504, "Brand: SONY\nProduct Line: WH 1000XM5\nModel: WH1000XM5\nCondition: new\nSold by: Audio Shop"],
@@ -860,7 +864,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   } });
   assert.equal(verifiedPost.isError, undefined, JSON.stringify(verifiedPost));
   assert.equal(panelPosts.length, 2);
-  assert.match(panelPosts[1].text, /^This is the verified best offer\.\n\nVerified details: \$80\.50 landed total · sold by Camera Store A · in stock · delivery Aug 25–Aug 27 · 30-day returns · 12-month warranty · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · protection requirements met$/);
+  assert.equal(panelPosts[1].text, `This is the verified best offer.\n\nVerified details: $80.50 landed total · sold by Camera Store A · in stock · delivery ${deliveryLabel} · 30-day returns · 12-month warranty · tracking available · exact identity matched · safety checks cleared · counterfeit risk low · protection requirements met`);
   assert.equal(panelPosts[1].links[0].price, "$74.50");
   assert.equal(panelPosts[1].links[0].seller, "Camera Store A");
   assert.deepEqual({
@@ -876,7 +880,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     verification: "Verified pick",
     landed_total: "$80.50",
     landed_total_label: "Landed total",
-    delivery: "Delivery Aug 25–Aug 27",
+    delivery: `Delivery ${deliveryLabel}`,
     cost_breakdown: [{ label: "Item", amount: "$74.50" }, { label: "Tax", amount: "$6.00" }],
     timing_label: "Buy now",
     protections: ["30-day returns", "12-month warranty"],
