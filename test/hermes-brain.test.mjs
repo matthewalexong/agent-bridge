@@ -38,10 +38,10 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /Harvest ≥2 distinct current families per lane/i);
   assert.match(skill, /4-5 exact buy pages for an explicit market map/i);
   assert.match(skill, /As soon as 2 exact in-stock pages exist.*post those provisional cards before continuing/i);
-  assert.match(skill, /Obey intake `interaction_stage`/i);
-  assert.match(skill, /`category_exploration` means explain current families, price bands, tradeoffs, and spec choices/i);
-  assert.match(skill, /Post no product cards, exact links, prices, or availability/i);
-  assert.match(skill, /Begin exact-offer research only in `offer_research`/i);
+  assert.match(skill, /main reasoning brain chooses `shopping_phase` from meaning and chat context/i);
+  assert.match(skill, /never a phrase table or local model/i);
+  assert.match(skill, /`explore_category`, `define_requirements`, `research_products`, `compare_offers`, or `decide_purchase`/i);
+  assert.match(skill, /first two.*ask one high-leverage question.*post no product cards, links, prices, or availability/i);
   assert.match(skill, /shared memory and any GPU-addressable limit.*storage.*item price.*stock\/delivery/i);
   assert.match(skill, /never declare a lane absent without searching it/i);
   assert.match(skill, /For Apple, configure one current Mac Studio.*chip, CPU\/GPU, memory, then storage/is);

@@ -118,7 +118,10 @@ test("product posts without link cards are rejected", () => {
   assert.match(validatePanelPost({ kind: "products", links: [{ url: "https://www.amazon.com/dp/B0EXAMPLE" }] }), /rejects model-authored links/);
   assert.match(validatePanelPost({ kind: "products", source_snapshot_ids: ["snapshot-1"], candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /rejects source snapshot cards/);
   assert.match(validatePanelPost({ kind: "products", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /recommendation_state/);
-  assert.equal(validatePanelPost({ kind: "products", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), null);
+  assert.match(validatePanelPost({ kind: "products", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /requires shopping_phase/);
+  assert.equal(validatePanelPost({ kind: "products", shopping_phase: "research_products", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), null);
+  assert.match(validatePanelPost({ kind: "products", shopping_phase: "explore_category", recommendation_state: "provisional", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /cannot publish product cards or links/i);
+  assert.match(validatePanelPost({ kind: "question", shopping_phase: "define_requirements", links: [{ url: "https://shop.example/product" }] }), /cannot publish product cards or links/i);
   assert.match(validatePanelPost({ kind: "products", recommendation_state: "verified", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /recommendation_ref/);
   assert.match(validatePanelPost({ kind: "none", candidate_set_id: "cset_aaaaaaaaaaaaaaaaaaaaaaaa", candidate_ids: ["listing_bbbbbbbbbbbbbbbb"] }), /only valid/);
   assert.match(validatePanelPost({ text: "Apple is the only practical path. $4,999 in stock.", kind: "none", source_snapshot_ids: ["snapshot-1"] }), /Source-only cards cannot publish/i);

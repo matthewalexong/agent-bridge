@@ -501,7 +501,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(listingCandidates.structuredContent.candidates[0].url, "https://fixture.example/products/camera-101");
   assert.equal(listingCandidates.structuredContent.candidates[0].price.amount_usd, 79);
   const unhydratedPost = await client.callTool({ name: "browser_panel_post", arguments: {
-    text: "Premature result.", kind: "products", recommendation_state: "provisional",
+    text: "Premature result.", kind: "products", shopping_phase: "research_products", recommendation_state: "provisional",
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
   } });
@@ -545,6 +545,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const boundPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Observed match under verification.",
     kind: "products",
+    shopping_phase: "research_products",
     recommendation_state: "provisional",
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     candidate_ids: [listingCandidates.structuredContent.candidates[0].id],
@@ -572,6 +573,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const localAiPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Apple Mac Studio M5 Max with 128GB and 1TB is pre-order and excluded from the four in-stock cards. Many machines share the Ryzen AI Max+ 395/128GB Strix Halo platform; these are representative. I can research lower-cost Strix Halo systems next.",
     kind: "products",
+    shopping_phase: "research_products",
     recommendation_state: "provisional",
     availability_requirement: "allow_unknown",
     candidate_set_id: localAiHydration.structuredContent.candidate_set_id,
@@ -726,7 +728,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.match(productClearance.clearance_attestation, /^v1\.[a-f0-9]{64}$/);
   assert.equal(productClearance.recommendation_ref, null, "a non-card canonical product ID cannot authorize a listing card");
   const unauthorizedVerifiedPost = await client.callTool({ name: "browser_panel_post", arguments: {
-    text: "Unverified winner.", kind: "products", recommendation_state: "verified",
+    text: "Unverified winner.", kind: "products", shopping_phase: "decide_purchase", recommendation_state: "verified",
     recommendation_refs: [{ recommendation_id: `shopping_recommendation_${"0".repeat(32)}`, dossier_id: "missing", phase: "product_recommendation", candidate_id: boundCandidate.candidate_id }],
     candidate_set_id: listingCandidates.structuredContent.candidate_set_id, candidate_ids: [boundCandidate.candidate_id],
   } });
@@ -898,7 +900,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(learnedPriceHistory.observations.length, 1);
   assert.deepEqual({ product_key: learnedPriceHistory.observations[0].product_key, condition: learnedPriceHistory.observations[0].condition, landed_total_usd: learnedPriceHistory.observations[0].landed_total_usd, source_type: learnedPriceHistory.observations[0].source.source_type }, { product_key: "camera-x", condition: "new", landed_total_usd: 80.5, source_type: "retailer" });
   const verifiedPost = await client.callTool({ name: "browser_panel_post", arguments: {
-    text: "This is the verified best offer.", kind: "products", recommendation_state: "verified",
+    text: "This is the verified best offer.", kind: "products", shopping_phase: "decide_purchase", recommendation_state: "verified",
     recommendation_refs: [finalOfferDossier.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id,
     candidate_ids: [boundCandidate.candidate_id],
   } });
@@ -944,7 +946,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(deferredDossierResponse.isError, undefined, JSON.stringify(deferredDossierResponse));
   assert.equal(deferredDossierResponse.structuredContent.decision.action, "defer_purchase");
   assert.equal(deferredDossierResponse.structuredContent.decision.selected_offer, boundCandidate.candidate_id);
-  const deferredPost = await client.callTool({ name: "browser_panel_post", arguments: { text: "This is the safe offer to monitor, but the current price is not compelling.", kind: "products", recommendation_state: "verified", recommendation_refs: [deferredDossierResponse.structuredContent.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id, candidate_ids: [boundCandidate.candidate_id] } });
+  const deferredPost = await client.callTool({ name: "browser_panel_post", arguments: { text: "This is the safe offer to monitor, but the current price is not compelling.", kind: "products", shopping_phase: "decide_purchase", recommendation_state: "verified", recommendation_refs: [deferredDossierResponse.structuredContent.recommendation_ref], candidate_set_id: listingCandidates.structuredContent.candidate_set_id, candidate_ids: [boundCandidate.candidate_id] } });
   assert.equal(deferredPost.isError, undefined, JSON.stringify(deferredPost));
   assert.equal(panelPosts.length, 3);
   assert.equal(panelPosts[2].links[0].verification, "Verified offer");

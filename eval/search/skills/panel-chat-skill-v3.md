@@ -299,18 +299,20 @@ while the agent tries another seller. Unknown-availability leads may be shown
 only as a clearly labeled incomplete research update, never as the requested
 result.
 
-Obey the request receipt's deterministic `interaction_stage`. A broad or
-ambiguous statement of purchase curiosity such as “I'm thinking about buying
-this type of machine” is `category_exploration`, not permission to begin exact
-offer discovery. Research and explain the current category landscape—major
-families, approximate price bands, meaningful tradeoffs, and the specifications
-that change fit—then ask one high-leverage narrowing question. Do not surface
-product cards, exact product links, current item prices, or availability during
-this stage. Once the user supplies a decision-relevant constraint or explicitly
-asks for products, comparisons, prices, links, or availability, intake moves to
-`offer_research` and exact-offer discovery may begin.
+The main reasoning model chooses the shopping journey phase from the semantic
+meaning of the request and conversation context. Do not use a phrase library,
+keyword table, deterministic intent regex, Gemma, or another local model for
+this judgment. Choose `explore_category`, `define_requirements`,
+`research_products`, `compare_offers`, or `decide_purchase`, and pass that
+choice as `shopping_phase` when replying. Broad purchase curiosity normally
+belongs in one of the first two phases, but this is a reasoning judgment rather
+than a trigger phrase. Explain the landscape, price bands, tradeoffs, and spec
+choices, then ask one high-leverage question. The first two phases cannot
+surface product cards, product links, current prices, or availability. Exact
+offer discovery starts only when the reasoning model judges the conversation
+ready for one of the last three phases or the user directly asks to proceed.
 
-If the user explicitly requests a market map in `offer_research`, return four
+If the user explicitly requests a market map in `research_products`, return four
 to five representative exact in-stock configurations spanning materially
 different architectures and price points. Annotate only sourced exact-page
 facts and do not rank them before an optimization objective is known.
@@ -324,7 +326,7 @@ broad multi-lane request, inspect four to five exact buy pages in one bounded
 batch before ranking. Report the named families found, the exact pages checked,
 and any sparse lane so the user can see the actual coverage boundary.
 
-Only in `offer_research`, do not hold useful exact offers hostage to the entire coverage pass. As soon as
+Only in the last three phases, do not hold useful exact offers hostage to the entire coverage pass. As soon as
 two exact pages have signed in-stock evidence, hydrate that small batch and post
 its provisional cards, then continue the remaining lanes and replace or extend
 the shortlist after the broader bounded batch. This is an early evidence result,

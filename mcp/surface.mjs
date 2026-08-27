@@ -169,8 +169,12 @@ export function defaultEvaluatorResultChars(surface = resolveMcpSurface()) {
   return surface === MCP_SURFACE_FULL ? 120_000 : 20_000;
 }
 
-export function validatePanelPost({ text, kind, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
+export function validatePanelPost({ text, kind, shopping_phase, links, candidate_set_id, candidate_ids, recommendation_state, recommendation_refs, source_snapshot_ids } = {}) {
   const cards = Array.isArray(links) ? links : [];
+  const earlyJourney = shopping_phase === "explore_category" || shopping_phase === "define_requirements";
+  if (earlyJourney && (kind === "products" || cards.length > 0 || (Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0))) {
+    return `${shopping_phase} cannot publish product cards or links; guide the user and ask one narrowing question first.`;
+  }
   if (kind === "products") {
     if (cards.length > 0) return "kind=products rejects model-authored links; choose candidate_ids from shopping_listing_candidates.";
     if (Array.isArray(source_snapshot_ids) && source_snapshot_ids.length > 0) return "kind=products rejects source snapshot cards; product cards come from signed candidate evidence.";
@@ -180,6 +184,7 @@ export function validatePanelPost({ text, kind, links, candidate_set_id, candida
     if (!['provisional', 'verified'].includes(recommendation_state)) return "kind=products requires recommendation_state=provisional or verified.";
     if (recommendation_state === "verified" && (!Array.isArray(recommendation_refs) || recommendation_refs.length !== candidate_ids.length)) return "verified product cards require one recommendation_ref per candidate_id.";
     if (recommendation_state === "provisional" && Array.isArray(recommendation_refs) && recommendation_refs.length) return "provisional product cards cannot claim recommendation authority.";
+    if (!["research_products", "compare_offers", "decide_purchase"].includes(shopping_phase)) return "kind=products requires shopping_phase=research_products, compare_offers, or decide_purchase chosen by the main reasoning model.";
   } else if (candidate_set_id != null || (Array.isArray(candidate_ids) && candidate_ids.length > 0) || recommendation_state != null || (Array.isArray(recommendation_refs) && recommendation_refs.length > 0)) {
     return "candidate and recommendation fields are only valid with kind=products.";
   }

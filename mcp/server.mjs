@@ -349,6 +349,7 @@ tool(
     inputSchema: {
       text: z.string().min(1).max(20_000),
       kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
+      shopping_phase: z.enum(["explore_category", "define_requirements", "research_products", "compare_offers", "decide_purchase"]).optional().describe("Main-reasoning-model judgment of the user's current shopping journey phase. Required for product cards. Early phases structurally reject cards and links."),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
       candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional().describe("Short-lived set ID from shopping_listing_candidates. Required for products."),
       candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
