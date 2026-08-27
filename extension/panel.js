@@ -241,7 +241,7 @@ function renderAll(doc, transcript, entries) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-function renderSessions(select, sessions, selectedSessionId) {
+function renderSessions(select, removeButton, sessions, selectedSessionId) {
   const selected = selectedSessionId || "";
   select.replaceChildren();
   const doc = select.ownerDocument;
@@ -258,6 +258,9 @@ function renderSessions(select, sessions, selectedSessionId) {
     select.append(option);
   }
   select.value = selected;
+  const selectedSession = (Array.isArray(sessions) ? sessions : []).find((session) => session.id === selected);
+  removeButton.disabled = !selectedSession || Boolean(selectedSession.running);
+  removeButton.title = selectedSession?.running ? "Active sessions cannot be removed" : "Remove selected session";
 }
 
 // Live "thinking" bubble. Transient — not part of the transcript; it exists
@@ -315,6 +318,7 @@ export function startPanel(doc = document) {
   const clearButton = doc.querySelector("#clear");
   const sessionsSelect = doc.querySelector("#sessions");
   const refreshSessionsButton = doc.querySelector("#refresh-sessions");
+  const removeSessionButton = doc.querySelector("#remove-session");
 
   let connected = false;
   let agentName = null;
@@ -339,7 +343,7 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, message.transcript ?? []);
       setThinking(doc, transcript, message.status ?? null, message.progress ?? []);
       agentName = message.agent?.name ?? null;
-      renderSessions(sessionsSelect, message.sessions ?? [], message.selectedSessionId ?? null);
+      renderSessions(sessionsSelect, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null);
       setStatus();
     }
   });
@@ -405,13 +409,29 @@ export function startPanel(doc = document) {
   refreshSessionsButton.addEventListener("click", () => {
     void send({ type: "panel.sessions.refresh" });
   });
+  removeSessionButton.addEventListener("click", async () => {
+    const session = [...sessionsSelect.options].find((option) => option.value === sessionsSelect.value);
+    if (!session || !session.value) return;
+    const confirmed = window.confirm(`Remove “${session.textContent}” from the session list?\n\nIts context will remain archived in the connected harness and can be restored there.`);
+    if (!confirmed) return;
+    removeSessionButton.disabled = true;
+    status.textContent = "Removing session from the list…";
+    status.className = "status waiting";
+    try {
+      await send({ type: "panel.session.remove", sessionId: session.value });
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.className = "status error";
+      removeSessionButton.disabled = false;
+    }
+  });
   // Hydrate: existing transcript, agent identity, and bridge connectivity.
   send({ type: "panel.get" })
     .then((result) => {
       renderAll(doc, transcript, result.transcript ?? []);
       setThinking(doc, transcript, result.status ?? null, result.progress ?? []);
       agentName = result.agent?.name ?? null;
-      renderSessions(sessionsSelect, result.sessions ?? [], result.selectedSessionId ?? null);
+      renderSessions(sessionsSelect, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null);
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,

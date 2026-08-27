@@ -34,7 +34,7 @@ const PANEL_CLOSE_GRACE_MS = 300;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1", "harness-session-remove:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -318,6 +318,16 @@ async function selectHarnessSession(rawSessionId) {
   emitBrowserEvent("panel.session.select", { requestId, sessionId });
   broadcastPanel();
   return { requestId, sessionId };
+}
+
+function requestHarnessSessionArchive(rawSessionId) {
+  const sessionId = String(rawSessionId || "").trim();
+  const session = panelSessions.find((candidate) => candidate.id === sessionId);
+  if (!session) throw codedError("invalid_request", "Choose a session from the connected harness.");
+  if (session.running) throw codedError("session_running", "An active session cannot be removed while it is running.");
+  const requestId = `sessions-${crypto.randomUUID()}`;
+  emitBrowserEvent("panel.session.archive", { requestId, sessionId });
+  return { requested: true, requestId, sessionId };
 }
 
 function recordPanelEntry(role, text, links, research) {
@@ -1863,6 +1873,21 @@ async function dispatch(method, params) {
       for (const entry of Array.isArray(params.transcript) ? params.transcript.slice(-100) : []) panelTranscript.push(entry);
       broadcastPanel();
       return { loaded: true, sessionId: params.sessionId, count: panelTranscript.length };
+    case "panel.session.archived":
+      if (params.error) {
+        recordPanelEntry("system", params.error);
+        broadcastPanel();
+        return { archived: false, sessionId: params.sessionId, error: params.error };
+      }
+      panelSessions = panelSessions.filter((session) => session.id !== params.sessionId);
+      if (panelSessionSelection === params.sessionId) {
+        panelTranscript.length = 0;
+        panelProgress = [];
+        panelStatus = null;
+        await resetPanelConversation();
+      }
+      broadcastPanel();
+      return { archived: true, sessionId: params.sessionId };
     case "panel.post": {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
@@ -1912,6 +1937,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (error) => sendResponse({ ok: false, error: errorPayload(error) }),
     );
     return true;
+  }
+  if (message?.type === "panel.session.remove") {
+    try {
+      sendResponse({ ok: true, result: requestHarnessSessionArchive(message.sessionId) });
+    } catch (error) {
+      sendResponse({ ok: false, error: errorPayload(error) });
+    }
+    return false;
   }
   if (message?.type === "panel.clear") {
     void (async () => {

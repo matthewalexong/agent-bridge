@@ -86,6 +86,14 @@ h1 {
   height: 29px;
   cursor: pointer;
 }
+.icon-button.danger:not(:disabled) {
+  color: #ff8b8f;
+  border-color: rgba(255, 139, 143, 0.32);
+}
+.icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 #transcript {
   flex: 1;

@@ -228,9 +228,33 @@ test("previous harness sessions can be listed, loaded, and resumed without copyi
     const messageEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
     assert.equal(messageEvent.data.harnessSession, true);
 
-    await harness.sendRuntime({ type: "panel.close" });
+    const removal = await harness.sendRuntime({ type: "panel.session.remove", sessionId: "session-shop" });
+    assert.equal(removal.ok, true);
+    const archiveEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.session.archive");
+    assert.equal(archiveEvent.data.sessionId, "session-shop");
+    await harness.dispatch("session-archived", "panel.session.archived", { sessionId: "session-shop" });
+    const afterRemoval = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(afterRemoval.result.sessions.length, 0);
+    assert.equal(afterRemoval.result.selectedSessionId, null);
+    assert.ok(afterRemoval.result.capabilities.includes("harness-session-remove:v1"));
+
     const closeEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.close").at(-1);
     assert.equal(closeEvent.data.harnessSession, true, "closing detaches the panel without ending harness-owned context");
+  } finally {
+    harness.restore();
+  }
+});
+
+test("active harness sessions cannot be removed", async () => {
+  const harness = await loadHarness();
+  try {
+    await harness.dispatch("sessions-running", "panel.sessions.update", { sessions: [
+      { id: "session-running", title: "Active research", updatedAt: "2026-08-27T00:00:00.000Z", running: true },
+    ] });
+    const removal = await harness.sendRuntime({ type: "panel.session.remove", sessionId: "session-running" });
+    assert.equal(removal.ok, false);
+    assert.equal(removal.error.code, "session_running");
+    assert.equal(harness.nativeMessages.some((message) => message.type === "event" && message.event === "panel.session.archive"), false);
   } finally {
     harness.restore();
   }

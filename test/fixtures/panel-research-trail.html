@@ -16,6 +16,7 @@
       <label for="sessions">Session</label>
       <select id="sessions" aria-label="Choose a previous harness session"><option value="">New session</option></select>
       <button id="refresh-sessions" class="icon-button" type="button" aria-label="Refresh previous sessions">↻</button>
+      <button id="remove-session" class="icon-button danger" type="button" aria-label="Remove selected session" disabled>×</button>
     </div>
     <main id="transcript" aria-live="polite" aria-label="Conversation"><p id="empty" class="empty">Empty</p></main>
     <form id="composer"><textarea id="input" rows="2" aria-label="Message the connected agent"></textarea><button id="send" class="primary" type="submit" disabled>Send</button></form>
@@ -41,7 +42,7 @@
         selectedSessionId: "session-camera",
         status: { text: "Checking return protection before final confirmation.", phase: "verify", evidence: ["30-day verified return window", "No restocking fee"], next: "Reconcile checkout total", at: "2026-08-22T20:03:00.000Z" },
         progress: trail.slice(0, 2),
-        capabilities: ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "harness-session-picker:v1"],
+        capabilities: ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "harness-session-picker:v1", "harness-session-remove:v1"],
       };
       window.chrome = { runtime: { lastError: null, connect() { return { onDisconnect: { addListener() {} } }; }, onMessage: { addListener() {} }, sendMessage(message, callback) { callback({ ok: true, result: message.type === "panel.get" ? state : message.type === "auth.get" ? {} : { cleared: true } }); } } };
     </script>
