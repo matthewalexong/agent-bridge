@@ -19,6 +19,19 @@ const browserEvidenceRegistry = createBrowserEvidenceRegistry();
 const shoppingCandidateRegistry = createShoppingCandidateRegistry();
 const shoppingRecommendationRegistry = createShoppingRecommendationRegistry();
 const mcpSurface = resolveMcpSurface();
+const configuredPanelAgentName = String(process.env.CHROME_AGENT_BRIDGE_AGENT_NAME || "").trim().slice(0, 80);
+
+async function syncConfiguredPanelIdentity() {
+  if (!configuredPanelAgentName) return;
+  try {
+    const panel = await callBridge("panel.get");
+    if (panel?.agent?.name == null) await callBridge("panel.identify", { agent: configuredPanelAgentName });
+  } catch {
+    // The side panel/native host may start after this MCP process. A bounded
+    // local heartbeat retries without inference and never overwrites another
+    // non-null agent identity.
+  }
+}
 
 function asText(value) {
   return {
@@ -565,3 +578,8 @@ registerShoppingTools({
 });
 
 await server.connect(new StdioServerTransport());
+if (configuredPanelAgentName) {
+  void syncConfiguredPanelIdentity();
+  const identityTimer = setInterval(() => void syncConfiguredPanelIdentity(), 15_000);
+  identityTimer.unref?.();
+}

@@ -90,6 +90,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [1305, "https://bestbuy.example/products/nvidia-dgx-spark-128gb"],
   ]);
   const panelPosts = [];
+  let panelAgent = null;
   const mockBridge = http.createServer((request, response) => {
     let body = "";
     request.setEncoding("utf8");
@@ -109,7 +110,12 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
           { id: "panel_request_1", role: "user", text: "Research camera-x.", at: testNow },
           { id: "panel_budget_1", role: "user", text: "Research camera-x. Keep it under $1000.", at: testNow },
           { id: "panel_case_1", role: "user", text: "Please track this purchase for returns and warranty claims.", at: testNow },
-        ] } }));
+        ], agent: panelAgent } }));
+        return;
+      }
+      if (rpc.method === "panel.identify") {
+        panelAgent = { name: rpc.params.agent, since: testNow };
+        response.end(JSON.stringify({ ok: true, result: { identified: true, agent: panelAgent } }));
         return;
       }
       if (rpc.method === "panel.post") {
@@ -155,6 +161,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     env: {
       PATH: process.env.PATH || "",
       CHROME_AGENT_BRIDGE_DIR: bridgeDir,
+      CHROME_AGENT_BRIDGE_AGENT_NAME: "DeepSeek Harness",
       AB_MCP_SURFACE: "full",
     },
     stderr: "pipe",
@@ -162,6 +169,8 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   const client = new Client({ name: "chrome-agent-bridge-test", version: "1.0.0" });
   context.after(() => client.close());
   await client.connect(transport);
+  for (let attempt = 0; attempt < 20 && panelAgent == null; attempt += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(panelAgent?.name, "DeepSeek Harness", "configured harness identity is declared when the bridge becomes available");
 
   async function observedPage(tabId, page_kind, options = {}) {
     const snapshot = await client.callTool({ name: "browser_snapshot", arguments: { tabId } });
