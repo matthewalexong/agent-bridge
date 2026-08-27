@@ -32,7 +32,8 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /hydration once as `\{snapshots:.*navigate `\{tabId,url\}`.*snapshots `\{pages:.*act `\{tabId,kind,ref\}`/i);
   assert.match(skill, /Always call `shopping_request_intake`/i);
   assert.match(skill, /AMD Ryzen AI Max\/Strix Halo.*NVIDIA GB10\/Grace Blackwell/i);
-  assert.match(skill, /AMD's Ryzen AI Halo Developer Platform\/Micro Center offer/i);
+  assert.match(skill, /Ryzen AI Max\+ 395\/128GB as a multi-vendor ecosystem/i);
+  assert.match(skill, /show 1-2 representative exact offers.*offer a focused cheapest-model search/i);
   assert.match(skill, /ASUS Ascent GX10 and DGX Spark exact offers/i);
   assert.match(skill, /Harvest ≥2 distinct current families per lane/i);
   assert.match(skill, /4-5 exact buy pages for a broad request/i);

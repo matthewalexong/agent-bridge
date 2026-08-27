@@ -272,9 +272,12 @@ and NVIDIA GB10/Grace Blackwell systems. Those names seed discovery rather than
 preselect winners. A lane may be omitted from the final cards only after it was
 actually searched and its exclusion or unresolved status is reported. Never
 infer that an architecture has no viable products from Apple-only results.
-The AMD lane must separately inspect AMD's own Ryzen AI Halo Developer Platform
-and its current Micro Center offer; third-party Strix Halo PCs do not stand in
-for AMD's branded 128GB system.
+Treat Ryzen AI Max+ 395 with 128GB as a multi-vendor Strix Halo ecosystem, not
+an exhaustive vendor checklist. A broad map should show one or two
+representative exact offers, explain that many machines share essentially this
+compute-and-unified-memory platform, and offer a focused follow-up search (for
+example, cheapest Strix Halo systems). AMD's own Ryzen AI Halo Developer
+Platform is one discovery lead, not a mandatory final card.
 Apple's configure-to-order page is not an excuse to drop that lane. Configure
 one current Mac Studio to the requested memory in dependency order (chip,
 processor/GPU, memory, then storage), taking a fresh snapshot after every

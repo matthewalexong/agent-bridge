@@ -4,7 +4,7 @@ import process from "node:process";
 import { loadOrCreateAuthState } from "../lib/auth-token.mjs";
 import { runtimeFile } from "../lib/config.mjs";
 
-const REQUEST = "Find me a thorough current market map of 128GB or more local AI machines with unified, shared, or coherent CPU-GPU memory for running local LLMs. Cover Apple Silicon, AMD Ryzen AI Max or Strix Halo, and NVIDIA GB10 or Grace Blackwell—including AMD's own Ryzen AI Halo Developer Platform, ASUS Ascent GX10, and DGX Spark exact offers. Show 4–5 distinct exact configurations across price points when possible. For every suggestion, verify the exact configuration, current in-stock availability or near-term delivery, current item price, seller, and provide a clickable exact product link. Do not call unknown availability in stock, and do not stop after Apple options.";
+const REQUEST = "Find me a thorough current market map of 128GB or more local AI machines with unified, shared, or coherent CPU-GPU memory for running local LLMs. Cover Apple Silicon, AMD Ryzen AI Max or Strix Halo, and NVIDIA GB10 or Grace Blackwell—including representative Ryzen AI Max+ 395 systems, ASUS Ascent GX10, and DGX Spark exact offers. Show 4–5 distinct exact configurations across price points when possible. For every suggestion, verify the exact configuration, current in-stock availability or near-term delivery, current item price, seller, and provide a clickable exact product link. Do not call unknown availability in stock, and do not stop after Apple options.";
 const timeoutMs = Number(process.env.AGENT_BRIDGE_AUDIT_TIMEOUT_MS || 12 * 60 * 1000);
 const settleMs = 12_000;
 
@@ -49,7 +49,8 @@ function audit(state, userEntry) {
     every_card_has_seller: links.length >= 4 && links.every((link) => String(link.seller || "").trim()),
     memory_requirement_visible: /128\s*GB|256\s*GB|512\s*GB/i.test(combined),
     amd_lane_visible: /AMD|Ryzen AI Max|Strix Halo/i.test(combined),
-    amd_halo_developer_platform_visible: /AMD(?:'s own)?\s+Ryzen AI Halo Developer Platform/i.test(combined),
+    amd_strix_halo_ecosystem_explained: /(?:many|multiple|several|a range of).*?(?:Ryzen AI Max\+?\s*395|Strix Halo)|(?:Ryzen AI Max\+?\s*395|Strix Halo).*?(?:many|multiple|several|a range of)/is.test(combined),
+    amd_focused_follow_up_offered: /(?:dig|search|compare|find|research).*?(?:cheapest|lower-cost|more|Strix Halo|Ryzen AI Max)/is.test(combined),
     nvidia_lane_visible: /NVIDIA|GB10|Grace Blackwell/i.test(combined),
     asus_gx10_visible: /ASUS\s+(?:Ascent\s+)?GX10/i.test(combined),
     dgx_spark_visible: /DGX\s+Spark/i.test(combined),
