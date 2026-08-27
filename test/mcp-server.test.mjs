@@ -68,6 +68,11 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [1201, "Brand: Acme\nProduct Line: Camera X\nProduct Category: cameras\nModel: CX-1\nCurrent Price: $74.50\nFREE delivery\nSold by: Camera Store A\nIn stock\nManufacturer warranty: included\n30-day returns\nCondition: new"],
     [1203, "Brand: Acme\nModel: Camera 103\nCurrent Price: $79.00\nSold by: Fixture Store 103\nIn stock\nCondition: new"],
     [1207, `Checkout\nProduct Key: camera-x\nSeller: Camera Store A\nItem Price: $74.50\nShipping: $0.00\nTax: $6.00\nImport Duty Treatment: not applicable\nBrokerage Treatment: not applicable\nCarrier Surcharge Treatment: not applicable\nCurrency Conversion Treatment: not applicable\nShips From Country: US\nDestination Country: US\nDestination Eligible: yes\nIncoterm: domestic\nDelivery Earliest: ${deliveryEarliest}\nDelivery Latest: ${deliveryLatest}\nTracking Available: yes`],
+    [1301, ["Pre-order Mac Studio", "Available starting 9.22.", "Your new Mac Studio.", "Mac Studio with M5 Max chip", "18-core CPU, 40-core GPU, 16-core Neural Engine", "128GB unified memory", "1TB storage", "Buy for $5,399.00"].join("\n")],
+    [1302, "BOSGAME M5 AMD Ryzen AI Max+ 395 128GB 2TB\nCurrent Price: $3,599.00\nSold by: BOSGAME\nIn stock\nCondition: new"],
+    [1303, "NIMO Mini PC AMD Ryzen AI Max+ 395 128GB 2TB\nCurrent Price: $4,699.00\nSold by: NIMO\nIn stock\nCondition: new"],
+    [1304, "ASUS Ascent GX10 NVIDIA GB10 128GB 1TB\nCurrent Price: $3,999.00\nSold by: Best Buy\nIn stock\nCondition: new"],
+    [1305, "NVIDIA DGX Spark GB10 128GB 4TB\nCurrent Price: $5,299.00\nSold by: Best Buy\nIn stock\nCondition: new"],
     [502, "Brand: Acme\nModel: Drive X"],
     [503, "Brand: Sony\nProduct Line: WH-1000XM5\nModel: WH-1000XM5"],
     [504, "Brand: SONY\nProduct Line: WH 1000XM5\nModel: WH1000XM5\nCondition: new\nSold by: Audio Shop"],
@@ -78,6 +83,11 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     [601, "https://www.cpsc.gov/Recalls"],
     [1201, "https://fixture.example/products/camera-101?utm_source=detail"],
     [1203, "https://fixture.example/products/camera-103"],
+    [1301, "https://www.apple.com/shop/buy-mac/mac-studio/m5-max-chip-18-core-cpu-40-core-gpu-128gb-memory-1tb-storage"],
+    [1302, "https://bosgame.example/products/m5-ryzen-ai-max-395-128gb"],
+    [1303, "https://nimo.example/products/ryzen-ai-max-395-128gb"],
+    [1304, "https://bestbuy.example/products/asus-ascent-gx10-128gb"],
+    [1305, "https://bestbuy.example/products/nvidia-dgx-spark-128gb"],
   ]);
   const panelPosts = [];
   const mockBridge = http.createServer((request, response) => {
@@ -551,6 +561,36 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
     seller: "Camera Store A",
     availability: "In stock",
   }]);
+  const localAiSnapshots = await client.callTool({ name: "browser_snapshot_batch", arguments: { pages: [1301, 1302, 1303, 1304, 1305].map((tabId) => ({ tabId })) } });
+  assert.equal(localAiSnapshots.isError, undefined, JSON.stringify(localAiSnapshots));
+  const localAiHydration = await client.callTool({ name: "shopping_page_evidence_batch", arguments: {
+    snapshots: localAiSnapshots.structuredContent.results.map((result) => ({ snapshot_id: result.snapshot.snapshotId })),
+    query: "128GB local AI market map",
+  } });
+  assert.equal(localAiHydration.isError, undefined, JSON.stringify(localAiHydration));
+  assert.equal(localAiHydration.structuredContent.candidate_ids.length, 5);
+  const localAiPost = await client.callTool({ name: "browser_panel_post", arguments: {
+    text: "Apple Mac Studio M5 Max with 128GB and 1TB is pre-order and excluded from the four in-stock cards. Many machines share the Ryzen AI Max+ 395/128GB Strix Halo platform; these are representative. I can research lower-cost Strix Halo systems next.",
+    kind: "products",
+    recommendation_state: "provisional",
+    availability_requirement: "allow_unknown",
+    candidate_set_id: localAiHydration.structuredContent.candidate_set_id,
+    candidate_ids: localAiHydration.structuredContent.candidate_ids,
+  } });
+  assert.equal(localAiPost.isError, undefined, JSON.stringify(localAiPost));
+  const localAiCards = panelPosts.at(-1).links;
+  assert.equal(localAiCards.length, 5);
+  const appleCard = localAiCards.find((card) => card.url.includes("apple.com/shop/buy-mac/mac-studio/"));
+  assert.deepEqual(appleCard, {
+    url: "https://www.apple.com/shop/buy-mac/mac-studio/m5-max-chip-18-core-cpu-40-core-gpu-128gb-memory-1tb-storage",
+    title: "Apple Mac Studio M5 Max, 18-core CPU, 40-core GPU, 128GB unified memory, 1TB storage",
+    price: "$5,399.00",
+    price_label: "Item price",
+    seller: "Apple",
+    availability: "Pre-order",
+  });
+  assert.equal(localAiCards.filter((card) => card.availability === "In stock").length, 4);
+  panelPosts.pop();
   const rejectedManualPost = await client.callTool({ name: "browser_panel_post", arguments: {
     text: "Injected card.", kind: "products", links: [{ url: "https://attacker.example/products/fake" }],
   } });
@@ -576,7 +616,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   ] } });
   assert.equal(evidenceBatch.isError, undefined, JSON.stringify(evidenceBatch));
   assert.equal(evidenceBatch.structuredContent.artifacts.length, 4);
-  assert.deepEqual(evidenceBatch.structuredContent.ledger, { entries: 4, reused: 2, extracted: 2 });
+  assert.deepEqual(evidenceBatch.structuredContent.ledger, { entries: 9, reused: 2, extracted: 2 });
   assert.equal(evidenceBatch.structuredContent.artifacts[0].facts.seller.value, "Camera Store A");
   assert.equal(evidenceBatch.structuredContent.artifacts[1].facts.seller.value, "Camera Store B");
 

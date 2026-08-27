@@ -65,6 +65,14 @@ test("candidate registry refuses final cards until exact pages are hydrated", ()
   assert.equal(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].price, "$44.00");
 });
 
+test("candidate cards format four-digit signed prices for readable display", () => {
+  const registry = createShoppingCandidateRegistry();
+  const set = artifact();
+  registry.store(set);
+  registry.hydrate(hydratedArtifact(set, "listing_bbbbbbbbbbbbbbbb", { value: 5399, status: "explicit" }));
+  assert.equal(registry.cards(set.candidate_set_id, ["listing_bbbbbbbbbbbbbbbb"])[0].price, "$5,399.00");
+});
+
 test("candidate cards carry only signed exact-page seller and availability facts", () => {
   const registry = createShoppingCandidateRegistry();
   const set = artifact();
