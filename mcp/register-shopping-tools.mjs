@@ -472,7 +472,7 @@ export function registerShoppingTools({ tool, asText, resolveBrowserSnapshot, re
   const applicability = shoppingApplicabilityEntrySchema;
   tool("shopping_request_intake", {
     title: "Capture an immutable shopping request",
-    description: "Resolve an exact user-authored side-panel message by its runtime ID and return a process-attested immutable text receipt with a deterministic exhaustive clause inventory, constraint-risk hints, and typed literal facts for money, measurements, percentages, quantities, deadlines, comparison operators, and negation. The model cannot supply replacement message text or alter literal semantics.",
+    description: "Resolve an exact user-authored side-panel message by its runtime ID and return a process-attested immutable text receipt with a deterministic interaction stage, exhaustive clause inventory, constraint-risk hints, and typed literal facts. Broad or ambiguous purchase curiosity is category_exploration and is not ready for exact-offer cards; an explicit offer request or decision constraint enables offer_research. The model cannot replace the message or alter literal semantics.",
     inputSchema: { request_id: id },
   }, async (input) => {
     if (typeof resolvePanelRequest !== "function") throw Object.assign(new Error("Panel request resolution is unavailable"), { code: "shopping_request_unavailable" });

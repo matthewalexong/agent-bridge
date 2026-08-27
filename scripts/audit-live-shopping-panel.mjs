@@ -39,14 +39,20 @@ function audit(state, userEntry) {
   const start = state.transcript.findIndex((entry) => entry.id === userEntry.id);
   const replies = start >= 0 ? state.transcript.slice(start + 1).filter((entry) => entry.role === "agent") : [];
   const links = uniqueProductLinks(replies);
+  const inStockLinks = links.filter((link) => /^in stock$/i.test(String(link.availability || "")));
   const combined = `${replies.map((entry) => entry.text).join("\n")}\n${links.map((link) => `${link.title} ${link.price || ""} ${link.seller || ""} ${link.availability || ""}`).join("\n")}`;
+  const appleExactLink = links.some((link) => {
+    try {
+      const url = new URL(link.url);
+      return /(^|\.)apple\.com$/i.test(url.hostname) && /\/shop\/buy-mac\/mac-studio\/[^/?#]+/i.test(url.pathname);
+    } catch { return false; }
+  });
   const checks = {
     final_status_cleared: state.status == null,
     visible_agent_update: replies.length > 0,
-    four_exact_product_links: links.length >= 4,
-    every_card_in_stock: links.length >= 4 && links.every((link) => /^in stock$/i.test(String(link.availability || ""))),
-    every_card_has_price: links.length >= 4 && links.every((link) => /\d/.test(String(link.price || ""))),
-    every_card_has_seller: links.length >= 4 && links.every((link) => String(link.seller || "").trim()),
+    four_exact_in_stock_product_links: inStockLinks.length >= 4,
+    every_in_stock_card_has_price: inStockLinks.length >= 4 && inStockLinks.every((link) => /\d/.test(String(link.price || ""))),
+    every_in_stock_card_has_seller: inStockLinks.length >= 4 && inStockLinks.every((link) => String(link.seller || "").trim()),
     memory_requirement_visible: /128\s*GB|256\s*GB|512\s*GB/i.test(combined),
     amd_lane_visible: /AMD|Ryzen AI Max|Strix Halo/i.test(combined),
     amd_strix_halo_ecosystem_explained: /(?:many|multiple|several|a range of).*?(?:Ryzen AI Max\+?\s*395|Strix Halo)|(?:Ryzen AI Max\+?\s*395|Strix Halo).*?(?:many|multiple|several|a range of)/is.test(combined),
@@ -54,8 +60,10 @@ function audit(state, userEntry) {
     nvidia_lane_visible: /NVIDIA|GB10|Grace Blackwell/i.test(combined),
     asus_gx10_visible: /ASUS\s+(?:Ascent\s+)?GX10/i.test(combined),
     dgx_spark_visible: /DGX\s+Spark/i.test(combined),
-    apple_lane_accounted_for: /Apple|Mac Studio|Apple lane/i.test(combined),
-    no_unknown_stock_card: links.every((link) => !/unknown|unverified/i.test(String(link.availability || ""))),
+    apple_exact_configuration_named: /Mac Studio[\s\S]{0,180}M\d+\s+(?:Max|Ultra)[\s\S]{0,180}128\s*GB/i.test(combined) || /M\d+\s+(?:Max|Ultra)[\s\S]{0,180}Mac Studio[\s\S]{0,180}128\s*GB/i.test(combined),
+    apple_concrete_availability_state: /(?:Mac Studio|Apple)[\s\S]{0,240}(?:pre-?order|back-?order|out of stock|unavailable|available starting|in stock|ships? by|delivery by)/i.test(combined),
+    apple_exact_configuration_link: appleExactLink,
+    no_unknown_in_stock_card: inStockLinks.every((link) => !/unknown|unverified/i.test(String(link.availability || ""))),
   };
   return { passed: Object.values(checks).every(Boolean), checks, links, replies };
 }

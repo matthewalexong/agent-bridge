@@ -197,11 +197,16 @@ export function validatePanelProductClaims({ text, links, recommendation_state, 
   const broadLocalAiMap = cards.length >= 4 && /\b128\s*GB\b/i.test(cardCopy) &&
     /\b(?:AMD|Ryzen AI Max|Strix Halo)\b/i.test(cardCopy) &&
     /\b(?:NVIDIA|GB10|DGX Spark|Ascent GX10)\b/i.test(cardCopy);
-  const hasAppleCard = /\b(?:Apple|Mac Studio|M\d+\s+(?:Max|Ultra))\b/i.test(cardCopy);
-  const namesExactAppleLane = /(?:\bMac Studio\b[^.\n]{0,160}\bM\d+\s+(?:Max|Ultra)\b|\bM\d+\s+(?:Max|Ultra)\b[^.\n]{0,160}\bMac Studio\b)/i.test(copy);
-  const givesConcreteAppleState = /\b(?:pre-?order|back-?order|out of stock|unavailable|available starting|in stock|ships? by|delivery by)\b/i.test(copy);
-  if (broadLocalAiMap && !hasAppleCard && !(namesExactAppleLane && givesConcreteAppleState)) {
-    return "A broad 128GB local-AI market map cannot vaguely omit Apple: include an exact signed Apple card, or name the exact current Mac Studio generation/configuration and its concrete availability state.";
+  const exactAppleCards = cards.filter((card) => {
+    let url;
+    try { url = new URL(card?.url); } catch { return false; }
+    return /\bMac Studio\b[^\n]{0,180}\bM\d+\s+(?:Max|Ultra)\b[^\n]{0,180}\b128\s*GB\b/i.test(String(card?.title || ""))
+      && /(^|\.)apple\.com$/i.test(url.hostname)
+      && /\/shop\/buy-mac\/mac-studio\/[^/?#]+/i.test(url.pathname);
+  });
+  const hasConcreteAppleCardState = exactAppleCards.some((card) => /^(?:in stock|pre-?order|out of stock|back-?order|unavailable)$/i.test(String(card?.availability || "")));
+  if (broadLocalAiMap && !(exactAppleCards.length > 0 && hasConcreteAppleCardState)) {
+    return "A broad 128GB local-AI market map must include a signed exact Apple Mac Studio configuration card with its configured Apple URL, 128GB memory, price, and concrete availability; preorder or unavailable cards must be labeled and excluded from the in-stock count.";
   }
   const explainsStrixHaloEcosystem = /\b(?:many|multiple|several|a range of)\b[^.\n]{0,140}\b(?:Ryzen AI Max\+?\s*395|Strix Halo)\b/i.test(copy) || /\b(?:Ryzen AI Max\+?\s*395|Strix Halo)\b[^.\n]{0,140}\b(?:many|multiple|several|a range of)\b/i.test(copy);
   const offersFocusedAmdFollowUp = /\b(?:dig|search|compare|find|research)\b[^.\n]{0,120}\b(?:cheapest|lower-cost|more|Strix Halo|Ryzen AI Max)\b/i.test(copy);

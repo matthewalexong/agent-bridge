@@ -149,9 +149,11 @@ test("product copy cannot outrun signed price and availability evidence", () => 
     { title: "ASUS Ascent GX10 NVIDIA GB10 128GB", availability: "In stock", price: "$3,999", seller: "Best Buy" },
     { title: "NVIDIA DGX Spark GB10 128GB", availability: "In stock", price: "$5,299", seller: "Best Buy" },
   ];
-  assert.match(validatePanelProductClaims({ text: "Apple was checked, but no offer was verified.", links: localAiMap, recommendation_state: "provisional" }), /cannot vaguely omit Apple/i);
-  assert.match(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards.", links: localAiMap, recommendation_state: "provisional" }), /multi-vendor ecosystem/i);
-  assert.equal(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards. Many machines share the Ryzen AI Max+ 395/128GB Strix Halo platform; these are representative, not exhaustive. I can dig into lower-cost Strix Halo systems next if you want.", links: localAiMap, recommendation_state: "provisional" }), null);
+  const exactAppleCard = { title: "Apple Mac Studio M5 Max, 18-core CPU, 40-core GPU, 128GB unified memory, 1TB storage", url: "https://www.apple.com/shop/buy-mac/mac-studio/m5-max-chip-18-core-cpu-40-core-gpu-128gb-memory-1tb-storage", availability: "Pre-order", price: "$5,399", seller: "Apple" };
+  assert.match(validatePanelProductClaims({ text: "Apple was checked, but no offer was verified.", links: localAiMap, recommendation_state: "provisional" }), /must include a signed exact Apple/i);
+  assert.match(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards.", links: localAiMap, recommendation_state: "provisional" }), /must include a signed exact Apple/i);
+  assert.match(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order and excluded from these in-stock cards.", links: [...localAiMap, exactAppleCard], recommendation_state: "provisional", availability_requirement: "allow_unknown" }), /multi-vendor ecosystem/i);
+  assert.equal(validatePanelProductClaims({ text: "Apple Mac Studio M5 Max with 128GB and 1TB is currently pre-order, available starting September 22, so it is excluded from these in-stock cards. Many machines share the Ryzen AI Max+ 395/128GB Strix Halo platform; these are representative, not exhaustive. I can dig into lower-cost Strix Halo systems next if you want.", links: [...localAiMap, exactAppleCard], recommendation_state: "provisional", availability_requirement: "allow_unknown" }), null);
 });
 
 test("panel snapshots keep the evidence handle without duplicating element metadata", () => {

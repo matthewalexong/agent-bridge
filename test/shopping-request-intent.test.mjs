@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { issueShoppingRequestReceipt, inventoryShoppingRequestClauses, verifyShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
+import { classifyShoppingInteractionStage, issueShoppingRequestReceipt, inventoryShoppingRequestClauses, verifyShoppingRequestReceipt } from "../lib/shopping-request-intent.mjs";
 
 const NOW = "2026-08-22T20:00:00.000Z";
 
@@ -36,6 +36,20 @@ test("request receipts reject message, clause, provenance, and process tampering
   const child = spawnSync(process.execPath, ["--input-type=module", "-e", script, JSON.stringify(receipt)], { encoding: "utf8" });
   assert.equal(child.status, 0, child.stderr);
   assert.equal(child.stdout, "false");
+});
+
+test("broad purchase curiosity stays in category exploration until the user narrows or asks for offers", () => {
+  const broad = inventoryShoppingRequestClauses("I'm thinking about buying a local AI machine.");
+  assert.deepEqual(classifyShoppingInteractionStage(broad), { mode: "category_exploration", exact_offer_research_ready: false, reason: "broad_or_ambiguous" });
+  const constrained = inventoryShoppingRequestClauses("I'm thinking about buying a local AI machine with at least 128 GB.");
+  assert.deepEqual(classifyShoppingInteractionStage(constrained), { mode: "offer_research", exact_offer_research_ready: true, reason: "decision_constraint_present" });
+  const explicit = inventoryShoppingRequestClauses("Show me current local AI machine options.");
+  assert.deepEqual(classifyShoppingInteractionStage(explicit), { mode: "offer_research", exact_offer_research_ready: true, reason: "explicit_offer_request" });
+  const receipt = issueShoppingRequestReceipt({ request_id: "panel_explore", text: broad.text, captured_at: NOW });
+  assert.equal(receipt.interaction_stage.mode, "category_exploration");
+  const changed = structuredClone(receipt);
+  changed.interaction_stage.exact_offer_research_ready = true;
+  assert.equal(verifyShoppingRequestReceipt(changed), false);
 });
 
 test("typed literals preserve numeric value, unit, direction, deadline, and polarity", () => {

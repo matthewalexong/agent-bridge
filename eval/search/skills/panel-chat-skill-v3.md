@@ -286,8 +286,11 @@ summary; never combine the base-page price or generic pickup FAQ with the
 selected memory. If the qualifying Mac is preorder, backordered, unavailable,
 or otherwise not currently in stock, name the exact generation, memory,
 storage, configured item price, and concrete state with its exact page. Do not
-count it toward the four-to-five in-stock cards, but do not replace that result
-with vague language such as “Apple was checked” or “no Apple offer verified.”
+count it toward the four-to-five in-stock cards. Include its signed exact card
+using `availability_requirement=allow_unknown` so the configuration link stays
+clickable, and explicitly label it excluded from the in-stock count. Do not
+replace that result with vague language such as “Apple was checked” or “no
+Apple offer verified.”
 The NVIDIA lane must separately inspect current ASUS Ascent GX10 and NVIDIA DGX
 Spark exact offers; one cannot stand in for the other. An in-stock shortlist
 contains only signed exact-product cards whose observed availability is
@@ -296,15 +299,21 @@ while the agent tries another seller. Unknown-availability leads may be shown
 only as a clearly labeled incomplete research update, never as the requested
 result.
 
-When a broad request has no fastest, cheapest, best, portability, OS, or other
-optimization objective, interpret it as a request for a market map rather than
-silently choosing a winner. Return four to five representative exact in-stock
-configurations spanning materially different architectures and price points.
-For each option, annotate only sourced facts from its exact page: exact model
-and chip, installed shared/unified memory, any distinct GPU-addressable limit,
-storage, observed item price, seller, stock or delivery state, and the relevant
-software-stack distinction. Do not rank these options. After showing the map,
-ask which tradeoff the user wants to optimize for the next pass.
+Obey the request receipt's deterministic `interaction_stage`. A broad or
+ambiguous statement of purchase curiosity such as “I'm thinking about buying
+this type of machine” is `category_exploration`, not permission to begin exact
+offer discovery. Research and explain the current category landscape—major
+families, approximate price bands, meaningful tradeoffs, and the specifications
+that change fit—then ask one high-leverage narrowing question. Do not surface
+product cards, exact product links, current item prices, or availability during
+this stage. Once the user supplies a decision-relevant constraint or explicitly
+asks for products, comparisons, prices, links, or availability, intake moves to
+`offer_research` and exact-offer discovery may begin.
+
+If the user explicitly requests a market map in `offer_research`, return four
+to five representative exact in-stock configurations spanning materially
+different architectures and price points. Annotate only sourced exact-page
+facts and do not rank them before an optimization objective is known.
 
 Architecture coverage is not product-family coverage. Before narrowing a broad
 request, inventory at least two distinct current product families per required
@@ -315,7 +324,7 @@ broad multi-lane request, inspect four to five exact buy pages in one bounded
 batch before ranking. Report the named families found, the exact pages checked,
 and any sparse lane so the user can see the actual coverage boundary.
 
-Do not hold useful exact offers hostage to the entire coverage pass. As soon as
+Only in `offer_research`, do not hold useful exact offers hostage to the entire coverage pass. As soon as
 two exact pages have signed in-stock evidence, hydrate that small batch and post
 its provisional cards, then continue the remaining lanes and replace or extend
 the shortlist after the broader bounded batch. This is an early evidence result,
