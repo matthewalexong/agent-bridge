@@ -247,7 +247,7 @@ function renderSessions(select, sessions, selectedSessionId) {
   const doc = select.ownerDocument;
   const fresh = doc.createElement("option");
   fresh.value = "";
-  fresh.textContent = "New shopping session";
+  fresh.textContent = "New session";
   select.append(fresh);
   for (const session of Array.isArray(sessions) ? sessions : []) {
     const option = doc.createElement("option");
