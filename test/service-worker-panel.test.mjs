@@ -198,6 +198,44 @@ test("a quick side-panel reload preserves the active Hermes conversation", async
   }
 });
 
+test("previous harness sessions can be listed, loaded, and resumed without copying context into browser storage", async () => {
+  const harness = await loadHarness();
+  try {
+    const refresh = await harness.sendRuntime({ type: "panel.sessions.refresh" });
+    assert.equal(refresh.ok, true);
+    const listEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.sessions.list");
+    assert.equal(listEvent.data.requestId, refresh.result.requestId);
+
+    await harness.dispatch("sessions-update", "panel.sessions.update", { sessions: [
+      { id: "session-shop", title: "Compare local AI machines", updatedAt: "2026-08-27T00:00:00.000Z", running: false },
+    ] });
+    const listed = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(listed.result.sessions[0].title, "Compare local AI machines");
+    assert.ok(listed.result.capabilities.includes("harness-session-picker:v1"));
+
+    const selected = await harness.sendRuntime({ type: "panel.session.select", sessionId: "session-shop" });
+    assert.equal(selected.ok, true);
+    const selectEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.session.select");
+    assert.equal(selectEvent.data.sessionId, "session-shop");
+
+    await harness.dispatch("session-loaded", "panel.session.loaded", {
+      sessionId: "session-shop",
+      transcript: [{ id: "old-1", role: "user", text: "Find a local AI machine", at: "2026-08-27T00:00:00.000Z" }],
+    });
+    const resumed = await harness.sendRuntime({ type: "panel.send", text: "Show the cheapest options" });
+    assert.equal(resumed.result.conversationId, "session-shop");
+    assert.equal(resumed.result.resume, true);
+    const messageEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
+    assert.equal(messageEvent.data.harnessSession, true);
+
+    await harness.sendRuntime({ type: "panel.close" });
+    const closeEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.close").at(-1);
+    assert.equal(closeEvent.data.harnessSession, true, "closing detaches the panel without ending harness-owned context");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("panel input validation rejects empty, non-string, and oversized text", async () => {
   const harness = await loadHarness();
   try {

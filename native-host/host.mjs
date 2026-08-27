@@ -12,6 +12,7 @@ import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.
 import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
+import { listHarnessSessions, loadHarnessSession, promptHarnessSession } from "../lib/harness-sessions.mjs";
 
 let authState = await loadOrCreateAuthState();
 const pending = new Map();
@@ -223,22 +224,65 @@ function recordEvent(event, data) {
     clearTimeout(waiter.timeout);
     waiter.resolve(result);
   }
-  // Direct panel → Hermes wiring: user messages typed in the side panel are
-  // forwarded to the Hermes webhook so a real agent turn handles them
+  // Direct panel → harness wiring: user messages typed in the side panel are
+  // forwarded to the active harness so a real agent turn handles them
   // (replacing the standalone panel-watcher daemon). Fire-and-forget: a
   // webhook failure must never break the event loop.
   if (event === "panel.message" && data?.role === "user") {
-    void forwardPanelMessageToHermes(data);
+    if (data.harnessSession) void forwardPanelMessageToHarnessSession(data);
+    else void forwardPanelMessageToHermes(data);
   }
-  if (event === "panel.close" && data?.conversationId) {
+  if (event === "panel.close" && data?.conversationId && !data.harnessSession) {
     void endPanelConversation(data.conversationId);
+  }
+  if (event === "panel.sessions.list") void publishHarnessSessions(data?.requestId);
+  if (event === "panel.session.select" && data?.sessionId) void publishHarnessSession(data.sessionId, data?.requestId);
+}
+
+async function publishHarnessSessions(requestId) {
+  try {
+    const sessions = await listHarnessSessions({ env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD } });
+    await forwardToExtension("panel.sessions.update", { requestId, sessions });
+  } catch (error) {
+    log(`harness sessions: list failed (${error?.message ?? error})`);
+    await forwardToExtension("panel.sessions.update", { requestId, sessions: [], error: "Previous sessions are unavailable right now." }).catch(() => {});
+  }
+}
+
+async function publishHarnessSession(sessionId, requestId) {
+  try {
+    const loaded = await loadHarnessSession(sessionId);
+    await forwardToExtension("panel.session.loaded", { requestId, ...loaded });
+  } catch (error) {
+    log(`harness sessions: load failed (${error?.message ?? error})`);
+    await forwardToExtension("panel.session.loaded", { requestId, sessionId, error: "That session could not be loaded." }).catch(() => {});
+  }
+}
+
+async function forwardPanelMessageToHarnessSession(data) {
+  try {
+    const sessionId = sanitizeConversationId(data.conversationId);
+    if (!sessionId) return;
+    await promptHarnessSession(sessionId, typeof data.text === "string" ? data.text : "");
+    log(`panel→harness: queued prompt in ${sessionId}`);
+  } catch (error) {
+    log(`panel→harness: prompt failed (${error?.message ?? error})`);
+    pushPanelStatus(null, { persist: false });
+    void forwardToExtension("panel.post", { text: "I couldn't resume that harness session. Please choose another session or start a new one.", links: [] }).catch(() => {});
   }
 }
 
 // --- Hermes webhook forwarder ---------------------------------------------
 import { appendFileSync, createReadStream, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
+
+// The extension lives one directory below its harness workspace. This keeps
+// unrelated DeepSeek projects and evaluation sessions out of the picker while
+// remaining movable with the project. Deployments may override the scope.
+const HARNESS_SESSION_CWD = process.env.AB_HARNESS_SESSION_CWD
+  || dirname(dirname(fileURLToPath(import.meta.url)));
 
 function panelWebhookUrl() {
   return resolvePanelWebhookUrl(process.env);

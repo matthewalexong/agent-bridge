@@ -241,6 +241,25 @@ function renderAll(doc, transcript, entries) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
+function renderSessions(select, sessions, selectedSessionId) {
+  const selected = selectedSessionId || "";
+  select.replaceChildren();
+  const doc = select.ownerDocument;
+  const fresh = doc.createElement("option");
+  fresh.value = "";
+  fresh.textContent = "New shopping session";
+  select.append(fresh);
+  for (const session of Array.isArray(sessions) ? sessions : []) {
+    const option = doc.createElement("option");
+    option.value = session.id;
+    const date = new Date(session.updatedAt);
+    const when = Number.isNaN(date.valueOf()) ? "" : ` · ${date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
+    option.textContent = `${session.title || "Previous session"}${when}${session.running ? " · active" : ""}`;
+    select.append(option);
+  }
+  select.value = selected;
+}
+
 // Live "thinking" bubble. Transient — not part of the transcript; it exists
 // only while the agent is actively working and is removed when it clears.
 // Kept OUTSIDE the transcript rebuild so renderAll() doesn't wipe it mid-turn.
@@ -294,6 +313,8 @@ export function startPanel(doc = document) {
   const input = doc.querySelector("#input");
   const sendButton = doc.querySelector("#send");
   const clearButton = doc.querySelector("#clear");
+  const sessionsSelect = doc.querySelector("#sessions");
+  const refreshSessionsButton = doc.querySelector("#refresh-sessions");
 
   let connected = false;
   let agentName = null;
@@ -318,6 +339,7 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, message.transcript ?? []);
       setThinking(doc, transcript, message.status ?? null, message.progress ?? []);
       agentName = message.agent?.name ?? null;
+      renderSessions(sessionsSelect, message.sessions ?? [], message.selectedSessionId ?? null);
       setStatus();
     }
   });
@@ -363,12 +385,33 @@ export function startPanel(doc = document) {
       // Clearing is best-effort; the transcript broadcast keeps the UI honest.
     }
   });
+  sessionsSelect.addEventListener("change", async () => {
+    if (!sessionsSelect.value) {
+      await send({ type: "panel.clear" }).catch(() => {});
+      return;
+    }
+    sessionsSelect.disabled = true;
+    status.textContent = "Loading session from the connected harness…";
+    status.className = "status waiting";
+    try {
+      await send({ type: "panel.session.select", sessionId: sessionsSelect.value });
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.className = "status error";
+    } finally {
+      sessionsSelect.disabled = false;
+    }
+  });
+  refreshSessionsButton.addEventListener("click", () => {
+    void send({ type: "panel.sessions.refresh" });
+  });
   // Hydrate: existing transcript, agent identity, and bridge connectivity.
   send({ type: "panel.get" })
     .then((result) => {
       renderAll(doc, transcript, result.transcript ?? []);
       setThinking(doc, transcript, result.status ?? null, result.progress ?? []);
       agentName = result.agent?.name ?? null;
+      renderSessions(sessionsSelect, result.sessions ?? [], result.selectedSessionId ?? null);
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,
@@ -382,6 +425,7 @@ export function startPanel(doc = document) {
       }
     })
     .catch(() => {});
+  void send({ type: "panel.sessions.refresh" });
   send({ type: "auth.get" })
     .then(() => {
       connected = true;

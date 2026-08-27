@@ -12,6 +12,11 @@
       <div class="head-text"><h1>Agent Bridge</h1><p id="status" class="status pending">Connecting…</p></div>
       <button id="clear" class="text-button" type="button">Clear</button>
     </header>
+    <div class="session-bar">
+      <label for="sessions">Session</label>
+      <select id="sessions" aria-label="Choose a previous harness session"><option value="">New shopping session</option></select>
+      <button id="refresh-sessions" class="icon-button" type="button" aria-label="Refresh previous sessions">↻</button>
+    </div>
     <main id="transcript" aria-live="polite" aria-label="Conversation"><p id="empty" class="empty">Empty</p></main>
     <form id="composer"><textarea id="input" rows="2" aria-label="Message the connected agent"></textarea><button id="send" class="primary" type="submit" disabled>Send</button></form>
     <script>
@@ -28,12 +33,17 @@
             { url: "https://regulator.example/search", title: "Evidence · Official safety search" },
           ], at: "2026-08-22T20:02:00.000Z" },
         ],
-        agent: { name: "Hermes", since: "2026-08-22T19:58:00.000Z" },
+        agent: { name: "DeepSeek Harness", since: "2026-08-22T19:58:00.000Z" },
+        sessions: [
+          { id: "session-camera", title: "Compare mirrorless cameras", updatedAt: "2026-08-22T20:02:00.000Z", running: false },
+          { id: "session-laptop", title: "Local AI laptop research", updatedAt: "2026-08-21T18:40:00.000Z", running: false },
+        ],
+        selectedSessionId: "session-camera",
         status: { text: "Checking return protection before final confirmation.", phase: "verify", evidence: ["30-day verified return window", "No restocking fee"], next: "Reconcile checkout total", at: "2026-08-22T20:03:00.000Z" },
         progress: trail.slice(0, 2),
-        capabilities: ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1"],
+        capabilities: ["links:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "harness-session-picker:v1"],
       };
-      window.chrome = { runtime: { lastError: null, onMessage: { addListener() {} }, sendMessage(message, callback) { callback({ ok: true, result: message.type === "panel.get" ? state : message.type === "auth.get" ? {} : { cleared: true } }); } } };
+      window.chrome = { runtime: { lastError: null, connect() { return { onDisconnect: { addListener() {} } }; }, onMessage: { addListener() {} }, sendMessage(message, callback) { callback({ ok: true, result: message.type === "panel.get" ? state : message.type === "auth.get" ? {} : { cleared: true } }); } } };
     </script>
     <script type="module" src="../../extension/panel.js"></script>
   </body>

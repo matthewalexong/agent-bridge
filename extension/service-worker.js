@@ -34,7 +34,7 @@ const PANEL_CLOSE_GRACE_MS = 300;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -47,6 +47,8 @@ const PANEL_PROGRESS_SENSITIVE = /(?:xai-|sk-)[A-Za-z0-9_-]{16,}|\bbearer\s+[A-Z
 const panelTranscript = [];
 let nextPanelMessageId = 1;
 let panelAgent = null;
+let panelSessions = [];
+let panelSessionSelection = null;
 // Current status is transient. Agent-authored, bounded progress milestones are
 // kept separately for the active turn and attached to the final answer as an
 // audit summary; host placeholders opt out with persist:false.
@@ -228,36 +230,39 @@ const conversationMemory = { id: null, started: false };
 
 async function readStoredConversation() {
   try {
-    const data = await chrome.storage?.session?.get?.(["panelConversationId", "panelConversationStarted"]);
+    const data = await chrome.storage?.session?.get?.(["panelConversationId", "panelConversationStarted", "panelHarnessSession"]);
     if (data?.panelConversationId) {
-      return { id: data.panelConversationId, started: Boolean(data.panelConversationStarted) };
+      return { id: data.panelConversationId, started: Boolean(data.panelConversationStarted), harnessSession: Boolean(data.panelHarnessSession) };
     }
   } catch {
     // session storage is optional; in-memory is enough for one SW lifetime
   }
-  return { id: conversationMemory.id, started: conversationMemory.started };
+  return { id: conversationMemory.id, started: conversationMemory.started, harnessSession: Boolean(panelSessionSelection) };
 }
 
-async function writeStoredConversation(id, started) {
+async function writeStoredConversation(id, started, harnessSession = false) {
   conversationMemory.id = id;
   conversationMemory.started = started;
   try {
-    await chrome.storage?.session?.set?.({ panelConversationId: id, panelConversationStarted: started });
+    await chrome.storage?.session?.set?.({ panelConversationId: id, panelConversationStarted: started, panelHarnessSession: harnessSession });
   } catch {
     // ignore
   }
 }
 
 async function resetPanelConversation() {
-  const previousId = conversationMemory.id || (await readStoredConversation()).id;
+  const stored = await readStoredConversation();
+  const previousId = conversationMemory.id || stored.id;
+  const wasHarnessSession = Boolean(panelSessionSelection || stored.harnessSession);
   conversationMemory.id = null;
   conversationMemory.started = false;
   try {
-    await chrome.storage?.session?.remove?.(["panelConversationId", "panelConversationStarted"]);
+    await chrome.storage?.session?.remove?.(["panelConversationId", "panelConversationStarted", "panelHarnessSession"]);
   } catch {
     // ignore
   }
-  if (previousId) emitBrowserEvent("panel.close", { conversationId: previousId });
+  if (previousId) emitBrowserEvent("panel.close", { conversationId: previousId, harnessSession: wasHarnessSession });
+  panelSessionSelection = null;
 }
 
 async function closePanelSession() {
@@ -287,14 +292,32 @@ function registerPanelLifecyclePort(port) {
 }
 
 async function nextConversationTurn() {
-  let { id, started } = await readStoredConversation();
+  let { id, started, harnessSession } = await readStoredConversation();
   if (!id) {
     id = `c${crypto.randomUUID().replaceAll("-", "")}`;
     started = false;
   }
   const resume = started;
-  await writeStoredConversation(id, true);
-  return { conversationId: id, resume };
+  await writeStoredConversation(id, true, harnessSession);
+  return { conversationId: id, resume, harnessSession };
+}
+
+function panelState() {
+  return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, sessions: panelSessions, selectedSessionId: panelSessionSelection, capabilities: PANEL_CAPABILITIES };
+}
+
+async function selectHarnessSession(rawSessionId) {
+  const sessionId = String(rawSessionId || "").trim();
+  if (!sessionId || !panelSessions.some((session) => session.id === sessionId)) throw codedError("invalid_request", "Choose a session from the connected harness.");
+  panelTranscript.length = 0;
+  panelProgress = [];
+  panelStatus = null;
+  panelSessionSelection = sessionId;
+  await writeStoredConversation(sessionId, true, true);
+  const requestId = `sessions-${crypto.randomUUID()}`;
+  emitBrowserEvent("panel.session.select", { requestId, sessionId });
+  broadcastPanel();
+  return { requestId, sessionId };
 }
 
 function recordPanelEntry(role, text, links, research) {
@@ -325,6 +348,7 @@ async function submitPanelMessage(rawText) {
     messageId: entry.id,
     conversationId: turn.conversationId,
     resume: turn.resume,
+    harnessSession: turn.harnessSession,
   });
   broadcastPanel();
   return { entry, conversationId: turn.conversationId, resume: turn.resume };
@@ -378,6 +402,8 @@ function broadcastPanel() {
       agent: panelAgent,
       status: panelStatus,
       progress: panelProgress,
+      sessions: panelSessions,
+      selectedSessionId: panelSessionSelection,
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
@@ -1813,13 +1839,30 @@ async function dispatch(method, params) {
     case "raw.detach":
       return detachRawSession(params);
     case "panel.get":
-      return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, capabilities: PANEL_CAPABILITIES };
+      return panelState();
     case "panel.send":
       return submitPanelMessage(params.text);
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
       return { status: setPanelStatus(params), progress: panelProgress };
+    case "panel.sessions.update":
+      panelSessions = Array.isArray(params.sessions) ? params.sessions.slice(0, 30) : [];
+      broadcastPanel();
+      return { updated: true, sessions: panelSessions, error: params.error ?? null };
+    case "panel.session.loaded":
+      if (params.sessionId !== panelSessionSelection) return { loaded: false, stale: true };
+      if (params.error) {
+        panelTranscript.length = 0;
+        recordPanelEntry("system", params.error);
+        panelStatus = null;
+        broadcastPanel();
+        return { loaded: false, sessionId: params.sessionId, error: params.error };
+      }
+      panelTranscript.length = 0;
+      for (const entry of Array.isArray(params.transcript) ? params.transcript.slice(-100) : []) panelTranscript.push(entry);
+      broadcastPanel();
+      return { loaded: true, sessionId: params.sessionId, count: panelTranscript.length };
     case "panel.post": {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
@@ -1854,8 +1897,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "panel.get") {
-    sendResponse({ ok: true, result: { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, capabilities: PANEL_CAPABILITIES } });
+    sendResponse({ ok: true, result: panelState() });
     return false;
+  }
+  if (message?.type === "panel.sessions.refresh") {
+    const requestId = `sessions-${crypto.randomUUID()}`;
+    emitBrowserEvent("panel.sessions.list", { requestId });
+    sendResponse({ ok: true, result: { requested: true, requestId } });
+    return false;
+  }
+  if (message?.type === "panel.session.select") {
+    void selectHarnessSession(message.sessionId).then(
+      (result) => sendResponse({ ok: true, result }),
+      (error) => sendResponse({ ok: false, error: errorPayload(error) }),
+    );
+    return true;
   }
   if (message?.type === "panel.clear") {
     void (async () => {
