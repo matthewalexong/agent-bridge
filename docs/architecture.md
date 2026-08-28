@@ -39,6 +39,12 @@ The harness is the main brain. Agent Bridge transports capabilities and returns 
 
 The loopback host listens only on `127.0.0.1`. The pairing token represents browser-control authority and stays in the local user's private bridge directory.
 
+## Browser authorization
+
+The Chrome extension independently enforces the side panel's **Observe only**, **Ask before acting**, and scope-bounded **Allow routine actions** modes before browser state changes. The harness can request an operation, but it cannot change modes or approve its own pending request through MCP or the native host. Consequential clicks and sensitive monitoring require visible one-time approval even in routine mode. Closing the panel resets browser control to **Ask before acting** and cancels pending actions.
+
+See [browser access controls](./browser-access-controls.md) for the action classes, scopes, approval lifetime, pause behavior, and failure contract.
+
 ## Browser-control layers
 
 | Layer | Intended use | Data boundary |

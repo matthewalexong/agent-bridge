@@ -16,6 +16,8 @@ Read this reference only when the user-authorized task requires arbitrary Chrome
 
 Use `targetSessionId` only after `Target.attachToTarget` returns it or a `Target.attachedToTarget` event exposes it within the same Raw session.
 
+Raw attachment is sensitive and always waits for a one-time side-panel approval. That approval covers the resulting Raw session, not other tabs or future attachments. Poll and detach remain available for deterministic cleanup.
+
 Minimal call shapes:
 
 ```text

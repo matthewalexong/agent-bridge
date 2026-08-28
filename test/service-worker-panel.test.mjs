@@ -19,9 +19,19 @@ async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitNativeResponse(harness, id) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = harness.nativeMessages.find((message) => message.id === id);
+    if (response) return response;
+    await wait(0);
+  }
+  throw new Error(`Timed out waiting for ${id}`);
+}
+
 async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } = {}) {
   const nativeMessages = [];
   const broadcasts = [];
+  const browserActions = [];
   const nativeMessage = event();
   const runtimeMessage = event();
   const runtimeConnect = event();
@@ -62,6 +72,12 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
       },
     },
     tabs: {
+      async query() { return [{ id: 42, windowId: 7, url: "https://example.com/start", active: true }]; },
+      async get(tabId) { return { id: tabId, windowId: 7, url: tabId === 42 ? "https://example.com/start" : "https://other.example/start" }; },
+      async update(tabId, values) {
+        browserActions.push({ method: "tabs.update", tabId, values });
+        return { id: tabId, windowId: 7, url: values.url || "https://example.com/start", active: values.active === true };
+      },
       onCreated: passiveEvent(),
       onUpdated: passiveEvent(),
       onRemoved: passiveEvent(),
@@ -73,6 +89,7 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
   return {
     nativeMessages,
     broadcasts,
+    browserActions,
     sender,
     sendRuntime: (message) => new Promise((resolve) => {
       runtimeMessage.listener(message, sender, resolve);
@@ -174,6 +191,136 @@ test("authenticated bridge panel.send uses the same conversation event path as t
   }
 });
 
+test("Ask before acting holds the exact browser action until the user approves it", async () => {
+  const harness = await loadHarness();
+  try {
+    const initial = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(initial.result.browserAccess.mode, "ask");
+    const operation = harness.dispatch("permission-navigate", "tabs.navigate", { tabId: 42, url: "https://example.com/next" });
+    await wait(0);
+    assert.equal(harness.browserActions.length, 0, "the browser must not change before approval");
+    const pendingState = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(pendingState.result.browserAccess.pending.length, 1);
+    assert.equal(pendingState.result.browserAccess.pending[0].summary, "Navigate to https://example.com/next");
+
+    const approval = await harness.sendRuntime({
+      type: "panel.permission.resolve",
+      requestId: pendingState.result.browserAccess.pending[0].id,
+      decision: "approve",
+    });
+    assert.equal(approval.ok, true);
+    await operation;
+    const result = await waitNativeResponse(harness, "permission-navigate");
+    assert.equal(result.ok, true);
+    assert.equal(harness.browserActions.length, 1);
+    const after = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(after.result.browserAccess.pending.length, 0);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("routine access is scope-bound while sensitive and consequential actions still ask", async () => {
+  const harness = await loadHarness();
+  try {
+    const setting = await harness.sendRuntime({ type: "panel.permission.set", mode: "routine", scope: "tab" });
+    assert.equal(setting.result.tabId, 42);
+    const allowed = await harness.dispatch("routine-navigation", "tabs.navigate", { tabId: 42, url: "https://different.example/page" });
+    assert.equal(allowed.ok, true, "tab scope follows the selected tab across navigation");
+
+    const outside = harness.dispatch("outside-navigation", "tabs.navigate", { tabId: 43, url: "https://other.example/page" });
+    await wait(0);
+    let state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.browserAccess.pending[0].risk, "routine");
+    await harness.sendRuntime({ type: "panel.permission.resolve", requestId: state.result.browserAccess.pending[0].id, decision: "deny" });
+    await outside;
+    const outsideResult = await waitNativeResponse(harness, "outside-navigation");
+    assert.equal(outsideResult.ok, false);
+    assert.equal(outsideResult.error.code, "browser_permission_denied");
+
+    const consequential = harness.dispatch("consequential-click", "page.click", { tabId: 42, selector: "#submit", confirmed: true });
+    await wait(0);
+    state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.browserAccess.pending[0].risk, "consequential");
+    await harness.sendRuntime({ type: "panel.permission.resolve", requestId: state.result.browserAccess.pending[0].id, decision: "deny" });
+    await consequential;
+    assert.equal((await waitNativeResponse(harness, "consequential-click")).error.code, "browser_permission_denied");
+
+    const sensitive = harness.dispatch("sensitive-raw", "raw.attach", { tabId: 42, captureEvents: false });
+    await wait(0);
+    state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.browserAccess.pending[0].risk, "sensitive");
+    await harness.sendRuntime({ type: "panel.permission.resolve", requestId: state.result.browserAccess.pending[0].id, decision: "deny" });
+    await sensitive;
+    assert.equal((await waitNativeResponse(harness, "sensitive-raw")).error.code, "browser_permission_denied");
+  } finally {
+    harness.restore();
+  }
+});
+
+test("Observe only and Pause fail closed without creating an approval bypass", async () => {
+  const harness = await loadHarness();
+  try {
+    await harness.sendRuntime({ type: "panel.permission.set", mode: "observe", scope: "tab" });
+    const observed = await harness.dispatch("observe-navigation", "tabs.navigate", { tabId: 42, url: "https://example.com/nope" });
+    assert.equal(observed.ok, false);
+    assert.equal(observed.error.code, "browser_access_blocked");
+    assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 0);
+
+    await harness.sendRuntime({ type: "panel.permission.set", mode: "routine", scope: "browser" });
+    await harness.sendRuntime({ type: "panel.permission.pause", paused: true });
+    const paused = await harness.dispatch("paused-navigation", "tabs.navigate", { tabId: 42, url: "https://example.com/nope" });
+    assert.equal(paused.ok, false);
+    assert.equal(paused.error.code, "browser_access_blocked");
+    const state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.browserAccess.paused, true);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("mode changes cancel pending actions and duplicate requests cannot double-execute", async () => {
+  const harness = await loadHarness();
+  try {
+    const first = harness.dispatch("pending-first", "tabs.navigate", { tabId: 42, url: "https://example.com/pending" });
+    await wait(0);
+    await harness.dispatch("pending-duplicate", "tabs.navigate", { tabId: 42, url: "https://example.com/pending" });
+    const duplicate = await waitNativeResponse(harness, "pending-duplicate");
+    assert.equal(duplicate.ok, false);
+    assert.equal(duplicate.error.code, "browser_action_duplicate");
+
+    await harness.sendRuntime({ type: "panel.permission.set", mode: "observe", scope: "tab" });
+    await first;
+    const cancelled = await waitNativeResponse(harness, "pending-first");
+    assert.equal(cancelled.ok, false);
+    assert.equal(cancelled.error.code, "browser_permission_changed");
+    assert.equal(harness.browserActions.length, 0);
+    assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 0);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("pending browser approval expires without changing browser state", async (context) => {
+  context.mock.timers.enable({ apis: ["setTimeout"] });
+  const harness = await loadHarness();
+  try {
+    void harness.dispatch("permission-expiry", "tabs.navigate", { tabId: 42, url: "https://example.com/expired" });
+    await flush();
+    assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 1);
+    context.mock.timers.tick(24_001);
+    await flush();
+    const response = await waitNativeResponse(harness, "permission-expiry");
+    assert.equal(response.ok, false);
+    assert.equal(response.error.code, "browser_permission_timeout");
+    assert.equal(harness.browserActions.length, 0);
+    assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 0);
+  } finally {
+    harness.restore();
+    context.mock.timers.reset();
+  }
+});
+
 test("one Hermes conversation lasts until the side panel closes", async () => {
   const harness = await loadHarness();
   try {
@@ -189,6 +336,9 @@ test("one Hermes conversation lasts until the side panel closes", async () => {
     assert.equal(closeEvent.data.conversationId, first.result.conversationId);
     const afterClose = await harness.dispatch("after-panel-close", "panel.get", {});
     assert.equal(afterClose.result.transcript.length, 0);
+    assert.equal(afterClose.result.browserAccess.mode, "ask");
+    assert.equal(afterClose.result.browserAccess.paused, false);
+    assert.equal(afterClose.result.browserAccess.pending.length, 0);
 
     harness.connectPanel();
     const reopened = await harness.sendRuntime({ type: "panel.send", text: "now find headphones" });

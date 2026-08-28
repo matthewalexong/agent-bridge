@@ -7,9 +7,10 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("panel renders live and durable research trails with DOM-safe text", async () => {
-  const [script, styles] = await Promise.all([
+  const [script, styles, html] = await Promise.all([
     fs.readFile(path.join(root, "extension/panel.js"), "utf8"),
     fs.readFile(path.join(root, "extension/panel.css"), "utf8"),
+    fs.readFile(path.join(root, "extension/panel.html"), "utf8"),
   ]);
   assert.match(script, /function appendResearchItems/);
   assert.match(script, /function appendResearchTrail/);
@@ -29,6 +30,14 @@ test("panel renders live and durable research trails with DOM-safe text", async 
   assert.match(script, /message\.sessionAdapter\?\.displayName/, "the panel identifies a connected harness adapter");
   assert.match(script, /declared\.includes\("sessions\.rename:v1"\)/, "rename visibility follows adapter capabilities");
   assert.match(script, /declared\.includes\("sessions\.archive:v1"\)/, "archive visibility follows adapter capabilities");
+  assert.match(script, /function renderBrowserAccess/);
+  assert.match(script, /panel\.permission\.resolve/);
+  assert.match(styles, /\.access-request/);
+  assert.match(html, /<option value="observe">Observe only<\/option>/);
+  assert.match(html, /<option value="ask" selected>Ask before acting<\/option>/);
+  assert.match(html, /<option value="routine">Allow routine actions<\/option>/);
+  assert.match(html, /id="pause-access"/);
+  assert.match(html, /aria-live="assertive"/);
   assert.match(script, /card-price-label/);
   assert.match(script, /Sold by /);
   assert.match(script, /Availability unknown/);

@@ -16,6 +16,37 @@
       <button id="clear" class="text-button" type="button" title="Clear the conversation">Clear</button>
     </header>
 
+    <section class="access-panel" aria-labelledby="access-heading">
+      <div class="access-row">
+        <label id="access-heading" for="access-mode">Browser access</label>
+        <select id="access-mode" aria-describedby="access-description">
+          <option value="observe">Observe only</option>
+          <option value="ask" selected>Ask before acting</option>
+          <option value="routine">Allow routine actions</option>
+        </select>
+        <button id="pause-access" class="access-pause" type="button" aria-pressed="false">Pause</button>
+      </div>
+      <div class="access-scope-row" id="access-scope-row" hidden>
+        <label for="access-scope">Allow on</label>
+        <select id="access-scope">
+          <option value="tab" selected>Current tab</option>
+          <option value="site">Current site</option>
+          <option value="browser">All tabs</option>
+        </select>
+      </div>
+      <p id="access-description" class="access-description">The agent must ask before clicking, typing, navigating, or monitoring.</p>
+      <div id="access-request" class="access-request" role="status" aria-live="assertive" hidden>
+        <div>
+          <strong id="access-request-title">Browser action requested</strong>
+          <span id="access-request-detail"></span>
+        </div>
+        <div class="access-actions">
+          <button id="deny-access" class="access-deny" type="button">Deny</button>
+          <button id="approve-access" class="access-approve" type="button">Approve once</button>
+        </div>
+      </div>
+    </section>
+
     <div class="session-bar">
       <label for="sessions">Session</label>
       <select id="sessions" aria-label="Choose a previous harness session">

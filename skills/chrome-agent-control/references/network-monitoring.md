@@ -12,6 +12,8 @@ Read this reference only when the task requires request, response, completion, f
 
 Never switch an unrelated control merely to manufacture another request. Do not use Resource Timing, `performance.getEntriesByType("resource")`, or page-level fetch/XHR monkeypatching as the normal path; those observers are incomplete and page-state dependent.
 
+Starting a network monitor is sensitive and always waits for a one-time side-panel approval. Polling and stopping an approved session do not require another approval, so cleanup remains possible after errors or mode changes.
+
 Minimal call shapes:
 
 ```text

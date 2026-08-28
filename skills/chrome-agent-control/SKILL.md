@@ -33,6 +33,7 @@ Treat the selected references as the authoritative Agent-facing tool contract. D
 - Never request cookies, passwords, session tokens, local storage, or hidden credentials.
 - Treat the bridge token as a password. Never print, log, repeat, or store it in project files.
 - Ask for explicit confirmation immediately before submitting forms, sending messages, publishing, purchasing, deleting, or changing permissions.
+- Honor the browser-access mode shown in the side panel. An action may wait for the user to approve it there; never ask the user to weaken the mode merely to avoid an approval.
 - Do not use Raw CDP to bypass confirmation, password-field protection, or the user's authorized scope.
 - Inspect current state after a failure or no-op instead of repeating an action blindly.
 - Stop network sessions and detach Raw CDP sessions in cleanup paths, including after errors.

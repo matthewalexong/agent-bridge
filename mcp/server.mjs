@@ -145,7 +145,7 @@ tool(
   "browser_navigate",
   {
     title: "Navigate Chrome tab",
-    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL.",
+    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL. The extension enforces the side-panel browser-access mode and may hold this exact call for approval.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       url: z.string().url().or(z.literal("about:blank")),
@@ -230,7 +230,7 @@ tool(
   {
     title: "Act on page element",
     description:
-      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls.",
+      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. The extension enforces the side-panel browser-access mode and may hold this exact call for approval. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       kind: z.enum(["click", "fill", "press", "select"]).optional(),
@@ -451,7 +451,7 @@ tool(
   {
     title: "Start network monitoring",
     description:
-      "Start a tab-scoped, metadata-only Chrome network monitor. Pass rawSessionId to reuse that Raw CDP attachment instead of attaching a second debugger. Headers and bodies are never returned.",
+      "Start a tab-scoped, metadata-only Chrome network monitor. Starting is sensitive and waits for one-time side-panel approval even when routine actions are allowed. Pass rawSessionId to reuse that Raw CDP attachment instead of attaching a second debugger. Headers and bodies are never returned.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       rawSessionId: rawSessionId.optional(),
@@ -498,7 +498,7 @@ tool(
   {
     title: "Attach Raw CDP",
     description:
-      "Attach an unrestricted Chrome DevTools Protocol session to one tab. Set captureEvents=false when only commands plus a sanitized network projection are needed; captured Raw events may expose credentials and private data.",
+      "Attach an unrestricted Chrome DevTools Protocol session to one tab. Attachment is sensitive and waits for one-time side-panel approval even when routine actions are allowed. Set captureEvents=false when only commands plus a sanitized network projection are needed; captured Raw events may expose credentials and private data.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       captureEvents: z.boolean().optional().default(true),

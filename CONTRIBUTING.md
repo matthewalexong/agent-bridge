@@ -13,7 +13,7 @@ The core architecture is deliberately neutral:
 - Local or inexpensive models may assist with narrow, low-risk tasks, but they are optional optimizations rather than architectural dependencies.
 - Shopping is the first mature reference capability, not a restriction on the platform.
 
-Read [the architecture guide](./docs/architecture.md) before changing component boundaries, authentication, session ownership, browser permissions, or the Raw CDP surface. Harness integrations must also follow the [session adapter contract](./docs/harness-session-adapters.md).
+Read [the architecture guide](./docs/architecture.md) before changing component boundaries, authentication, session ownership, browser permissions, or the Raw CDP surface. Browser-action changes must preserve the [access-control contract](./docs/browser-access-controls.md), and harness integrations must follow the [session adapter contract](./docs/harness-session-adapters.md).
 
 ## Choose a contribution lane
 

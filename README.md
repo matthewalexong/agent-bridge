@@ -38,6 +38,8 @@ The side panel can list, resume, and remove previous sessions from the connected
 
 Harness integrations negotiate a [versioned, provider-neutral session adapter contract](./docs/harness-session-adapters.md). The panel hides controls the connected harness does not support, while the harness remains free to choose or change its main reasoning model.
 
+The side panel also provides extension-enforced [browser access controls](./docs/browser-access-controls.md): **Observe only**, **Ask before acting**, or scope-bounded **Allow routine actions**, plus a pause control and exact one-time approvals. The harness cannot approve its own requests. Consequential clicks, sanitized network monitoring, and Raw CDP attachment still require visible approval in routine mode.
+
 Version 0.8 also provides clean-room local JavaScript, binary, protocol, source-map, and WASM analysis plus high-level script, debugger, profiler, trace, and opt-in deep-network projections over the existing Raw connection. These additions require no proxy, second browser, privileged service, ADB, Frida, native reverse-engineering suite, WABT, or Binaryen. See the [analysis tool catalog](./docs/analysis-tools.md).
 
 **Raw CDP is equivalent to granting the local bearer token full developer control of an attached tab.** Depending on the commands sent, it can execute JavaScript, read or modify page content, inspect cookies and storage, capture request or response bodies, intercept traffic, and control child targets. Do not expose the loopback service or token to another user or machine.
