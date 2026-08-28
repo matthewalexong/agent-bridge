@@ -45,7 +45,7 @@ test("public collaboration forms protect private browser state", async () => {
 });
 
 test("new contributor documents contain no broken local Markdown links", async () => {
-  const paths = ["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "docs/architecture.md", "docs/public-beta.md"];
+  const paths = ["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "docs/architecture.md", "docs/public-beta.md", "docs/quick-start.md"];
   for (const path of paths) {
     const content = await read(path);
     for (const match of content.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {

@@ -4,9 +4,11 @@ Agent Bridge is an early developer beta. Community support is best-effort.
 
 ## Installation and usage questions
 
-Read the [Agent installation guide](./docs/agent-installation.md) and [architecture guide](./docs/architecture.md) first. If the answer is not there, start a GitHub Discussion with your operating system, Chrome version, Node.js version, harness type, and the first verification step that failed.
+Start with the [ten-minute quick start](./docs/quick-start.md), run `npm run doctor`, then consult the [Agent installation guide](./docs/agent-installation.md) and [architecture guide](./docs/architecture.md). If the answer is not there, start a GitHub Discussion with your operating system, Chrome version, Node.js version, harness type, and the first diagnostic check that failed.
 
 Never include pairing tokens, cookies, headers, request or response bodies, private URLs, account information, or unredacted browser captures.
+
+For a machine-readable diagnostic, run `npm --silent run doctor -- --json`. The output intentionally omits the pairing token, private browser content, absolute home path, local port, and process ID, but you should still review it before posting.
 
 ## Reproducible bugs
 

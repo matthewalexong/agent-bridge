@@ -33,6 +33,8 @@ npm run install-host
 
 The released extension has the stable ID `hkedmoboloodflgcaidimhddljdnndcd`; the installer already allows that ID. Do not ask the user to copy an extension ID when installing an official release.
 
+After loading or reloading the extension, run `npm run doctor`. A ready installation reports nine passing checks without printing the pairing token, private browser state, absolute home path, runtime port, or process ID. Use `npm --silent run doctor -- --json` for machine-readable output.
+
 ## Step 2: ask the user to approve the extension
 
 1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge/releases).
@@ -109,10 +111,13 @@ Do not guess a tab ID or inspect unrelated tabs.
 
 If `browser_status` reports offline:
 
-1. Confirm `npm run install-host` completed in the current checkout.
-2. Reload **Agent Bridge** from `chrome://extensions`.
-3. Reopen its popup and check the connection state.
-4. Restart the MCP client if its server was configured while the client was already running.
+1. Run `npm run doctor` and resolve the first failed check.
+2. Confirm `npm run install-host` completed in the current checkout.
+3. Reload **Agent Bridge** from `chrome://extensions`.
+4. Reopen its popup and check the connection state.
+5. Restart the MCP client if its server was configured while the client was already running.
+
+The shorter [quick start and troubleshooting tree](./quick-start.md) maps every doctor check to its next safe action.
 
 ## Token renewal
 
