@@ -295,6 +295,17 @@ function registerPanelLifecyclePort(port) {
 
 async function nextConversationTurn() {
   let { id, started, harnessSession } = await readStoredConversation();
+  // A service-worker restart used to preserve the opaque conversation ID but
+  // forget the matching visible selection. That made a panel labeled “New
+  // session” silently resume old context. Only recover stored context when the
+  // matching visible state. Treat any context inherited by a fresh worker as
+  // closed: previous harness context is available only through explicit session
+  // selection. Same-worker follow-ups remain continuous while the panel is open.
+  if (started && !conversationMemory.started) {
+    id = null;
+    started = false;
+    harnessSession = false;
+  }
   if (!id) {
     id = `c${crypto.randomUUID().replaceAll("-", "")}`;
     started = false;

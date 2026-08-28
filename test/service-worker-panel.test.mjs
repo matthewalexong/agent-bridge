@@ -19,7 +19,7 @@ async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function loadHarness() {
+async function loadHarness({ sessionStore = new Map() } = {}) {
   const nativeMessages = [];
   const broadcasts = [];
   const nativeMessage = event();
@@ -44,6 +44,19 @@ async function loadHarness() {
       sendMessage: (message) => { broadcasts.push(message); return Promise.resolve(); },
     },
     action: { onClicked: passiveEvent() },
+    storage: {
+      session: {
+        async get(keys) {
+          return Object.fromEntries(keys.filter((key) => sessionStore.has(key)).map((key) => [key, sessionStore.get(key)]));
+        },
+        async set(values) {
+          for (const [key, value] of Object.entries(values)) sessionStore.set(key, value);
+        },
+        async remove(keys) {
+          for (const key of keys) sessionStore.delete(key);
+        },
+      },
+    },
     tabs: {
       onCreated: passiveEvent(),
       onUpdated: passiveEvent(),
@@ -193,6 +206,26 @@ test("a quick side-panel reload preserves the active Hermes conversation", async
     assert.equal(second.result.conversationId, first.result.conversationId);
     assert.equal(second.result.resume, true);
     assert.equal(harness.nativeMessages.some((message) => message.type === "event" && message.event === "panel.close"), false);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("a service-worker reload never resumes hidden context behind a New session label", async () => {
+  const staleConversationId = `c${"a".repeat(32)}`;
+  const sessionStore = new Map([
+    ["panelConversationId", staleConversationId],
+    ["panelConversationStarted", true],
+    ["panelHarnessSession", false],
+  ]);
+  const harness = await loadHarness({ sessionStore });
+  try {
+    const before = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(before.result.selectedSessionId, null, "the UI truthfully presents a new session");
+
+    const sent = await harness.sendRuntime({ type: "panel.send", text: "Research this from scratch" });
+    assert.notEqual(sent.result.conversationId, staleConversationId);
+    assert.equal(sent.result.resume, false);
   } finally {
     harness.restore();
   }
