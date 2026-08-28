@@ -19,12 +19,13 @@ async function wait(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function loadHarness() {
+async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } = {}) {
   const nativeMessages = [];
   const broadcasts = [];
   const nativeMessage = event();
   const runtimeMessage = event();
   const runtimeConnect = event();
+  const actionClicked = event();
   const port = {
     onMessage: nativeMessage,
     onDisconnect: event(),
@@ -35,7 +36,10 @@ async function loadHarness() {
   globalThis.chrome = {
     runtime: {
       id: "hkedmoboloodflgcaidimhddljdnndcd",
-      connectNative: () => port,
+      connectNative: () => {
+        if (!nativeAvailable) throw new Error("native host unavailable");
+        return port;
+      },
       getManifest: () => ({ version: "0.9.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
@@ -43,7 +47,20 @@ async function loadHarness() {
       onMessage: runtimeMessage,
       sendMessage: (message) => { broadcasts.push(message); return Promise.resolve(); },
     },
-    action: { onClicked: passiveEvent() },
+    action: { onClicked: actionClicked },
+    storage: {
+      session: {
+        async get(keys) {
+          return Object.fromEntries(keys.filter((key) => sessionStore.has(key)).map((key) => [key, sessionStore.get(key)]));
+        },
+        async set(values) {
+          for (const [key, value] of Object.entries(values)) sessionStore.set(key, value);
+        },
+        async remove(keys) {
+          for (const key of keys) sessionStore.delete(key);
+        },
+      },
+    },
     tabs: {
       onCreated: passiveEvent(),
       onUpdated: passiveEvent(),
@@ -65,6 +82,8 @@ async function loadHarness() {
       runtimeConnect.listener(panelPort);
       return { disconnect: () => panelPort.onDisconnect.listener() };
     },
+    setNativeAvailable(value) { nativeAvailable = Boolean(value); },
+    triggerConnect() { actionClicked.listener(); },
     dispatch: async (id, method, params) => {
       await nativeMessage.listener({ type: "request", id, method, params }, port);
       await flush();
@@ -198,12 +217,32 @@ test("a quick side-panel reload preserves the active Hermes conversation", async
   }
 });
 
+test("a service-worker reload never resumes hidden context behind a New session label", async () => {
+  const staleConversationId = `c${"a".repeat(32)}`;
+  const sessionStore = new Map([
+    ["panelConversationId", staleConversationId],
+    ["panelConversationStarted", true],
+    ["panelHarnessSession", false],
+  ]);
+  const harness = await loadHarness({ sessionStore });
+  try {
+    const before = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(before.result.selectedSessionId, null, "the UI truthfully presents a new session");
+
+    const sent = await harness.sendRuntime({ type: "panel.send", text: "Research this from scratch" });
+    assert.notEqual(sent.result.conversationId, staleConversationId);
+    assert.equal(sent.result.resume, false);
+  } finally {
+    harness.restore();
+  }
+});
+
 test("previous harness sessions can be listed, loaded, and resumed without copying context into browser storage", async () => {
   const harness = await loadHarness();
   try {
     const refresh = await harness.sendRuntime({ type: "panel.sessions.refresh" });
     assert.equal(refresh.ok, true);
-    const listEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.sessions.list");
+    const listEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.sessions.list" && message.data.requestId === refresh.result.requestId);
     assert.equal(listEvent.data.requestId, refresh.result.requestId);
 
     await harness.dispatch("sessions-update", "panel.sessions.update", { sessions: [
@@ -240,6 +279,35 @@ test("previous harness sessions can be listed, loaded, and resumed without copyi
 
     const closeEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.close").at(-1);
     assert.equal(closeEvent.data.harnessSession, true, "closing detaches the panel without ending harness-owned context");
+  } finally {
+    harness.restore();
+  }
+});
+
+test("every native bridge connection automatically requests the durable session catalog", async () => {
+  const harness = await loadHarness();
+  try {
+    const listEvents = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.sessions.list");
+    assert.equal(listEvents.length, 1);
+    assert.match(listEvents[0].data.requestId, /^sessions-connect-/);
+  } finally {
+    harness.restore();
+  }
+});
+
+test("a session catalog request made during extension reconnect is delivered once the native bridge returns", async () => {
+  const harness = await loadHarness({ nativeAvailable: false });
+  try {
+    const refresh = await harness.sendRuntime({ type: "panel.sessions.refresh" });
+    assert.equal(refresh.ok, true);
+    assert.equal(refresh.result.queued, true);
+    assert.equal(harness.nativeMessages.some((message) => message.event === "panel.sessions.list"), false);
+
+    harness.setNativeAvailable(true);
+    harness.triggerConnect();
+    const listEvents = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.sessions.list");
+    assert.equal(listEvents.length, 1);
+    assert.equal(listEvents[0].data.requestId, refresh.result.requestId);
   } finally {
     harness.restore();
   }

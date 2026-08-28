@@ -1,13 +1,13 @@
 {
   "name": "chrome-agent-bridge",
   "version": "0.9.0",
-  "description": "Control and analyze user-approved Chrome tabs through a local MCP bridge, with local code, protocol, and WASM analysis.",
+  "description": "Connect AI harnesses and MCP agents to the user's existing Chrome session, with local browser and analysis tools.",
   "author": {
-    "name": "梧桐",
-    "url": "https://github.com/escapeWu"
+    "name": "Agent Bridge contributors",
+    "url": "https://github.com/matthewalexong/agent-bridge-rsi"
   },
-  "homepage": "https://github.com/escapeWu/chrome-agent-bridge",
-  "repository": "https://github.com/escapeWu/chrome-agent-bridge",
+  "homepage": "https://github.com/matthewalexong/agent-bridge-rsi",
+  "repository": "https://github.com/matthewalexong/agent-bridge-rsi",
   "license": "MIT",
   "keywords": [
     "chrome",
@@ -18,17 +18,17 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "Chrome Agent Bridge",
-    "shortDescription": "Control and monitor approved Chrome tabs through MCP.",
-    "longDescription": "A local, open-source Chrome bridge for Agents. It provides semantic page control, sanitized monitoring, explicit Raw CDP, script and source-map analysis, debugger and profiler workflows, opt-in deep network inspection, and offline JavaScript, binary, protocol, and WASM analysis.",
-    "developerName": "梧桐",
+    "displayName": "Agent Bridge",
+    "shortDescription": "Let agents work through your existing Chrome session.",
+    "longDescription": "A local, open-source bridge that lets AI harnesses and MCP agents work through the Chrome browser the user already uses. It provides semantic page control, harness-connected sessions, sanitized monitoring, explicit Raw CDP, debugger and profiler workflows, and offline code, binary, protocol, and WASM analysis.",
+    "developerName": "Agent Bridge contributors",
     "category": "Developer Tools",
     "capabilities": [
       "Interactive",
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/escapeWu/chrome-agent-bridge",
+    "websiteURL": "https://github.com/matthewalexong/agent-bridge-rsi",
     "defaultPrompt": [
       "Inspect my current Chrome tab and summarize the page.",
       "Monitor requests while I perform an action in Chrome.",

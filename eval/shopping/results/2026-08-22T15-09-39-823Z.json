@@ -1,6 +1,6 @@
 {
   "summary": {
-    "skill": "/Users/matthewong/Projects/agent-bridge/eval/shopping/skills/purchase-decision-v3.md",
+    "skill": "eval/shopping/skills/purchase-decision-v3.md",
     "model_tier": "local",
     "runs": 2,
     "tasks": 10,

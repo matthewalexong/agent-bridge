@@ -1,6 +1,6 @@
 {
   "when": "2026-08-19T00:33:18.617Z",
-  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/.candidate-task4.md",
+  "skillPath": "eval/skills/.candidate-task4.md",
   "model": "gemma-4-E2B-it",
   "overall": 0.8571428571428571,
   "results": [

@@ -8,13 +8,13 @@ The analysis used the locally installed, production-built ChatGPT Chrome extensi
 
 The implementation in this repository is independently written against public Chrome Extension, Chrome Debugger Protocol, Native Messaging, and MCP APIs.
 
-The high-level page-control contract also references the MIT-licensed [OpenClaw Browser plugin](https://github.com/openclaw/openclaw/tree/3d707a9b963b91134d01b204638f87841a50787b/extensions/browser). The audited OpenClaw Chrome extension is intentionally a thin CDP transport; its Playwright-backed snapshot/ref/action engine lives in the Browser plugin. Chrome Agent Bridge therefore keeps its own transport and adopts only the relevant semantic contract and actionability ideas, without adding OpenClaw or Playwright as a runtime dependency.
+The high-level page-control contract also references the MIT-licensed [OpenClaw Browser plugin](https://github.com/openclaw/openclaw/tree/3d707a9b963b91134d01b204638f87841a50787b/extensions/browser). The audited OpenClaw Chrome extension is intentionally a thin CDP transport; its Playwright-backed snapshot/ref/action engine lives in the Browser plugin. Agent Bridge therefore keeps its own transport and adopts only the relevant semantic contract and actionability ideas, without adding OpenClaw or Playwright as a runtime dependency.
 
 ## Observed architecture shape
 
 The installed extension uses a Manifest V3 service worker, a named Native Messaging host, JSON-RPC-style request/response messages, Chrome tab APIs, content scripts, and a generic Chrome Debugger Protocol relay. Its private runtime performs versioned handshakes before browser-control requests are accepted.
 
-Chrome Agent Bridge does not emulate that private handshake, replace the official native host, bypass ChatGPT authentication, or expose an API from the official extension. It supplies its own extension, native host, local bearer token, and MCP contract.
+Agent Bridge does not emulate that private handshake, replace the official native host, bypass ChatGPT authentication, or expose an API from the official extension. It supplies its own extension, native host, local bearer token, and MCP contract.
 
 ## Capability mapping
 

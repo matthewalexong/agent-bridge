@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "chrome-agent-bridge": {
-      "title": "Chrome Agent Bridge",
-      "description": "Control and analyze approved Chrome tabs, or inspect supplied JavaScript, source maps, binary protocols, and WASM locally.",
+      "title": "Agent Bridge",
+      "description": "Connect an agent to approved tabs in the user's existing Chrome session, with local browser and analysis tools.",
       "command": "node",
       "args": [
         "./mcp/server.mjs"

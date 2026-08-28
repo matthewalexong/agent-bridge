@@ -1,6 +1,6 @@
 {
   "when": "2026-08-18T22:33:55.496Z",
-  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/extract-verify.md",
+  "skillPath": "eval/skills/extract-verify.md",
   "model": "gemma-4-E2B-it",
   "overall": 0.8333333333333334,
   "results": [

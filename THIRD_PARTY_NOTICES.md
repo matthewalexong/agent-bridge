@@ -2,7 +2,7 @@
 
 ## OpenClaw
 
-Chrome Agent Bridge's semantic page-control contract and interactive role set were informed by the OpenClaw Browser plugin at commit [`3d707a9b963b91134d01b204638f87841a50787b`](https://github.com/openclaw/openclaw/tree/3d707a9b963b91134d01b204638f87841a50787b/extensions/browser).
+Agent Bridge's semantic page-control contract and interactive role set were informed by the OpenClaw Browser plugin at commit [`3d707a9b963b91134d01b204638f87841a50787b`](https://github.com/openclaw/openclaw/tree/3d707a9b963b91134d01b204638f87841a50787b/extensions/browser).
 
 OpenClaw is licensed under the MIT License:
 
@@ -32,11 +32,11 @@ SOFTWARE.
 
 The complete OpenClaw license is available at [github.com/openclaw/openclaw/blob/main/LICENSE](https://github.com/openclaw/openclaw/blob/main/LICENSE).
 
-OpenClaw is not bundled as a runtime dependency. Chrome Agent Bridge retains its own MCP, Native Messaging, authentication, and CDP transport implementation.
+OpenClaw is not bundled as a runtime dependency. Agent Bridge retains its own MCP, Native Messaging, authentication, and CDP transport implementation.
 
 ## Analysis runtime dependencies
 
-Chrome Agent Bridge uses the following MIT-licensed packages for clean-room local analysis:
+Agent Bridge uses the following MIT-licensed packages for clean-room local analysis:
 
 - Acorn, copyright (C) 2012-2022 by various contributors.
 - acorn-walk, copyright (C) 2012-2020 by various contributors.

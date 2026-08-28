@@ -18,6 +18,7 @@ const MAX_RAW_POLL_BYTES = 2_500_000;
 let nativePort = null;
 let reconnectTimer = null;
 let reconnectDelayMs = 1_000;
+let pendingPanelSessionListRequestId = null;
 let nextAuthRequestId = 1;
 const createdTabIds = new Set();
 const pendingAuthRequests = new Map();
@@ -156,6 +157,12 @@ function connect() {
       scheduleReconnect();
     });
     port.postMessage({ type: "hello", extensionVersion: chrome.runtime.getManifest().version });
+    // Every successful native connection refreshes the durable harness catalog.
+    // This makes previous sessions available even when the panel's own startup
+    // request happened before the bridge connected or the panel opens later.
+    const sessionListRequestId = pendingPanelSessionListRequestId || `sessions-connect-${crypto.randomUUID()}`;
+    pendingPanelSessionListRequestId = null;
+    emitBrowserEvent("panel.sessions.list", { requestId: sessionListRequestId });
   } catch {
     nativePort = null;
     scheduleReconnect();
@@ -224,6 +231,19 @@ function emitBrowserEvent(event, data) {
   } catch {
     // The disconnect handler schedules reconnection.
   }
+}
+
+function requestPanelSessionList(requestId) {
+  pendingPanelSessionListRequestId = requestId;
+  connect();
+  if (!nativePort) return { requested: true, requestId, queued: true };
+  // A successful connect flushes the queued request above. If the port was
+  // already connected, deliver it here.
+  if (pendingPanelSessionListRequestId === requestId) {
+    pendingPanelSessionListRequestId = null;
+    emitBrowserEvent("panel.sessions.list", { requestId });
+  }
+  return { requested: true, requestId, queued: false };
 }
 
 const conversationMemory = { id: null, started: false, harnessSession: false };
@@ -295,6 +315,17 @@ function registerPanelLifecyclePort(port) {
 
 async function nextConversationTurn() {
   let { id, started, harnessSession } = await readStoredConversation();
+  // A service-worker restart used to preserve the opaque conversation ID but
+  // forget the matching visible selection. That made a panel labeled “New
+  // session” silently resume old context. Only recover stored context when the
+  // matching visible state. Treat any context inherited by a fresh worker as
+  // closed: previous harness context is available only through explicit session
+  // selection. Same-worker follow-ups remain continuous while the panel is open.
+  if (started && !conversationMemory.started) {
+    id = null;
+    started = false;
+    harnessSession = false;
+  }
   if (!id) {
     id = `c${crypto.randomUUID().replaceAll("-", "")}`;
     started = false;
@@ -1819,7 +1850,7 @@ async function dispatch(method, params) {
     case "tabs.close": {
       await requireTab(params.tabId);
       if (!createdTabIds.has(params.tabId)) {
-        throw codedError("tab_not_owned", "Only tabs created by Chrome Agent Bridge can be closed");
+        throw codedError("tab_not_owned", "Only tabs created by Agent Bridge can be closed");
       }
       await chrome.tabs.remove(params.tabId);
       createdTabIds.delete(params.tabId);
@@ -1961,8 +1992,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "panel.sessions.refresh") {
     const requestId = `sessions-${crypto.randomUUID()}`;
-    emitBrowserEvent("panel.sessions.list", { requestId });
-    sendResponse({ ok: true, result: { requested: true, requestId } });
+    sendResponse({ ok: true, result: requestPanelSessionList(requestId) });
     return false;
   }
   if (message?.type === "panel.session.select") {

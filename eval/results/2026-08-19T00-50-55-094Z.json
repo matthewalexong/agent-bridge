@@ -1,6 +1,6 @@
 {
   "when": "2026-08-19T00:50:55.098Z",
-  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/extract-facts-v2.md",
+  "skillPath": "eval/skills/extract-facts-v2.md",
   "model": "gemma-4-E2B-it",
   "overall": 1,
   "results": [

@@ -30,4 +30,4 @@ for (const candidate of [...candidates(), path.join(bridgeDirectory(), "native-h
     if (error?.code !== "ENOENT") throw error;
   }
 }
-if (removed === 0) process.stdout.write("No Chrome Agent Bridge native host manifest was installed.\n");
+if (removed === 0) process.stdout.write("No Agent Bridge native host manifest was installed.\n");
