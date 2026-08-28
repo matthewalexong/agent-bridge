@@ -51,6 +51,87 @@ h1 {
 .status.waiting { color: #ffce6b; }
 .status.error { color: #ff8b8f; }
 
+.access-panel {
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(47, 215, 255, 0.12);
+  background: rgba(7, 19, 44, 0.94);
+}
+.access-row,
+.access-scope-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.access-scope-row { margin-top: 7px; }
+.access-row label,
+.access-scope-row label {
+  color: #8fa9c8;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.access-row select,
+.access-scope-row select {
+  min-width: 0;
+  flex: 1;
+  color: #dbe8f8;
+  background: #0b1d3b;
+  border: 1px solid rgba(47, 215, 255, 0.22);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 11px;
+}
+.access-pause {
+  min-height: 29px;
+  padding: 0 10px;
+  color: #ffce6b;
+  background: transparent;
+  border: 1px solid rgba(255, 206, 107, 0.36);
+}
+.access-pause[aria-pressed="true"] {
+  color: #07132c;
+  background: #ffce6b;
+}
+.access-description {
+  margin: 6px 0 0;
+  color: #8fa9c8;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.access-request {
+  margin-top: 8px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 206, 107, 0.55);
+  background: rgba(255, 206, 107, 0.09);
+}
+.access-request[hidden] { display: none; }
+.access-request > div:first-child {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.access-request strong {
+  color: #ffce6b;
+  font-size: 11px;
+}
+.access-request span {
+  color: #dbe8f8;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.access-actions { display: flex; gap: 5px; }
+.access-actions button { min-height: 29px; padding: 0 9px; font-size: 10px; }
+.access-deny { color: #ff8b8f; background: transparent; border: 1px solid rgba(255, 139, 143, 0.35); }
+.access-approve { color: #07132c; background: #91f56d; }
+
 .session-bar {
   display: flex;
   align-items: center;

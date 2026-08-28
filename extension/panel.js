@@ -269,6 +269,36 @@ function renderSessions(select, renameButton, removeButton, sessions, selectedSe
   removeButton.title = selectedSession?.running ? "Active sessions cannot be removed" : "Remove selected session";
 }
 
+function renderBrowserAccess(elements, access = {}) {
+  const mode = ["observe", "ask", "routine"].includes(access.mode) ? access.mode : "ask";
+  const scope = ["tab", "site", "browser"].includes(access.scope) ? access.scope : "tab";
+  elements.mode.value = mode;
+  elements.scope.value = scope;
+  elements.scopeRow.hidden = mode !== "routine";
+  elements.pause.setAttribute("aria-pressed", access.paused ? "true" : "false");
+  elements.pause.textContent = access.paused ? "Resume" : "Pause";
+  if (access.paused) {
+    elements.description.textContent = "Browser control is paused. Reading and conversation remain available.";
+  } else if (mode === "observe") {
+    elements.description.textContent = "The agent can read and research, but cannot change browser state.";
+  } else if (mode === "ask") {
+    elements.description.textContent = "The agent must ask before clicking, typing, navigating, or monitoring.";
+  } else {
+    const label = scope === "browser" ? "all tabs" : scope === "site" ? (access.origin || "the current site") : `tab ${access.tabId ?? "currently active"}`;
+    elements.description.textContent = `Routine actions are allowed on ${label}. Consequential and sensitive actions still require approval.`;
+  }
+  const request = Array.isArray(access.pending) ? access.pending[0] : null;
+  elements.request.hidden = !request;
+  elements.approve.dataset.requestId = request?.id || "";
+  elements.deny.dataset.requestId = request?.id || "";
+  if (request) {
+    elements.requestTitle.textContent = request.risk === "consequential" ? "Consequential action requested" : request.risk === "sensitive" ? "Sensitive access requested" : "Browser action requested";
+    elements.requestDetail.textContent = `${request.summary}${request.origin ? ` · ${request.origin}` : ""}`;
+  } else {
+    elements.requestDetail.textContent = "";
+  }
+}
+
 // Live "thinking" bubble. Transient — not part of the transcript; it exists
 // only while the agent is actively working and is removed when it clears.
 // Kept OUTSIDE the transcript rebuild so renderAll() doesn't wipe it mid-turn.
@@ -326,6 +356,18 @@ export function startPanel(doc = document) {
   const refreshSessionsButton = doc.querySelector("#refresh-sessions");
   const renameSessionButton = doc.querySelector("#rename-session");
   const removeSessionButton = doc.querySelector("#remove-session");
+  const accessElements = {
+    mode: doc.querySelector("#access-mode"),
+    scope: doc.querySelector("#access-scope"),
+    scopeRow: doc.querySelector("#access-scope-row"),
+    pause: doc.querySelector("#pause-access"),
+    description: doc.querySelector("#access-description"),
+    request: doc.querySelector("#access-request"),
+    requestTitle: doc.querySelector("#access-request-title"),
+    requestDetail: doc.querySelector("#access-request-detail"),
+    approve: doc.querySelector("#approve-access"),
+    deny: doc.querySelector("#deny-access"),
+  };
 
   let connected = false;
   let agentName = null;
@@ -354,6 +396,7 @@ export function startPanel(doc = document) {
       agentName = message.agent?.name ?? null;
       harnessName = message.sessionAdapter?.displayName ?? null;
       renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null, message.sessionAdapter ?? null);
+      renderBrowserAccess(accessElements, message.browserAccess);
       setStatus();
     }
   });
@@ -400,6 +443,49 @@ export function startPanel(doc = document) {
       // Clearing is best-effort; the transcript broadcast keeps the UI honest.
     }
   });
+  accessElements.mode.addEventListener("change", async () => {
+    accessElements.mode.disabled = true;
+    try {
+      const result = await send({ type: "panel.permission.set", mode: accessElements.mode.value, scope: accessElements.scope.value });
+      renderBrowserAccess(accessElements, result);
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.className = "status error";
+    } finally {
+      accessElements.mode.disabled = false;
+    }
+  });
+  accessElements.scope.addEventListener("change", async () => {
+    accessElements.scope.disabled = true;
+    try {
+      const result = await send({ type: "panel.permission.set", mode: "routine", scope: accessElements.scope.value });
+      renderBrowserAccess(accessElements, result);
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : String(error);
+      status.className = "status error";
+    } finally {
+      accessElements.scope.disabled = false;
+    }
+  });
+  accessElements.pause.addEventListener("click", async () => {
+    const paused = accessElements.pause.getAttribute("aria-pressed") !== "true";
+    const result = await send({ type: "panel.permission.pause", paused }).catch(() => null);
+    if (result) renderBrowserAccess(accessElements, result);
+  });
+  async function resolveAccess(decision, button) {
+    const requestId = button.dataset.requestId;
+    if (!requestId) return;
+    accessElements.approve.disabled = true;
+    accessElements.deny.disabled = true;
+    try {
+      await send({ type: "panel.permission.resolve", requestId, decision });
+    } finally {
+      accessElements.approve.disabled = false;
+      accessElements.deny.disabled = false;
+    }
+  }
+  accessElements.approve.addEventListener("click", () => { void resolveAccess("approve", accessElements.approve); });
+  accessElements.deny.addEventListener("click", () => { void resolveAccess("deny", accessElements.deny); });
   sessionsSelect.addEventListener("change", async () => {
     if (!sessionsSelect.value) {
       await send({ type: "panel.clear" }).catch(() => {});
@@ -459,6 +545,7 @@ export function startPanel(doc = document) {
       agentName = result.agent?.name ?? null;
       harnessName = result.sessionAdapter?.displayName ?? null;
       renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null, result.sessionAdapter ?? null);
+      renderBrowserAccess(accessElements, result.browserAccess);
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,

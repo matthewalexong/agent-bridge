@@ -32,6 +32,8 @@ browser_watch_events({afterCursor, tabId?, timeoutMs?})
 
 ## Action loop
 
+The extension enforces the side panel's browser-access mode. In **Ask before acting**, a state-changing tool call may wait briefly while the user approves or denies that exact action. **Allow routine actions** is scope-bounded, and consequential clicks still require approval. **Observe only** and **Pause** return typed access errors without changing the page. Do not retry a denied or timed-out action unless the user asks you to.
+
 1. Take a fresh `browser_snapshot` before acting on an unfamiliar or changed page.
 2. Select a semantic ref from that snapshot. Refs belong only to the latest snapshot on the same tab.
 3. Perform one intentional `browser_act` action.
@@ -57,4 +59,5 @@ Use `kind:"select"` only for a native `<select>`. For ARIA combobox/listbox widg
 - `selector_not_found`: selector compatibility calls require a fresh current selector.
 - `restricted_page`: ask the user to open a normal web page.
 - `confirmation_required`: stop and obtain confirmation for the exact consequential click; do not reuse confirmation for another action.
+- `browser_permission_denied`, `browser_permission_timeout`, or `browser_access_blocked`: do not bypass the side-panel decision or move the action to Raw CDP.
 - Password fields are rejected by `browser_fill`. Do not use Raw CDP to bypass that boundary.

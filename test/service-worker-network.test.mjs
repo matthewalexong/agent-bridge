@@ -15,10 +15,22 @@ async function flush() {
   await new Promise((resolve) => setImmediate(resolve));
 }
 
+function runtimeRequest(runtimeMessage, chrome, message) {
+  return new Promise((resolve) => runtimeMessage.listener(message, { id: chrome.runtime.id }, resolve));
+}
+
+async function approvePending(runtimeMessage, chrome) {
+  const state = await runtimeRequest(runtimeMessage, chrome, { type: "panel.get" });
+  for (const pending of state.result.browserAccess.pending) {
+    await runtimeRequest(runtimeMessage, chrome, { type: "panel.permission.resolve", requestId: pending.id, decision: "approve" });
+  }
+}
+
 test("network monitor returns sanitized metadata and detaches cleanly", async () => {
   const nativeMessages = [];
   const debuggerCalls = [];
   const nativeMessage = event();
+  const runtimeMessage = event();
   const nativeDisconnect = event();
   const debuggerEvent = event();
   const debuggerDetach = event();
@@ -36,7 +48,7 @@ test("network monitor returns sanitized metadata and detaches cleanly", async ()
       getManifest: () => ({ version: "0.7.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
-      onMessage: passiveEvent(),
+      onMessage: runtimeMessage,
     },
     action: { onClicked: passiveEvent() },
     windows: { update: async () => ({}) },
@@ -63,12 +75,15 @@ test("network monitor returns sanitized metadata and detaches cleanly", async ()
   try {
     await import(`${pathToFileURL(path.join(root, "extension/service-worker.js"))}?network=${Date.now()}`);
 
-    await nativeMessage.listener({
+    const startOperation = nativeMessage.listener({
       type: "request",
       id: "network-start",
       method: "network.start",
       params: { tabId: 42, maxEvents: 10, maxBytes: 65_536 },
     }, port);
+    await flush();
+    await approvePending(runtimeMessage, globalThis.chrome);
+    await startOperation;
     await flush();
     const started = nativeMessages.find((message) => message.id === "network-start");
     assert.equal(started.ok, true);
@@ -180,6 +195,7 @@ test("network monitor returns sanitized metadata and detaches cleanly", async ()
 test("network monitor is isolated to its selected tab", async () => {
   const nativeMessages = [];
   const nativeMessage = event();
+  const runtimeMessage = event();
   const debuggerEvent = event();
   const port = {
     onMessage: nativeMessage,
@@ -195,7 +211,7 @@ test("network monitor is isolated to its selected tab", async () => {
       getManifest: () => ({ version: "0.7.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
-      onMessage: passiveEvent(),
+      onMessage: runtimeMessage,
     },
     action: { onClicked: passiveEvent() },
     windows: { update: async () => ({}) },
@@ -218,12 +234,15 @@ test("network monitor is isolated to its selected tab", async () => {
 
   try {
     await import(`${pathToFileURL(path.join(root, "extension/service-worker.js"))}?isolation=${Date.now()}`);
-    await nativeMessage.listener({
+    const startOperation = nativeMessage.listener({
       type: "request",
       id: "start-isolated",
       method: "network.start",
       params: { tabId: 42 },
     }, port);
+    await flush();
+    await approvePending(runtimeMessage, globalThis.chrome);
+    await startOperation;
     await flush();
     const sessionId = nativeMessages.find((message) => message.id === "start-isolated").result.sessionId;
 

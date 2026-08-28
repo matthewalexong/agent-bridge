@@ -35,7 +35,7 @@ const PANEL_CLOSE_GRACE_MS = 300;
 // Capability probe: bumped whenever panel.post/panel.get gains a field.
 // Old cached service workers lack it, so the panel (or tests) can detect a
 // stale SW and prompt a reload instead of silently dropping new features.
-const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1", "harness-session-remove:v1", "harness-session-rename:v1"];
+const PANEL_CAPABILITIES = ["links:v1", "product-card-evidence:v1", "identify:v1", "send:v1", "status:v1", "research-trail:v1", "session-until-close:v1", "harness-session-picker:v1", "harness-session-remove:v1", "harness-session-rename:v1", "browser-permissions:v1"];
 const PANEL_MAX_TEXT = 20_000;
 const PANEL_MAX_AGENT_NAME = 80;
 const PANEL_MAX_STATUS_TEXT = 300;
@@ -51,6 +51,13 @@ let panelAgent = null;
 let panelSessions = [];
 let panelSessionSelection = null;
 let panelSessionAdapter = null;
+const BROWSER_ACCESS_MODES = new Set(["observe", "ask", "routine"]);
+const BROWSER_ACCESS_SCOPES = new Set(["tab", "site", "browser"]);
+const BROWSER_APPROVAL_TTL_MS = 24_000;
+const ROUTINE_BROWSER_ACTIONS = new Set(["tabs.create", "tabs.close", "tabs.activate", "tabs.navigate", "page.click", "page.fill", "page.act"]);
+const SENSITIVE_BROWSER_ACTIONS = new Set(["network.start", "raw.attach"]);
+let browserAccess = defaultBrowserAccess();
+const pendingBrowserApprovals = new Map();
 const HARNESS_SESSION_CAPABILITIES = new Set([
   "sessions.list:v1",
   "sessions.load-display-transcript:v1",
@@ -69,6 +76,50 @@ const panelLifecyclePorts = new Set();
 let panelCloseTimer = null;
 const PANEL_STATUS_STALE_MS = 5 * 60 * 1000;
 let panelStatusExpiryTimer = null;
+
+function defaultBrowserAccess() {
+  return { mode: "ask", scope: "tab", tabId: null, origin: null, paused: false, updatedAt: new Date().toISOString() };
+}
+
+function browserAccessState() {
+  const now = Date.now();
+  for (const [id, request] of pendingBrowserApprovals) {
+    if (request.expiresAtMs <= now) expireBrowserApproval(id, request);
+  }
+  return {
+    ...browserAccess,
+    pending: [...pendingBrowserApprovals.values()].map((request) => ({
+      id: request.id,
+      method: request.method,
+      summary: request.summary,
+      risk: request.risk,
+      tabId: request.tabId,
+      origin: request.origin,
+      createdAt: request.createdAt,
+      expiresAt: request.expiresAt,
+    })),
+  };
+}
+
+function resetBrowserAccess() {
+  browserAccess = defaultBrowserAccess();
+  rejectPendingBrowserApprovals("browser_permission_cancelled", "Pending browser actions were cancelled because the permission session ended.");
+}
+
+function expireBrowserApproval(id, request) {
+  if (pendingBrowserApprovals.get(id) !== request) return;
+  pendingBrowserApprovals.delete(id);
+  clearTimeout(request.timer);
+  request.reject(codedError("browser_permission_timeout", "Browser approval timed out. Request the action again if it is still needed."));
+}
+
+function rejectPendingBrowserApprovals(code, message) {
+  for (const [id, request] of pendingBrowserApprovals) {
+    pendingBrowserApprovals.delete(id);
+    clearTimeout(request.timer);
+    request.reject(codedError(code, message));
+  }
+}
 
 function clearPanelStatusExpiry() {
   if (panelStatusExpiryTimer) clearTimeout(panelStatusExpiryTimer);
@@ -144,6 +195,154 @@ function codedError(code, message) {
   const error = new Error(message);
   error.code = code;
   return error;
+}
+
+function stableActionValue(value) {
+  if (Array.isArray(value)) return value.map(stableActionValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableActionValue(value[key])]));
+}
+
+function browserActionFingerprint(method, params) {
+  return JSON.stringify(stableActionValue({ method, params }));
+}
+
+function actionRisk(method, params) {
+  if (SENSITIVE_BROWSER_ACTIONS.has(method)) return "sensitive";
+  if (["page.act", "page.click"].includes(method) && params?.confirmed === true) return "consequential";
+  return "routine";
+}
+
+function actionLabel(method, params) {
+  if (method === "tabs.create") return `Open ${safeDisplayUrl(params?.url || "about:blank")}`;
+  if (method === "tabs.close") return "Close a bridge-created tab";
+  if (method === "tabs.activate") return "Switch the active tab";
+  if (method === "tabs.navigate") return `Navigate to ${safeDisplayUrl(params?.url)}`;
+  if (method === "page.fill" || (method === "page.act" && params?.kind === "fill")) return "Fill a field (value hidden)";
+  if (method === "page.act" && params?.kind === "select") return "Change a selection";
+  if (method === "page.act" && params?.kind === "press") return `Press ${String(params?.key || "a key").slice(0, 40)}`;
+  if (method === "page.click" || (method === "page.act" && params?.kind === "click")) return params?.confirmed === true ? "Perform a confirmed consequential click" : "Click a page control";
+  if (method === "network.start") return "Monitor sanitized network activity";
+  if (method === "raw.attach") return "Open unrestricted Raw CDP access";
+  return "Control the browser";
+}
+
+function safeDisplayUrl(value) {
+  try {
+    const url = new URL(String(value || "about:blank"));
+    if (url.protocol === "http:" || url.protocol === "https:") return `${url.origin}${url.pathname}`.slice(0, 180);
+    return url.protocol === "about:" ? url.href : `${url.protocol}//…`;
+  } catch {
+    return "the requested page";
+  }
+}
+
+async function actionContext(method, params) {
+  const tabId = Number.isInteger(params?.tabId) ? params.tabId : null;
+  let origin = null;
+  if (method === "tabs.create" || method === "tabs.navigate") {
+    try { origin = new URL(String(params?.url)).origin; } catch {}
+  } else if (tabId != null) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      origin = new URL(tab.url).origin;
+    } catch {}
+  }
+  return { tabId, origin };
+}
+
+function routineScopeAllows(context) {
+  if (browserAccess.scope === "browser") return true;
+  if (browserAccess.scope === "tab") return context.tabId != null && context.tabId === browserAccess.tabId;
+  return Boolean(context.origin && browserAccess.origin && context.origin === browserAccess.origin);
+}
+
+function requestBrowserApproval(method, params, context, risk, fingerprint) {
+  const existing = [...pendingBrowserApprovals.values()].find((request) => request.fingerprint === fingerprint);
+  if (existing) return Promise.reject(codedError("browser_action_duplicate", "An identical browser action is already waiting for user approval."));
+  const now = Date.now();
+  let resolveWait;
+  let rejectWait;
+  const wait = new Promise((resolve, reject) => {
+    resolveWait = resolve;
+    rejectWait = reject;
+  });
+  const request = {
+    id: `permission_${crypto.randomUUID()}`,
+    fingerprint,
+    method,
+    summary: actionLabel(method, params),
+    risk,
+    tabId: context.tabId,
+    origin: context.origin,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + BROWSER_APPROVAL_TTL_MS).toISOString(),
+    expiresAtMs: now + BROWSER_APPROVAL_TTL_MS,
+    wait,
+    resolve: resolveWait,
+    reject: rejectWait,
+  };
+  request.timer = setTimeout(() => {
+    expireBrowserApproval(request.id, request);
+    broadcastPanel();
+  }, BROWSER_APPROVAL_TTL_MS);
+  pendingBrowserApprovals.set(request.id, request);
+  broadcastPanel();
+  return wait;
+}
+
+async function enforceBrowserAccess(method, params) {
+  if (!ROUTINE_BROWSER_ACTIONS.has(method) && !SENSITIVE_BROWSER_ACTIONS.has(method)) return;
+  const risk = actionRisk(method, params);
+  const fingerprint = browserActionFingerprint(method, params);
+  if (browserAccess.paused || browserAccess.mode === "observe") {
+    throw codedError("browser_access_blocked", browserAccess.paused ? "Browser control is paused in the Agent Bridge side panel." : "Agent Bridge is in Observe only mode. Change browser access in the side panel before acting.");
+  }
+  const context = await actionContext(method, params);
+  const routineAllowed = risk === "routine" && browserAccess.mode === "routine" && routineScopeAllows(context);
+  if (routineAllowed) return;
+  await requestBrowserApproval(method, params, context, risk, fingerprint);
+}
+
+async function setBrowserAccessMode(rawMode, rawScope) {
+  const mode = String(rawMode || "");
+  const scope = String(rawScope || "tab");
+  if (!BROWSER_ACCESS_MODES.has(mode)) throw codedError("invalid_request", "Choose Observe only, Ask before acting, or Allow routine actions.");
+  if (!BROWSER_ACCESS_SCOPES.has(scope)) throw codedError("invalid_request", "Choose current tab, current site, or all tabs scope.");
+  let tabId = null;
+  let origin = null;
+  if (mode === "routine" && scope !== "browser") {
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!Number.isInteger(activeTab?.id)) throw codedError("active_tab_unavailable", "Open the tab you want the agent to control, then try again.");
+    tabId = activeTab.id;
+    try { origin = new URL(activeTab.url).origin; } catch {}
+    if (scope === "site" && !origin) throw codedError("active_site_unavailable", "The active tab does not have a site that can be authorized.");
+  }
+  browserAccess = { mode, scope, tabId, origin, paused: false, updatedAt: new Date().toISOString() };
+  rejectPendingBrowserApprovals("browser_permission_changed", "Pending browser actions were cancelled because the access mode changed.");
+  broadcastPanel();
+  return browserAccessState();
+}
+
+function resolveBrowserApproval(rawRequestId, decision) {
+  if (decision !== "approve" && decision !== "deny") throw codedError("invalid_request", "Choose approve or deny.");
+  const requestId = String(rawRequestId || "");
+  const request = pendingBrowserApprovals.get(requestId);
+  if (!request) throw codedError("approval_not_found", "That browser-action request is no longer pending.");
+  pendingBrowserApprovals.delete(requestId);
+  clearTimeout(request.timer);
+  if (decision === "approve") request.resolve();
+  else request.reject(codedError("browser_permission_denied", "The user denied this browser action in the Agent Bridge side panel."));
+  emitBrowserEvent("panel.permission.resolved", { requestId, decision, method: request.method, risk: request.risk });
+  broadcastPanel();
+  return { requestId, decision };
+}
+
+function setBrowserAccessPaused(paused) {
+  browserAccess = { ...browserAccess, paused: Boolean(paused), updatedAt: new Date().toISOString() };
+  rejectPendingBrowserApprovals("browser_control_paused", "Pending browser actions were cancelled because browser control was paused.");
+  broadcastPanel();
+  return browserAccessState();
 }
 
 function rejectPendingAuthRequests(message) {
@@ -314,6 +513,7 @@ async function closePanelSession() {
   panelTranscript.length = 0;
   panelProgress = [];
   panelStatus = null;
+  resetBrowserAccess();
   await resetPanelConversation();
   broadcastPanel();
 }
@@ -377,7 +577,7 @@ function supportsHarnessSessionCapability(capability) {
 }
 
 function panelState() {
-  return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, sessions: panelSessions, selectedSessionId: panelSessionSelection, sessionAdapter: panelSessionAdapter, capabilities: PANEL_CAPABILITIES };
+  return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, sessions: panelSessions, selectedSessionId: panelSessionSelection, sessionAdapter: panelSessionAdapter, browserAccess: browserAccessState(), capabilities: PANEL_CAPABILITIES };
 }
 
 async function selectHarnessSession(rawSessionId) {
@@ -502,6 +702,7 @@ function broadcastPanel() {
       sessions: panelSessions,
       selectedSessionId: panelSessionSelection,
       sessionAdapter: panelSessionAdapter,
+      browserAccess: browserAccessState(),
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
@@ -1878,6 +2079,7 @@ function handleRawDebuggerDetach(source) {
 }
 
 async function dispatch(method, params) {
+  await enforceBrowserAccess(method, params);
   switch (method) {
     case "browser.status":
       return { connected: true, extensionVersion: chrome.runtime.getManifest().version };
@@ -2039,6 +2241,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "panel.sessions.refresh") {
     const requestId = `sessions-${crypto.randomUUID()}`;
     sendResponse({ ok: true, result: requestPanelSessionList(requestId) });
+    return false;
+  }
+  if (message?.type === "panel.permission.set") {
+    void setBrowserAccessMode(message.mode, message.scope).then(
+      (result) => sendResponse({ ok: true, result }),
+      (error) => sendResponse({ ok: false, error: errorPayload(error) }),
+    );
+    return true;
+  }
+  if (message?.type === "panel.permission.resolve") {
+    try {
+      sendResponse({ ok: true, result: resolveBrowserApproval(message.requestId, message.decision) });
+    } catch (error) {
+      sendResponse({ ok: false, error: errorPayload(error) });
+    }
+    return false;
+  }
+  if (message?.type === "panel.permission.pause") {
+    sendResponse({ ok: true, result: setBrowserAccessPaused(message.paused) });
     return false;
   }
   if (message?.type === "panel.session.select") {

@@ -28,6 +28,7 @@ function chromeHarness({ inspectResults = [] } = {}) {
   const debuggerCalls = [];
   const scriptCalls = [];
   const nativeMessage = event();
+  const runtimeMessage = event();
   const debuggerEvent = event();
   const debuggerDetach = event();
   const port = {
@@ -43,7 +44,7 @@ function chromeHarness({ inspectResults = [] } = {}) {
       getManifest: () => ({ version: "0.7.0" }),
       onInstalled: passiveEvent(),
       onStartup: passiveEvent(),
-      onMessage: passiveEvent(),
+      onMessage: runtimeMessage,
     },
     action: { onClicked: passiveEvent() },
     windows: { update: async () => ({}) },
@@ -112,11 +113,21 @@ function chromeHarness({ inspectResults = [] } = {}) {
       onDetach: debuggerDetach,
     },
   };
-  return { chrome, debuggerCalls, nativeMessage, nativeMessages, port, scriptCalls };
+  return { chrome, debuggerCalls, nativeMessage, nativeMessages, port, runtimeMessage, scriptCalls };
+}
+
+function runtimeRequest(harness, message) {
+  return new Promise((resolve) => harness.runtimeMessage.listener(message, { id: harness.chrome.runtime.id }, resolve));
 }
 
 async function request(harness, id, method, params) {
-  await harness.nativeMessage.listener({ type: "request", id, method, params }, harness.port);
+  const operation = harness.nativeMessage.listener({ type: "request", id, method, params }, harness.port);
+  await flush();
+  const state = await runtimeRequest(harness, { type: "panel.get" });
+  for (const pending of state.result.browserAccess.pending) {
+    await runtimeRequest(harness, { type: "panel.permission.resolve", requestId: pending.id, decision: "approve" });
+  }
+  await operation;
   await flush();
   return harness.nativeMessages.find((message) => message.id === id);
 }
@@ -126,6 +137,7 @@ async function loadHarness(options) {
   const previousChrome = globalThis.chrome;
   globalThis.chrome = harness.chrome;
   await import(`${pathToFileURL(path.join(root, "extension/service-worker.js"))}?page=${crypto.randomUUID()}`);
+  await runtimeRequest(harness, { type: "panel.permission.set", mode: "routine", scope: "browser" });
   return { harness, restore: () => { globalThis.chrome = previousChrome; } };
 }
 
