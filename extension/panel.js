@@ -241,7 +241,7 @@ function renderAll(doc, transcript, entries) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-function renderSessions(select, renameButton, removeButton, sessions, selectedSessionId) {
+function renderSessions(select, renameButton, removeButton, sessions, selectedSessionId, sessionAdapter = null) {
   const selected = selectedSessionId || "";
   select.replaceChildren();
   const doc = select.ownerDocument;
@@ -259,8 +259,13 @@ function renderSessions(select, renameButton, removeButton, sessions, selectedSe
   }
   select.value = selected;
   const selectedSession = (Array.isArray(sessions) ? sessions : []).find((session) => session.id === selected);
-  renameButton.disabled = !selectedSession;
-  removeButton.disabled = !selectedSession || Boolean(selectedSession.running);
+  const declared = Array.isArray(sessionAdapter?.capabilities) ? sessionAdapter.capabilities : null;
+  const canRename = declared == null || declared.includes("sessions.rename:v1");
+  const canArchive = declared == null || declared.includes("sessions.archive:v1");
+  renameButton.hidden = !canRename;
+  removeButton.hidden = !canArchive;
+  renameButton.disabled = !canRename || !selectedSession;
+  removeButton.disabled = !canArchive || !selectedSession || Boolean(selectedSession.running);
   removeButton.title = selectedSession?.running ? "Active sessions cannot be removed" : "Remove selected session";
 }
 
@@ -324,6 +329,7 @@ export function startPanel(doc = document) {
 
   let connected = false;
   let agentName = null;
+  let harnessName = null;
 
   function setStatus() {
     if (!connected) {
@@ -331,8 +337,9 @@ export function startPanel(doc = document) {
       status.className = "status error";
       return;
     }
-    if (agentName) {
-      status.textContent = `Connected to ${agentName}`;
+    const connectedName = agentName || harnessName;
+    if (connectedName) {
+      status.textContent = `Connected to ${connectedName}`;
       status.className = "status connected";
     } else {
       status.textContent = "Bridge connected — waiting for your agent";
@@ -345,7 +352,8 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, message.transcript ?? []);
       setThinking(doc, transcript, message.status ?? null, message.progress ?? []);
       agentName = message.agent?.name ?? null;
-      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null);
+      harnessName = message.sessionAdapter?.displayName ?? null;
+      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, message.sessions ?? [], message.selectedSessionId ?? null, message.sessionAdapter ?? null);
       setStatus();
     }
   });
@@ -371,8 +379,9 @@ export function startPanel(doc = document) {
       await send({ type: "panel.send", text });
       input.value = "";
       autosize();
-      status.textContent = agentName
-        ? `Sent to ${agentName} — reply will appear here`
+      const connectedName = agentName || harnessName;
+      status.textContent = connectedName
+        ? `Sent to ${connectedName} — reply will appear here`
         : "Sent — your agent will reply here";
       status.className = "status waiting";
     } catch (error) {
@@ -448,7 +457,8 @@ export function startPanel(doc = document) {
       renderAll(doc, transcript, result.transcript ?? []);
       setThinking(doc, transcript, result.status ?? null, result.progress ?? []);
       agentName = result.agent?.name ?? null;
-      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null);
+      harnessName = result.sessionAdapter?.displayName ?? null;
+      renderSessions(sessionsSelect, renameSessionButton, removeSessionButton, result.sessions ?? [], result.selectedSessionId ?? null, result.sessionAdapter ?? null);
       setStatus();
       // Stale service worker detection: a cached SW from an older extension
       // load won't report capabilities, and newer features (link cards,

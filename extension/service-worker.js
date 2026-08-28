@@ -50,6 +50,16 @@ let nextPanelMessageId = 1;
 let panelAgent = null;
 let panelSessions = [];
 let panelSessionSelection = null;
+let panelSessionAdapter = null;
+const HARNESS_SESSION_CAPABILITIES = new Set([
+  "sessions.list:v1",
+  "sessions.load-display-transcript:v1",
+  "sessions.resume:v1",
+  "sessions.title-from-prompt:v1",
+  "sessions.rename:v1",
+  "sessions.archive:v1",
+  "sessions.pin:v1",
+]);
 // Current status is transient. Agent-authored, bounded progress milestones are
 // kept separately for the active turn and attached to the final answer as an
 // audit summary; host placeholders opt out with persist:false.
@@ -247,6 +257,18 @@ function requestPanelSessionList(requestId) {
 }
 
 const conversationMemory = { id: null, started: false, harnessSession: false };
+const REQUIRED_HARNESS_SESSION_CAPABILITIES = [
+  "sessions.list:v1",
+  "sessions.load-display-transcript:v1",
+  "sessions.resume:v1",
+  "sessions.title-from-prompt:v1",
+];
+const UNSUPPORTED_HARNESS_SESSION_ADAPTER = Object.freeze({
+  contractVersion: 1,
+  id: "unsupported-adapter",
+  displayName: "Unsupported harness adapter",
+  capabilities: [],
+});
 
 async function readStoredConversation() {
   try {
@@ -335,11 +357,31 @@ async function nextConversationTurn() {
   return { conversationId: id, resume, harnessSession };
 }
 
+function sanitizeHarnessSessionAdapter(value) {
+  // No descriptor means a pre-contract native host. An explicitly malformed
+  // descriptor is different: retain a capability-free sentinel so controls
+  // fail closed instead of granting legacy compatibility.
+  if (value == null) return null;
+  if (value.contractVersion !== 1 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id || "")) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
+  const displayName = typeof value.displayName === "string" ? value.displayName.trim().slice(0, 80) : "";
+  if (!displayName || !Array.isArray(value.capabilities)) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
+  const capabilities = [...new Set(value.capabilities.filter((capability) => HARNESS_SESSION_CAPABILITIES.has(capability)))].sort();
+  if (!REQUIRED_HARNESS_SESSION_CAPABILITIES.every((capability) => capabilities.includes(capability))) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
+  return { contractVersion: 1, id: value.id, displayName, capabilities };
+}
+
+function supportsHarnessSessionCapability(capability) {
+  // A missing descriptor means an older compatible native host. Once a v1
+  // descriptor arrives, unsupported controls fail closed and disappear.
+  return panelSessionAdapter == null || panelSessionAdapter.capabilities.includes(capability);
+}
+
 function panelState() {
-  return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, sessions: panelSessions, selectedSessionId: panelSessionSelection, capabilities: PANEL_CAPABILITIES };
+  return { transcript: panelTranscript.slice(-100), agent: panelAgent, status: panelStatus, progress: panelProgress, sessions: panelSessions, selectedSessionId: panelSessionSelection, sessionAdapter: panelSessionAdapter, capabilities: PANEL_CAPABILITIES };
 }
 
 async function selectHarnessSession(rawSessionId) {
+  if (!supportsHarnessSessionCapability("sessions.load-display-transcript:v1") || !supportsHarnessSessionCapability("sessions.resume:v1")) throw codedError("unsupported", "The connected harness cannot resume previous sessions.");
   const sessionId = String(rawSessionId || "").trim();
   if (!sessionId || !panelSessions.some((session) => session.id === sessionId)) throw codedError("invalid_request", "Choose a session from the connected harness.");
   panelTranscript.length = 0;
@@ -354,6 +396,7 @@ async function selectHarnessSession(rawSessionId) {
 }
 
 function requestHarnessSessionArchive(rawSessionId) {
+  if (!supportsHarnessSessionCapability("sessions.archive:v1")) throw codedError("unsupported", "The connected harness does not support removing sessions from this list.");
   const sessionId = String(rawSessionId || "").trim();
   const session = panelSessions.find((candidate) => candidate.id === sessionId);
   if (!session) throw codedError("invalid_request", "Choose a session from the connected harness.");
@@ -364,6 +407,7 @@ function requestHarnessSessionArchive(rawSessionId) {
 }
 
 function requestHarnessSessionRename(rawSessionId, rawTitle) {
+  if (!supportsHarnessSessionCapability("sessions.rename:v1")) throw codedError("unsupported", "The connected harness does not support renaming sessions.");
   const sessionId = String(rawSessionId || "").trim();
   if (!panelSessions.some((session) => session.id === sessionId)) throw codedError("invalid_request", "Choose a session from the connected harness.");
   const title = String(rawTitle || "").replace(/\s+/g, " ").trim().slice(0, 100);
@@ -457,6 +501,7 @@ function broadcastPanel() {
       progress: panelProgress,
       sessions: panelSessions,
       selectedSessionId: panelSessionSelection,
+      sessionAdapter: panelSessionAdapter,
     });
     if (result && typeof result.catch === "function") result.catch(() => {});
   } catch {
@@ -1900,6 +1945,7 @@ async function dispatch(method, params) {
     case "panel.status":
       return { status: setPanelStatus(params), progress: panelProgress };
     case "panel.sessions.update":
+      panelSessionAdapter = sanitizeHarnessSessionAdapter(params.adapter);
       panelSessions = Array.isArray(params.sessions) ? params.sessions.slice(0, 30) : [];
       broadcastPanel();
       return { updated: true, sessions: panelSessions, error: params.error ?? null };

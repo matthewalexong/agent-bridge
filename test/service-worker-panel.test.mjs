@@ -361,6 +361,58 @@ test("active harness sessions cannot be removed", async () => {
   }
 });
 
+test("session controls follow the connected harness adapter capabilities", async () => {
+  const harness = await loadHarness();
+  try {
+    await harness.dispatch("sessions-read-only", "panel.sessions.update", {
+      adapter: {
+        contractVersion: 1,
+        id: "read-only-harness",
+        displayName: "Read-only Harness",
+        capabilities: [
+          "sessions.list:v1",
+          "sessions.load-display-transcript:v1",
+          "sessions.resume:v1",
+          "sessions.title-from-prompt:v1",
+        ],
+      },
+      sessions: [{ id: "session-read-only", title: "Saved research", updatedAt: "2026-08-27T00:00:00.000Z", running: false }],
+    });
+    const state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.sessionAdapter.id, "read-only-harness");
+    assert.equal(state.result.sessionAdapter.capabilities.includes("sessions.rename:v1"), false);
+
+    const selected = await harness.sendRuntime({ type: "panel.session.select", sessionId: "session-read-only" });
+    assert.equal(selected.ok, true);
+    const rename = await harness.sendRuntime({ type: "panel.session.rename", sessionId: "session-read-only", title: "Nope" });
+    const removal = await harness.sendRuntime({ type: "panel.session.remove", sessionId: "session-read-only" });
+    assert.equal(rename.ok, false);
+    assert.equal(rename.error.code, "unsupported");
+    assert.equal(removal.ok, false);
+    assert.equal(removal.error.code, "unsupported");
+  } finally {
+    harness.restore();
+  }
+});
+
+test("a malformed advertised adapter fails closed", async () => {
+  const harness = await loadHarness();
+  try {
+    await harness.dispatch("sessions-malformed", "panel.sessions.update", {
+      adapter: { contractVersion: 1, id: "broken-harness", displayName: "Broken", capabilities: ["sessions.rename:v1"] },
+      sessions: [{ id: "session-broken", title: "Saved research", updatedAt: "2026-08-27T00:00:00.000Z", running: false }],
+    });
+    const state = await harness.sendRuntime({ type: "panel.get" });
+    assert.equal(state.result.sessionAdapter.id, "unsupported-adapter");
+    assert.deepEqual(state.result.sessionAdapter.capabilities, []);
+    const selected = await harness.sendRuntime({ type: "panel.session.select", sessionId: "session-broken" });
+    assert.equal(selected.ok, false);
+    assert.equal(selected.error.code, "unsupported");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("panel input validation rejects empty, non-string, and oversized text", async () => {
   const harness = await loadHarness();
   try {
