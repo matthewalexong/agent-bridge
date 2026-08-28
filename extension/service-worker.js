@@ -157,11 +157,12 @@ function connect() {
       scheduleReconnect();
     });
     port.postMessage({ type: "hello", extensionVersion: chrome.runtime.getManifest().version });
-    if (pendingPanelSessionListRequestId) {
-      const requestId = pendingPanelSessionListRequestId;
-      pendingPanelSessionListRequestId = null;
-      emitBrowserEvent("panel.sessions.list", { requestId });
-    }
+    // Every successful native connection refreshes the durable harness catalog.
+    // This makes previous sessions available even when the panel's own startup
+    // request happened before the bridge connected or the panel opens later.
+    const sessionListRequestId = pendingPanelSessionListRequestId || `sessions-connect-${crypto.randomUUID()}`;
+    pendingPanelSessionListRequestId = null;
+    emitBrowserEvent("panel.sessions.list", { requestId: sessionListRequestId });
   } catch {
     nativePort = null;
     scheduleReconnect();

@@ -242,7 +242,7 @@ test("previous harness sessions can be listed, loaded, and resumed without copyi
   try {
     const refresh = await harness.sendRuntime({ type: "panel.sessions.refresh" });
     assert.equal(refresh.ok, true);
-    const listEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.sessions.list");
+    const listEvent = harness.nativeMessages.find((message) => message.type === "event" && message.event === "panel.sessions.list" && message.data.requestId === refresh.result.requestId);
     assert.equal(listEvent.data.requestId, refresh.result.requestId);
 
     await harness.dispatch("sessions-update", "panel.sessions.update", { sessions: [
@@ -279,6 +279,17 @@ test("previous harness sessions can be listed, loaded, and resumed without copyi
 
     const closeEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.close").at(-1);
     assert.equal(closeEvent.data.harnessSession, true, "closing detaches the panel without ending harness-owned context");
+  } finally {
+    harness.restore();
+  }
+});
+
+test("every native bridge connection automatically requests the durable session catalog", async () => {
+  const harness = await loadHarness();
+  try {
+    const listEvents = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.sessions.list");
+    assert.equal(listEvents.length, 1);
+    assert.match(listEvents[0].data.requestId, /^sessions-connect-/);
   } finally {
     harness.restore();
   }

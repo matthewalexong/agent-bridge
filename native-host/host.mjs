@@ -245,6 +245,7 @@ async function publishHarnessSessions(requestId) {
   try {
     const sessions = await listHarnessSessions({ env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD } });
     await forwardToExtension("panel.sessions.update", { requestId, sessions });
+    log(`harness sessions: published ${sessions.length} session${sessions.length === 1 ? "" : "s"}`);
   } catch (error) {
     log(`harness sessions: list failed (${error?.message ?? error})`);
     await forwardToExtension("panel.sessions.update", { requestId, sessions: [], error: "Previous sessions are unavailable right now." }).catch(() => {});
