@@ -39,11 +39,18 @@ test("extension manifest requests only the documented capability set", async () 
   };
   assert.deepEqual(manifest.icons, expectedIcons);
   assert.deepEqual(manifest.action.default_icon, expectedIcons);
-  assert.equal(manifest.action.default_popup, "popup.html");
+  // Toolbar click must open the side panel directly: no popup may be wired.
+  assert.equal(manifest.action.default_popup, undefined);
+  assert.equal(manifest.side_panel.default_path, "panel.html");
 
   await Promise.all(
-    [...Object.values(expectedIcons), "popup.html", "popup.css", "popup.js", "panel.html", "panel.css", "panel.js"].map(
+    [...Object.values(expectedIcons), "panel.html", "panel.css", "panel.js"].map(
       (filePath) => fs.access(path.join(root, "extension", filePath)),
     ),
+  );
+  await Promise.all(
+    ["popup.html", "popup.css", "popup.js"].map(async (filePath) => {
+      await assert.rejects(fs.access(path.join(root, "extension", filePath)));
+    }),
   );
 });

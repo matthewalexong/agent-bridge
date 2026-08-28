@@ -60,7 +60,7 @@ function asError(error) {
               code === "bridge_offline"
                 ? "Ensure the unpacked extension and native host are installed, reload the extension, then retry."
                 : code === "unauthorized"
-                  ? "Reload the local token or renew it from the extension popup, then retry."
+                  ? "Reload the local token or renew it from the side panel's settings menu, then retry."
                   : "Inspect current browser state before retrying.",
           },
         }, null, 2),

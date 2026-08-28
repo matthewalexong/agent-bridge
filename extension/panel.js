@@ -341,6 +341,139 @@ function setThinking(doc, transcript, status, progress = []) {
   }
 }
 
+const TOKEN_PREFIX_LENGTH = 8;
+const TOKEN_SUFFIX_LENGTH = 6;
+
+export function maskToken(token) {
+  if (typeof token !== "string" || token.length < TOKEN_PREFIX_LENGTH + TOKEN_SUFFIX_LENGTH) {
+    return "Unavailable";
+  }
+  return `${token.slice(0, TOKEN_PREFIX_LENGTH)}••••••••••••••••${token.slice(-TOKEN_SUFFIX_LENGTH)}`;
+}
+
+function formatTimestamp(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? "Unknown" : date.toLocaleString();
+}
+
+/**
+ * Settings menu (⋮) in the panel header. Holds the local authentication
+ * token controls ported from the retired toolbar popup: masked display,
+ * reveal toggle, copy, and a two-step renew (the previous token is
+ * invalidated immediately, so the first click only arms confirmation).
+ */
+function startTokenMenu(doc, clipboard = navigator.clipboard) {
+  const toggle = doc.querySelector("#menu-toggle");
+  const popover = doc.querySelector("#menu-popover");
+  const tokenElement = doc.querySelector("#token");
+  const rotated = doc.querySelector("#token-rotated");
+  const notice = doc.querySelector("#token-notice");
+  const showHide = doc.querySelector("#toggle-token");
+  const copy = doc.querySelector("#copy-token");
+  const renew = doc.querySelector("#renew-token");
+
+  let token = null;
+  let revealed = false;
+  let renewArmed = false;
+  let renewTimer = null;
+
+  function renderToken() {
+    tokenElement.textContent = token ? (revealed ? token : maskToken(token)) : "Unavailable";
+    showHide.textContent = revealed ? "Hide" : "Show";
+  }
+
+  function setEnabled(on) {
+    showHide.disabled = !on;
+    copy.disabled = !on;
+    renew.disabled = !on;
+  }
+
+  function refresh(result) {
+    token = result?.token ?? null;
+    revealed = false;
+    setEnabled(token !== null);
+    rotated.textContent = result?.rotatedAt
+      ? `Last renewed: ${formatTimestamp(result.rotatedAt)}`
+      : "The token stays valid until you renew it.";
+    renderToken();
+  }
+
+  function fail(error) {
+    token = null;
+    setEnabled(false);
+    notice.textContent = error instanceof Error ? error.message : String(error);
+    renderToken();
+  }
+
+  function closeMenu() {
+    popover.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+  }
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!popover.hidden) {
+      closeMenu();
+      return;
+    }
+    popover.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+    // Fresh state on every open; the bridge may have rotated the token since.
+    send({ type: "auth.get" }).then(refresh, fail);
+  });
+  doc.addEventListener("click", (event) => {
+    if (!popover.hidden && !popover.contains(event.target)) closeMenu();
+  });
+  doc.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !popover.hidden) closeMenu();
+  });
+
+  showHide.addEventListener("click", () => {
+    revealed = !revealed;
+    renderToken();
+  });
+
+  copy.addEventListener("click", async () => {
+    if (!token) return;
+    try {
+      await clipboard.writeText(token);
+      notice.textContent = "Token copied. Do not paste it into untrusted pages or chats.";
+    } catch (error) {
+      notice.textContent = error instanceof Error ? error.message : "Could not copy token";
+    }
+  });
+
+  renew.addEventListener("click", async () => {
+    if (!renewArmed) {
+      renewArmed = true;
+      renew.textContent = "Confirm renew";
+      renew.classList.add("confirm");
+      notice.textContent = "Renewing immediately invalidates the previous token.";
+      renewTimer = setTimeout(() => {
+        renewArmed = false;
+        renew.textContent = "Renew";
+        renew.classList.remove("confirm");
+      }, 10_000);
+      return;
+    }
+    clearTimeout(renewTimer);
+    renewArmed = false;
+    renew.disabled = true;
+    renew.textContent = "Renewing…";
+    try {
+      refresh(await send({ type: "auth.renew" }));
+      notice.textContent = "Token renewed. The previous token is no longer valid.";
+    } catch (error) {
+      fail(error);
+    } finally {
+      renew.textContent = "Renew";
+      renew.classList.remove("confirm");
+    }
+  });
+
+  return { refresh, fail, closeMenu };
+}
+
 export function startPanel(doc = document) {
   // This long-lived port scopes Hermes context to this side-panel document.
   // Disconnect means the panel closed; the service worker allows a short
@@ -372,6 +505,7 @@ export function startPanel(doc = document) {
   let connected = false;
   let agentName = null;
   let harnessName = null;
+  const tokenMenu = startTokenMenu(doc);
 
   function setStatus() {
     if (!connected) {
@@ -561,15 +695,17 @@ export function startPanel(doc = document) {
     .catch(() => {});
   void send({ type: "panel.sessions.refresh" });
   send({ type: "auth.get" })
-    .then(() => {
+    .then((result) => {
       connected = true;
       setStatus();
       sendButton.disabled = false;
+      tokenMenu.refresh(result);
     })
-    .catch(() => {
+    .catch((error) => {
       connected = false;
       setStatus();
       sendButton.disabled = true;
+      tokenMenu.fail(error);
     });
   input.focus();
 }

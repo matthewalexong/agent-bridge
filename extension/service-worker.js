@@ -2218,7 +2218,20 @@ async function dispatch(method, params) {
 
 chrome.runtime.onInstalled.addListener(connect);
 chrome.runtime.onStartup.addListener(connect);
-chrome.action.onClicked.addListener(connect);
+// Toolbar click opens the side panel directly (no intermediate popup). The
+// optional-chain guards keep older cached service workers and test harnesses
+// that stub `action.onClicked` without a sidePanel API from throwing.
+chrome.action.onClicked.addListener((tab) => {
+  connect();
+  const windowId = tab?.windowId;
+  if (windowId === undefined) return;
+  try {
+    void Promise.resolve(chrome.sidePanel?.open?.({ windowId })).catch(() => {});
+  } catch {
+    // sidePanel.open rejected the gesture (unsupported build); the panel
+    // remains reachable from Chrome's toolbar menu.
+  }
+});
 chrome.runtime.onConnect?.addListener(registerPanelLifecyclePort);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;

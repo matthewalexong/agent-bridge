@@ -80,7 +80,7 @@ Shopping is the first mature example. Its product identity, market coverage, cur
 
 ## Source map
 
-- `extension/` — Manifest V3 extension, side panel, popup, and browser execution boundary.
+- `extension/` — Manifest V3 extension, side panel, and browser execution boundary.
 - `native-host/` — Native Messaging and authenticated loopback bridge.
 - `mcp/` — MCP server and tool registration.
 - `lib/` — shared browser projections, session adapters, analyzers, and domain logic.

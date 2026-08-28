@@ -33,7 +33,7 @@ Keep this checkout in place. The private Native Messaging launcher records its a
 4. Open `chrome://extensions`.
 5. Enable **Developer mode**.
 6. Choose **Load unpacked** and select the extracted directory.
-7. Open the Agent Bridge toolbar popup and confirm that it reports a connected local bridge.
+7. Click the Agent Bridge toolbar button — the side panel opens — and confirm its status reports a connected local bridge.
 
 Chrome loads the extracted directory, not the ZIP itself.
 
@@ -99,14 +99,14 @@ native-host-manifest / native-host-launcher
   └─ Run npm run install-host from the permanent checkout, then reload the extension.
 
 pairing
-  └─ Open Chrome and reload Agent Bridge. If the popup reports a pairing problem,
-     renew the credential from the popup; never copy it into a public report.
+  └─ Open Chrome and reload Agent Bridge. If the side panel reports a pairing problem,
+     renew the credential from its ⋮ settings menu; never copy it into a public report.
 
 runtime
   └─ Keep Chrome open, reload Agent Bridge on chrome://extensions, then rerun the doctor.
 
 connection
-  └─ Open the extension popup, confirm the local bridge is connected, and rerun the doctor.
+  └─ Open the side panel from the toolbar button, confirm the local bridge is connected, and rerun the doctor.
 
 all doctor checks pass, but the harness says offline
   └─ Verify the absolute MCP path, install the paired Skill, and restart the harness.

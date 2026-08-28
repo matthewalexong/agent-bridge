@@ -14,7 +14,22 @@
         <p id="status" class="status pending">Connecting to local bridge…</p>
       </div>
       <button id="clear" class="text-button" type="button" title="Clear the conversation">Clear</button>
+      <button id="menu-toggle" class="icon-button" type="button" title="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="menu-popover">⋮</button>
     </header>
+
+    <div id="menu-popover" class="menu-popover" role="menu" hidden>
+      <section class="menu-section" aria-labelledby="menu-token-heading">
+        <h2 id="menu-token-heading">Local authentication token</h2>
+        <code id="token" aria-live="polite">Unavailable</code>
+        <p id="token-rotated" class="menu-note">The token stays valid until you renew it.</p>
+        <div class="menu-actions">
+          <button id="toggle-token" class="menu-button" type="button" disabled>Show</button>
+          <button id="copy-token" class="menu-button" type="button" disabled>Copy</button>
+          <button id="renew-token" class="menu-button danger" type="button" disabled>Renew</button>
+        </div>
+        <p id="token-notice" class="menu-note" aria-live="polite">Stored only on this computer. Treat it like a password.</p>
+      </section>
+    </div>
 
     <section class="access-panel" aria-labelledby="access-heading">
       <div class="access-row">
