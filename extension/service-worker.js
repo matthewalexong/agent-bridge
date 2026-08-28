@@ -133,13 +133,8 @@ function schedulePanelStatusExpiry(status) {
   panelStatusExpiryTimer = setTimeout(() => {
     panelStatusExpiryTimer = null;
     if (panelStatus?.at !== marker) return;
-    recordPanelEntry(
-      "agent",
-      "Research paused because no update arrived for five minutes. Send “keep going” if you want me to continue the search.",
-      [],
-      panelProgress,
-    );
-    panelProgress = [];
+    // Silence a stale activity indicator without claiming that the harness
+    // stopped. A slow or temporarily quiet turn may still deliver a reply.
     panelStatus = null;
     broadcastPanel();
   }, PANEL_STATUS_STALE_MS);
@@ -2235,8 +2230,10 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onConnect?.addListener(registerPanelLifecyclePort);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
-  const action = message?.type === "auth.get"
-    ? "get"
+  const action = message?.type === "auth.status"
+    ? "status"
+    : message?.type === "auth.get"
+      ? "get"
     : message?.type === "auth.renew"
       ? "renew"
       : null;

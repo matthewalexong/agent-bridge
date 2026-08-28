@@ -1,4 +1,4 @@
-// Live Hermes panel sessions only need browser + shopping hubs.
+// Live side-panel sessions only need browser + shopping hubs.
 // The full catalog (CDP/analysis/checkout/watch/individual assessors)
 // stays available when AB_MCP_SURFACE=full (tests and debugger work).
 

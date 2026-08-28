@@ -13,7 +13,7 @@ import { advertisedDescription, compactPanelRead, compactPanelSnapshot, compactP
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
-  version: "0.9.0",
+  version: "0.9.1",
 });
 const browserEvidenceRegistry = createBrowserEvidenceRegistry();
 const shoppingCandidateRegistry = createShoppingCandidateRegistry();
@@ -172,7 +172,7 @@ tool(
       snapshot: result,
       captured_at: result.captured_at || result.capturedAt || null,
     });
-    // Hermes consumes the text content. Repeating a large snapshot again as
+    // The connected harness consumes the text content. Repeating a large snapshot again as
     // structuredContent can cross its spillover threshold, hiding snapshotId
     // from the very next shopping evidence call and wasting recovery turns.
     return asPanelText(compactPanelSnapshot({ ...result, evidence_receipt }, mcpSurface));
@@ -320,7 +320,7 @@ tool(
     description:
       "Declare which agent is answering in the side panel. The panel shows 'Connected to <name>' so the user knows who they are talking to. Call once when you start answering panel messages; the most recent caller wins. Defaults to CHROME_AGENT_BRIDGE_AGENT_NAME or 'MCP Agent'.",
     inputSchema: {
-      agent: z.string().min(1).max(80).optional().describe("Display name, e.g. 'Hermes' or 'OpenClaw'."),
+      agent: z.string().min(1).max(80).optional().describe("Display name reported by the currently connected agent."),
     },
   },
   async (input) => asText(await callBridge("panel.identify", {

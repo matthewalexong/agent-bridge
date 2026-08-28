@@ -14,10 +14,10 @@
         <p id="status" class="status pending">Connecting to local bridge…</p>
       </div>
       <button id="clear" class="text-button" type="button" title="Clear the conversation">Clear</button>
-      <button id="menu-toggle" class="icon-button" type="button" title="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="menu-popover">⋮</button>
+      <button id="menu-toggle" class="icon-button" type="button" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="menu-popover">⋮</button>
     </header>
 
-    <div id="menu-popover" class="menu-popover" role="menu" hidden>
+    <div id="menu-popover" class="menu-popover" role="dialog" aria-modal="false" aria-labelledby="menu-token-heading" hidden>
       <section class="menu-section" aria-labelledby="menu-token-heading">
         <h2 id="menu-token-heading">Local authentication token</h2>
         <code id="token" aria-live="polite">Unavailable</code>

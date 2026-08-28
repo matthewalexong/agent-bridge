@@ -45,3 +45,10 @@ test("panel webhook stays on default unless a shopping selection is enabled", ()
   const record = selectionRecord(preset);
   assert.equal(record.webhook_url, "http://127.0.0.1:8645/webhooks/panel_message");
 });
+
+test("generic harness webhook configuration takes precedence over the legacy alias", () => {
+  assert.equal(resolvePanelWebhookUrl({
+    AB_HARNESS_WEBHOOK_URL: "http://127.0.0.1:3080/panel-webhook",
+    AB_HERMES_WEBHOOK_URL: "http://127.0.0.1:8644/webhooks/panel_message",
+  }), "http://127.0.0.1:3080/panel-webhook");
+});

@@ -15,6 +15,8 @@ import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messagi
 import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
 import { harnessSessionAdapterInfo } from "../lib/harness-session-contract.mjs";
 
+const BRIDGE_VERSION = "0.9.1";
+
 let authState = await loadOrCreateAuthState();
 const pending = new Map();
 const eventBuffer = [];
@@ -26,6 +28,7 @@ let previousTabs = null;
 let cleanedUp = false;
 let runtimeIdentity = null;
 let harnessSessionAdapter = null;
+let latestPanelTurnKey = null;
 
 // The launcher runs the host with stderr unattached, so also persist a
 // bounded log file — otherwise forward/status failures are invisible.
@@ -75,11 +78,23 @@ function publicAuthState() {
   };
 }
 
+function publicAuthMetadata() {
+  return {
+    available: true,
+    createdAt: authState.createdAt,
+    rotatedAt: authState.rotatedAt,
+  };
+}
+
 async function handleAuthRequest(message) {
   if (typeof message.id !== "string") return;
   try {
     if (message.action === "renew") {
       authState = await renewAuthState();
+    } else if (message.action === "status") {
+      authState = await loadOrCreateAuthState();
+      sendNative({ type: "auth.response", id: message.id, ok: true, result: publicAuthMetadata() });
+      return;
     } else if (message.action !== "get") {
       const error = new Error(`Unsupported auth action: ${message.action}`);
       error.code = "auth_action_invalid";
@@ -231,8 +246,9 @@ function recordEvent(event, data) {
   // (replacing the standalone panel-watcher daemon). Fire-and-forget: a
   // webhook failure must never break the event loop.
   if (event === "panel.message" && data?.role === "user") {
+    latestPanelTurnKey = data.messageId || data.conversationId || `${Date.now()}`;
     if (data.harnessSession) void forwardPanelMessageToHarnessSession(data);
-    else void forwardPanelMessageToHermes(data);
+    else void forwardPanelMessageToHarness(data);
   }
   if (event === "panel.close" && data?.conversationId && !data.harnessSession) {
     void endPanelConversation(data.conversationId);
@@ -292,6 +308,8 @@ async function forwardPanelMessageToHarnessSession(data) {
     if (!sessionId) return;
     await harnessSessionAdapter.resumeSession(sessionId, typeof data.text === "string" ? data.text : "");
     log(`panel→harness: queued prompt in ${sessionId}`);
+    scheduleHarnessSessionCatalogSync();
+    monitorHarnessTurn(sessionId, data.messageId || data.conversationId);
   } catch (error) {
     log(`panel→harness: prompt failed (${error?.message ?? error})`);
     pushPanelStatus(null, { persist: false });
@@ -299,17 +317,21 @@ async function forwardPanelMessageToHarnessSession(data) {
   }
 }
 
-// --- Hermes webhook forwarder ---------------------------------------------
+// --- Harness webhook forwarder --------------------------------------------
 import { appendFileSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
-// The extension lives one directory below its harness workspace. This keeps
-// unrelated DeepSeek projects and evaluation sessions out of the picker while
-// remaining movable with the project. Deployments may override the scope.
+// In the bundled workspace layout the repository is a child of the harness
+// workspace and panel-created sessions live in its dedicated `panel` project.
+// Deployments can point this adapter at any other project folder.
+const DEFAULT_HARNESS_SESSION_CWD = join(
+  dirname(dirname(dirname(fileURLToPath(import.meta.url)))),
+  "panel",
+);
 const HARNESS_SESSION_CWD = process.env.AB_HARNESS_SESSION_CWD
-  || dirname(dirname(fileURLToPath(import.meta.url)));
+  || DEFAULT_HARNESS_SESSION_CWD;
 harnessSessionAdapter = createDeepSeekHarnessSessionAdapter({
   env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD },
 });
@@ -317,7 +339,7 @@ harnessSessionAdapter = createDeepSeekHarnessSessionAdapter({
 function panelWebhookUrl() {
   return resolvePanelWebhookUrl(process.env);
 }
-const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
+const HARNESS_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
 // Per-host-instance nonce. Extension restarts reset the panel message
 // counter to panel_1; without this nonce the gateway's idempotency cache
 // (1h TTL) would silently drop every early-ID message after a restart as
@@ -326,16 +348,16 @@ const HOST_INSTANCE = crypto.randomBytes(4).toString("hex");
 
 function readWebhookSecret() {
   try {
-    return readFileSync(HERMES_WEBHOOK_SECRET_FILE, "utf8").trim();
+    return readFileSync(HARNESS_WEBHOOK_SECRET_FILE, "utf8").trim();
   } catch {
     return "";
   }
 }
 
-async function postToHermesWebhook(payload, deliveryId) {
+async function postToHarnessWebhook(payload, deliveryId) {
   const secret = readWebhookSecret();
   if (!secret) {
-    log("panel→hermes: webhook secret missing — skipping forward");
+    log("panel→harness: webhook secret missing — skipping forward");
     return null;
   }
   const body = JSON.stringify(payload);
@@ -360,13 +382,71 @@ async function postToHermesWebhook(payload, deliveryId) {
   return { status, text };
 }
 
-async function forwardPanelMessageToHermes(data) {
+const sessionCatalogSyncTimers = new Set();
+const activeHarnessTurnMonitors = new Map();
+const HARNESS_TURN_POLL_MS = Math.max(250, Math.min(10_000, Number(process.env.AB_HARNESS_TURN_POLL_MS) || 2_000));
+const HARNESS_TURN_MAX_POLLS = Math.max(2, Math.ceil((20 * 60 * 1000) / HARNESS_TURN_POLL_MS));
+
+function scheduleHarnessSessionCatalogSync() {
+  // Session creation/resume is asynchronous after acknowledgement. Refresh a
+  // few times at bounded intervals so the picker observes the committed title,
+  // activity timestamp, and running state without polling forever.
+  // A new accepted turn supersedes the remaining refreshes from the previous
+  // one, so every message gets a prompt first refresh without unbounded timers.
+  for (const timer of sessionCatalogSyncTimers) clearTimeout(timer);
+  sessionCatalogSyncTimers.clear();
+  for (const delay of [250, 1_000, 3_000]) {
+    const timer = setTimeout(() => {
+      sessionCatalogSyncTimers.delete(timer);
+      void publishHarnessSessions();
+    }, delay);
+    timer.unref?.();
+    sessionCatalogSyncTimers.add(timer);
+  }
+}
+
+function monitorHarnessTurn(sessionId, turnKey) {
+  const previous = activeHarnessTurnMonitors.get(sessionId);
+  if (previous?.timer) clearTimeout(previous.timer);
+  const state = { generation: (previous?.generation || 0) + 1, polls: 0, sawRunning: false, timer: null };
+  activeHarnessTurnMonitors.set(sessionId, state);
+
+  const poll = async () => {
+    if (activeHarnessTurnMonitors.get(sessionId) !== state) return;
+    state.polls += 1;
+    try {
+      const sessions = await harnessSessionAdapter.listSessions();
+      const session = sessions.find((candidate) => candidate.id === sessionId);
+      if (session?.running) state.sawRunning = true;
+      // Two consecutive observations allow very short turns to settle even if
+      // the adapter never exposes a visible running=true transition.
+      if (session && !session.running && (state.sawRunning || state.polls >= 2)) {
+        activeHarnessTurnMonitors.delete(sessionId);
+        if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+        scheduleHarnessSessionCatalogSync();
+        return;
+      }
+    } catch (error) {
+      log(`panel→harness: lifecycle poll failed (${error?.message ?? error})`);
+    }
+    if (state.polls >= HARNESS_TURN_MAX_POLLS) {
+      activeHarnessTurnMonitors.delete(sessionId);
+      if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+      return;
+    }
+    state.timer = setTimeout(poll, HARNESS_TURN_POLL_MS);
+    state.timer.unref?.();
+  };
+  void poll();
+}
+
+async function forwardPanelMessageToHarness(data) {
   try {
     const conversationId = sanitizeConversationId(data.conversationId);
     const deliveryId = data.messageId
       ? `${HOST_INSTANCE}:${data.messageId}`
       : `${HOST_INSTANCE}:${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const result = await postToHermesWebhook({
+    const result = await postToHarnessWebhook({
       event_type: "panel.message",
       text: typeof data.text === "string" ? data.text : "",
       messageId: data.messageId ?? null,
@@ -375,11 +455,11 @@ async function forwardPanelMessageToHermes(data) {
       observedAt: new Date().toISOString(),
     }, deliveryId);
     if (!result) return;
-    log(`panel→hermes: forwarded (HTTP ${result.status}) ${result.text}`);
+    log(`panel→harness: forwarded (HTTP ${result.status}) ${result.text}`);
     if (result.status >= 200 && result.status < 300 && result.text.includes('"accepted"')) {
+      let harnessSessionId = null;
+      try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
       if (!data.resume) {
-        let harnessSessionId = null;
-        try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
         if (harnessSessionId) {
           const fallbackTitle = harnessSessionAdapter.titleFromPrompt(data.text);
           let title = fallbackTitle;
@@ -396,9 +476,11 @@ async function forwardPanelMessageToHermes(data) {
           }).catch(() => {});
         }
       }
+      scheduleHarnessSessionCatalogSync();
+      if (harnessSessionId) monitorHarnessTurn(harnessSessionId, data.messageId || data.conversationId);
     }
   } catch (error) {
-    log(`panel→hermes: forward failed (${error?.message ?? error})`);
+    log(`panel→harness: forward failed (${error?.message ?? error})`);
   }
 }
 
@@ -407,23 +489,22 @@ async function endPanelConversation(conversationId) {
   if (!id) return;
   try {
     const deliveryId = `${HOST_INSTANCE}:end-${id}-${Date.now()}`;
-    const result = await postToHermesWebhook({
+    const result = await postToHarnessWebhook({
       event_type: "panel.message",
       conversation_id: id,
       end: true,
       observedAt: new Date().toISOString(),
     }, deliveryId);
-    if (result) log(`panel→hermes: ended ${id} (HTTP ${result.status}) ${result.text}`);
+    if (result) log(`panel→harness: ended ${id} (HTTP ${result.status}) ${result.text}`);
   } catch (error) {
-    log(`panel→hermes: end failed (${error?.message ?? error})`);
+    log(`panel→harness: end failed (${error?.message ?? error})`);
   }
 }
 
 // --- Panel status push ------------------------------------------------------
 // Progress text in the panel is authored by the connected agent through the
 // browser_panel_status MCP tool; the host only forwards clears (e.g. when a
-// harness resume fails). No harness-specific status source lives here — the
-// former Hermes gateway-log tail was removed as harness-coupled dead weight.
+// harness resume fails). No harness-specific log or model source lives here.
 function pushPanelStatus(text, options = {}) {
   void forwardToExtension("panel.status", { text, ...options })
     .then(() => log(`panel.status pushed: ${text == null ? "(cleared)" : String(text).slice(0, 80)}`))
@@ -439,7 +520,7 @@ function handleExtensionMessage(message) {
   }
   if (message?.type === "hello") {
     extensionVersion = typeof message.extensionVersion === "string" ? message.extensionVersion : "0.0.0";
-    sendNative({ type: "hello", ok: true, host: "chrome-agent-bridge", version: "0.9.0" });
+    sendNative({ type: "hello", ok: true, host: "chrome-agent-bridge", version: BRIDGE_VERSION });
     return;
   }
   if (message?.type === "event" && typeof message.event === "string") {
@@ -534,7 +615,7 @@ server.listen(0, "127.0.0.1", async () => {
       startedAt: new Date().toISOString(),
   };
   await writePrivateJsonAtomic(runtimeFile(), runtimeIdentity);
-  sendNative({ type: "ready", ok: true, version: "0.9.0" });
+  sendNative({ type: "ready", ok: true, version: BRIDGE_VERSION });
 });
 
 async function cleanup() {

@@ -405,9 +405,22 @@ function startTokenMenu(doc, clipboard = navigator.clipboard) {
     renderToken();
   }
 
-  function closeMenu() {
+  function clearToken() {
+    token = null;
+    revealed = false;
+    setEnabled(false);
+    renderToken();
+  }
+
+  function closeMenu({ restoreFocus = false } = {}) {
     popover.hidden = true;
     toggle.setAttribute("aria-expanded", "false");
+    clearTimeout(renewTimer);
+    renewArmed = false;
+    renew.textContent = "Renew";
+    renew.classList.remove("confirm");
+    clearToken();
+    if (restoreFocus) toggle.focus();
   }
 
   toggle.addEventListener("click", (event) => {
@@ -419,13 +432,16 @@ function startTokenMenu(doc, clipboard = navigator.clipboard) {
     popover.hidden = false;
     toggle.setAttribute("aria-expanded", "true");
     // Fresh state on every open; the bridge may have rotated the token since.
-    send({ type: "auth.get" }).then(refresh, fail);
+    send({ type: "auth.get" }).then((result) => {
+      refresh(result);
+      showHide.focus();
+    }, fail);
   });
   doc.addEventListener("click", (event) => {
-    if (!popover.hidden && !popover.contains(event.target)) closeMenu();
+    if (!popover.hidden && !popover.contains(event.target) && event.target !== toggle) closeMenu();
   });
   doc.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !popover.hidden) closeMenu();
+    if (event.key === "Escape" && !popover.hidden) closeMenu({ restoreFocus: true });
   });
 
   showHide.addEventListener("click", () => {
@@ -471,11 +487,11 @@ function startTokenMenu(doc, clipboard = navigator.clipboard) {
     }
   });
 
-  return { refresh, fail, closeMenu };
+  return { fail, closeMenu };
 }
 
 export function startPanel(doc = document) {
-  // This long-lived port scopes Hermes context to this side-panel document.
+  // This long-lived port scopes the active harness context to this side-panel document.
   // Disconnect means the panel closed; the service worker allows a short
   // reconnect grace period so an ordinary document reload keeps its session.
   const lifecyclePort = chrome.runtime.connect({ name: "agent-bridge-panel-lifecycle" });
@@ -694,12 +710,11 @@ export function startPanel(doc = document) {
     })
     .catch(() => {});
   void send({ type: "panel.sessions.refresh" });
-  send({ type: "auth.get" })
-    .then((result) => {
+  send({ type: "auth.status" })
+    .then(() => {
       connected = true;
       setStatus();
       sendButton.disabled = false;
-      tokenMenu.refresh(result);
     })
     .catch((error) => {
       connected = false;

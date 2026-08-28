@@ -9,7 +9,7 @@ function event() {
   return { listener: null, addListener(listener) { this.listener = listener; } };
 }
 
-test("service worker proxies popup token requests only through native messaging", async () => {
+test("service worker exposes token-free status separately from explicit token requests", async () => {
   const nativeMessages = [];
   const nativeMessage = event();
   const nativeDisconnect = event();
@@ -41,6 +41,24 @@ test("service worker proxies popup token requests only through native messaging"
 
   try {
     await import(`${pathToFileURL(path.join(root, "extension/service-worker.js"))}?test=${Date.now()}`);
+    let statusResponse;
+    const statusAsync = runtimeMessage.listener(
+      { type: "auth.status" },
+      { id: globalThis.chrome.runtime.id },
+      (response) => { statusResponse = response; },
+    );
+    assert.equal(statusAsync, true);
+    const statusRequest = nativeMessages.find((message) => message.type === "auth.request" && message.action === "status");
+    await nativeMessage.listener({
+      type: "auth.response",
+      id: statusRequest.id,
+      ok: true,
+      result: { available: true, createdAt: "2026-01-01T00:00:00.000Z", rotatedAt: "2026-01-01T00:00:00.000Z" },
+    }, port);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(statusResponse.result.available, true);
+    assert.equal("token" in statusResponse.result, false);
+
     let popupResponse;
     const asyncResponse = runtimeMessage.listener(
       { type: "auth.get" },
@@ -48,7 +66,7 @@ test("service worker proxies popup token requests only through native messaging"
       (response) => { popupResponse = response; },
     );
     assert.equal(asyncResponse, true);
-    const request = nativeMessages.find((message) => message.type === "auth.request");
+    const request = nativeMessages.find((message) => message.type === "auth.request" && message.action === "get");
     assert.equal(request.action, "get");
 
     const token = `cab_${Buffer.alloc(32, 5).toString("base64url")}`;

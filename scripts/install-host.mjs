@@ -7,15 +7,23 @@ import { fileURLToPath } from "node:url";
 import { bridgeDirectory, EXTENSION_ID, HOST_NAME } from "../lib/config.mjs";
 
 function parseArgs(argv) {
-  const result = { dryRun: false, extensionId: EXTENSION_ID };
+  const result = { dryRun: false, extensionId: EXTENSION_ID, harnessWebhookUrl: null, harnessSessionCwd: null };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--extension-id") result.extensionId = argv[++index];
+    else if (arg === "--harness-webhook-url") result.harnessWebhookUrl = argv[++index];
+    else if (arg === "--harness-session-cwd") result.harnessSessionCwd = argv[++index];
     else if (arg === "--dry-run") result.dryRun = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!/^[a-p]{32}$/.test(result.extensionId)) {
     throw new Error("Pass a valid Chrome extension ID with --extension-id <32 characters a-p>");
+  }
+  if (result.harnessWebhookUrl != null) {
+    const url = new URL(result.harnessWebhookUrl);
+    if (url.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)) {
+      throw new Error("--harness-webhook-url must be a loopback HTTP URL");
+    }
   }
   return result;
 }
@@ -41,6 +49,15 @@ function manifestPath() {
 const args = parseArgs(process.argv.slice(2));
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const hostModulePath = path.join(projectRoot, "native-host", "host.mjs");
+const harnessWebhookUrl = args.harnessWebhookUrl
+  || process.env.AB_HARNESS_WEBHOOK_URL
+  || process.env.AB_HERMES_WEBHOOK_URL
+  || "http://127.0.0.1:3080/panel-webhook";
+const harnessSessionCwd = path.resolve(
+  args.harnessSessionCwd
+    || process.env.AB_HARNESS_SESSION_CWD
+    || path.join(path.dirname(projectRoot), "panel"),
+);
 const hostPath = path.join(bridgeDirectory(), "native-host-launcher");
 const target = manifestPath();
 const manifest = {
@@ -53,13 +70,15 @@ const manifest = {
 
 if (args.dryRun) {
   process.stdout.write(
-    `${JSON.stringify({ target, manifest, nodePath: process.execPath, hostModulePath }, null, 2)}\n`,
+    `${JSON.stringify({ target, manifest, nodePath: process.execPath, hostModulePath, harnessWebhookUrl, harnessSessionCwd }, null, 2)}\n`,
   );
 } else {
   const shellQuote = (value) => `'${value.replaceAll("'", `'"'"'`)}'`;
   const launcher = [
     "#!/bin/sh",
     "set -eu",
+    `export AB_HARNESS_WEBHOOK_URL=${shellQuote(harnessWebhookUrl)}`,
+    `export AB_HARNESS_SESSION_CWD=${shellQuote(harnessSessionCwd)}`,
     `exec ${shellQuote(process.execPath)} ${shellQuote(hostModulePath)}`,
     "",
   ].join("\n");
