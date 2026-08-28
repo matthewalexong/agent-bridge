@@ -31,10 +31,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/matthewalexong/agent-bridge-rsi.git"
+    "url": "git+https://github.com/matthewalexong/agent-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/matthewalexong/agent-bridge-rsi/issues"
+    "url": "https://github.com/matthewalexong/agent-bridge/issues"
   },
-  "homepage": "https://github.com/matthewalexong/agent-bridge-rsi#readme"
+  "homepage": "https://github.com/matthewalexong/agent-bridge#readme"
 }

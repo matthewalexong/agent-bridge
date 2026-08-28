@@ -1,0 +1,78 @@
+name: Bug report
+description: Report a reproducible Agent Bridge defect using synthetic or redacted evidence.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Agent Bridge. Do not include pairing tokens, cookies, headers, bodies, private URLs, account data, or unredacted browser captures. Report security vulnerabilities through the private security link instead.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      options:
+        - Chrome extension or side panel
+        - Native Messaging host or pairing
+        - MCP tools
+        - Harness integration or sessions
+        - Local or Raw CDP analysis
+        - Shopping reference capability
+        - Installation, packaging, or documentation
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and why it appears incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal synthetic reproduction
+      description: Include ordered steps and synthetic fixtures. State the selected tab and action where relevant.
+      placeholder: |
+        1. Start Agent Bridge...
+        2. Open a synthetic page...
+        3. Call browser_snapshot...
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Environment
+      description: Agent Bridge commit/version, operating system, Chrome, Node.js, and harness.
+      placeholder: v0.9.0; macOS 15; Chrome 140; Node 22; harness name/version
+    validations:
+      required: true
+  - type: checkboxes
+    id: lifecycle
+    attributes:
+      label: Reload and cleanup checks
+      options:
+        - label: I reloaded the extension after extension-side changes.
+        - label: I reinstalled the native host after host-path or manifest changes.
+        - label: I detached Raw CDP or stopped network monitoring after the reproduction.
+  - type: textarea
+    id: sanitized_evidence
+    attributes:
+      label: Sanitized evidence
+      description: Optional minimal log or screenshot with all private values removed.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I checked this report for credentials, cookies, private page content, account data, and identifying browser artifacts.
+          required: true
+        - label: This is not a privately reportable security vulnerability.
+          required: true

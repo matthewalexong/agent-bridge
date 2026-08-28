@@ -24,6 +24,9 @@ test("release ZIP contains only the load-unpacked extension at archive root", as
   assert.equal(entries.includes("manifest.json"), true);
   assert.equal(entries.includes("service-worker.js"), true);
   assert.equal(entries.includes("popup.html"), true);
+  assert.equal(entries.includes("panel.html"), true);
+  assert.equal(entries.includes("panel.css"), true);
+  assert.equal(entries.includes("panel.js"), true);
   assert.equal(entries.some((entry) => /(^|\/)(node_modules|work|dist|\.git)(\/|$)/.test(entry)), false);
   assert.equal(entries.some((entry) => /\.(pem|env)$/i.test(entry)), false);
 });

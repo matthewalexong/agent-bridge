@@ -63,7 +63,7 @@ For an Agent-executable checklist, MCP configuration, verification steps, upgrad
 
 ### Install the released extension ZIP
 
-1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge-rsi/releases).
+1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge/releases).
 2. Extract the ZIP to a permanent local directory.
 3. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the extracted directory.
 
@@ -72,8 +72,8 @@ The release manifest carries a public development key, so every unpacked release
 ### Install the local Agent bridge
 
 ```bash
-git clone https://github.com/matthewalexong/agent-bridge-rsi.git
-cd agent-bridge-rsi
+git clone https://github.com/matthewalexong/agent-bridge.git
+cd agent-bridge
 npm ci
 npm run install-host
 ```
@@ -117,7 +117,7 @@ Use an absolute path when configuring a standalone MCP client:
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"]
+      "args": ["/absolute/path/to/agent-bridge/mcp/server.mjs"]
     }
   }
 }
@@ -193,6 +193,8 @@ The clean-room capability analysis and migration boundaries are documented in [d
 
 This is an early developer release. Review the requested tab and action before allowing an agent to operate a signed-in site.
 
+The current scope and limitations of the public developer beta are summarized in [docs/public-beta.md](./docs/public-beta.md).
+
 Report vulnerabilities through the private process in [SECURITY.md](./SECURITY.md). Maintainers preparing a public release should complete the [public release security checklist](./docs/public-release-checklist.md) and run `npm run audit:public`.
 
 ## Development
@@ -202,6 +204,8 @@ npm test
 npm run check
 npm run build:extension
 ```
+
+New contributors should start with [CONTRIBUTING.md](./CONTRIBUTING.md), then read the [architecture guide](./docs/architecture.md) before changing authentication, session ownership, browser permissions, harness integration, or Raw CDP behavior. Installation and usage help is organized in [SUPPORT.md](./SUPPORT.md), and all project spaces follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 Validate the Codex plugin and Skill with the corresponding Codex creator validators before publishing changes.
 

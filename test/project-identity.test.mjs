@@ -5,7 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const repositoryUrl = "https://github.com/matthewalexong/agent-bridge-rsi";
+const repositoryUrl = "https://github.com/matthewalexong/agent-bridge";
 
 async function readJson(relativePath) {
   return JSON.parse(await fs.readFile(path.join(root, relativePath), "utf8"));

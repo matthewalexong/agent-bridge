@@ -1,0 +1,72 @@
+name: Response-quality feedback
+description: Report a connected harness result that was narrow, confusing, weakly sourced, or unhelpful.
+title: "[Quality]: "
+labels: [response-quality]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form when Agent Bridge connected successfully but the resulting research, recommendation, progress, or browser workflow should improve. Describe the result in your own words; do not paste private conversation history or browser data.
+  - type: dropdown
+    id: workflow
+    attributes:
+      label: Workflow type
+      options:
+        - General web research
+        - Shopping or product comparison
+        - Development or debugging
+        - Account or operations workflow
+        - Form or page interaction
+        - Other browser workflow
+    validations:
+      required: true
+  - type: textarea
+    id: intent
+    attributes:
+      label: Your intended outcome
+      description: Paraphrase what you wanted without including private data.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What the harness did
+      description: Summarize its research, actions, answer, and progress indicators.
+    validations:
+      required: true
+  - type: checkboxes
+    id: failure_modes
+    attributes:
+      label: What should improve?
+      options:
+        - label: It misunderstood or failed to clarify intent.
+        - label: It researched too narrowly or missed important alternatives.
+        - label: Its sources, links, freshness, price, or availability were inadequate.
+        - label: Its progress indicator was confusing, stale, or missing.
+        - label: Its browser action was wrong, unverified, or unnecessarily risky.
+        - label: Its final answer was overconfident or did not explain uncertainty.
+        - label: It used too much time or inference for the result.
+  - type: textarea
+    id: better_result
+    attributes:
+      label: What would a better result look like?
+      description: Include useful alternatives, questions, evidence types, or stopping behavior you expected.
+    validations:
+      required: true
+  - type: input
+    id: harness
+    attributes:
+      label: Harness and model, if known
+      description: Optional. Agent Bridge is harness- and model-neutral.
+  - type: textarea
+    id: public_sources
+    attributes:
+      label: Public sources or examples
+      description: Optional public URLs that demonstrate the gap. Do not include signed or account-specific links.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I removed credentials, private URLs, account details, cookies, headers, bodies, and identifying browser content.
+          required: true
