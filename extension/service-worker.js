@@ -18,6 +18,7 @@ const MAX_RAW_POLL_BYTES = 2_500_000;
 let nativePort = null;
 let reconnectTimer = null;
 let reconnectDelayMs = 1_000;
+let pendingPanelSessionListRequestId = null;
 let nextAuthRequestId = 1;
 const createdTabIds = new Set();
 const pendingAuthRequests = new Map();
@@ -156,6 +157,11 @@ function connect() {
       scheduleReconnect();
     });
     port.postMessage({ type: "hello", extensionVersion: chrome.runtime.getManifest().version });
+    if (pendingPanelSessionListRequestId) {
+      const requestId = pendingPanelSessionListRequestId;
+      pendingPanelSessionListRequestId = null;
+      emitBrowserEvent("panel.sessions.list", { requestId });
+    }
   } catch {
     nativePort = null;
     scheduleReconnect();
@@ -224,6 +230,19 @@ function emitBrowserEvent(event, data) {
   } catch {
     // The disconnect handler schedules reconnection.
   }
+}
+
+function requestPanelSessionList(requestId) {
+  pendingPanelSessionListRequestId = requestId;
+  connect();
+  if (!nativePort) return { requested: true, requestId, queued: true };
+  // A successful connect flushes the queued request above. If the port was
+  // already connected, deliver it here.
+  if (pendingPanelSessionListRequestId === requestId) {
+    pendingPanelSessionListRequestId = null;
+    emitBrowserEvent("panel.sessions.list", { requestId });
+  }
+  return { requested: true, requestId, queued: false };
 }
 
 const conversationMemory = { id: null, started: false, harnessSession: false };
@@ -1972,8 +1991,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "panel.sessions.refresh") {
     const requestId = `sessions-${crypto.randomUUID()}`;
-    emitBrowserEvent("panel.sessions.list", { requestId });
-    sendResponse({ ok: true, result: { requested: true, requestId } });
+    sendResponse({ ok: true, result: requestPanelSessionList(requestId) });
     return false;
   }
   if (message?.type === "panel.session.select") {
