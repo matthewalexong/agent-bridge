@@ -9,7 +9,7 @@ import {
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
-import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
+import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
@@ -300,7 +300,7 @@ async function forwardPanelMessageToHarnessSession(data) {
 }
 
 // --- Hermes webhook forwarder ---------------------------------------------
-import { appendFileSync, createReadStream, readFileSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -396,7 +396,6 @@ async function forwardPanelMessageToHermes(data) {
           }).catch(() => {});
         }
       }
-      startTurnStatusTail(deliveryId, conversationId);
     }
   } catch (error) {
     log(`panel→hermes: forward failed (${error?.message ?? error})`);
@@ -420,15 +419,11 @@ async function endPanelConversation(conversationId) {
   }
 }
 
-// --- Live "thinking" status in the panel ----------------------------------
-// The agent publishes meaningful progress through browser_panel_status. The
-// gateway log is tailed only to clear that transient status when the turn ends;
-// its generic heartbeats must never overwrite the agent's concrete summary.
-const GATEWAY_LOG_FILE = resolvePanelGatewayLogFile();
-const STATUS_POLL_MS = 3_000;
-const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
-const activeStatusTails = new Map(); // deliveryId -> { timer }
-
+// --- Panel status push ------------------------------------------------------
+// Progress text in the panel is authored by the connected agent through the
+// browser_panel_status MCP tool; the host only forwards clears (e.g. when a
+// harness resume fails). No harness-specific status source lives here — the
+// former Hermes gateway-log tail was removed as harness-coupled dead weight.
 function pushPanelStatus(text, options = {}) {
   void forwardToExtension("panel.status", { text, ...options })
     .then(() => log(`panel.status pushed: ${text == null ? "(cleared)" : String(text).slice(0, 80)}`))
@@ -436,123 +431,6 @@ function pushPanelStatus(text, options = {}) {
       log(`panel.status push failed (${error?.message ?? error})`);
     });
 }
-
-async function refreshCurrentPanelStatus(deliveryId) {
-  if (!activeStatusTails.has(deliveryId)) return;
-  try {
-    const panel = await forwardToExtension("panel.get", {});
-    const status = panel?.status;
-    if (!status?.text || !activeStatusTails.has(deliveryId)) return;
-    await forwardToExtension("panel.status", {
-      text: status.text,
-      phase: status.phase,
-      evidence: status.evidence,
-      next: status.next,
-      persist: false,
-    });
-    log(`thinking-status: activity refreshed for ${deliveryId}`);
-  } catch (error) {
-    log(`thinking-status: activity refresh failed (${error?.message ?? error})`);
-  }
-}
-
-function startTurnStatusTail(deliveryId, conversationId) {
-  if (activeStatusTails.has(deliveryId)) return;
-  log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
-  // Hermes identifies webhook turns in gateway log lines by the HTTP delivery
-  // id (x-request-id), even when conversation_id is supplied for session
-  // continuity. Matching the conversation id leaves the terminal line unseen,
-  // so the panel status never clears and the max-turn continuation never posts.
-  const chatMarker = `webhook:panel_message:${deliveryId}`;
-  let offset = 0;
-  try {
-    offset = statSync(GATEWAY_LOG_FILE).size;
-  } catch {
-    /* no gateway log — status updates simply won't appear */
-  }
-  const startedAt = Date.now();
-  const state = { timer: null, initialAgentId: null, budgetExhausted: false };
-  activeStatusTails.set(deliveryId, state);
-  void forwardToExtension("panel.get", {})
-    .then((panel) => {
-      state.initialAgentId = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent")?.id ?? null;
-    })
-    .catch(() => {});
-  pushPanelStatus("Planning the approach…", { phase: "plan", persist: false });
-  const timer = setInterval(() => {
-    if (Date.now() - startedAt > STATUS_MAX_MS) {
-      stopTurnStatusTail(deliveryId);
-      pushPanelStatus(null, { persist: false });
-      return;
-    }
-    let size;
-    try {
-      size = statSync(GATEWAY_LOG_FILE).size;
-    } catch {
-      return;
-    }
-    if (size < offset) offset = 0; // log rotated
-    if (size === offset) return;
-    const readFrom = offset;
-    offset = size;
-    const stream = createReadStream(GATEWAY_LOG_FILE, { start: readFrom, end: size - 1, encoding: "utf8" });
-    let chunk = "";
-    stream.on("data", (d) => { chunk += d; });
-    stream.on("end", () => {
-      for (const line of chunk.split("\n")) {
-        if (!line.includes(chatMarker)) continue;
-        if (line.includes("⏳ Working")) {
-          // A heartbeat proves Hermes is alive. Refresh the expiry without
-          // replacing the useful, agent-authored summary with generic text.
-          void refreshCurrentPanelStatus(deliveryId);
-          continue;
-        }
-        if (line.includes("Iteration budget exhausted")) {
-          state.budgetExhausted = true;
-          continue;
-        }
-        if (line.includes("response ready") || (line.includes("Response for ") && !line.includes("⏳"))) {
-          // Turn finished — the agent's panel.post reply lands on its own;
-          // drop the thinking bubble.
-          stopTurnStatusTail(deliveryId);
-          pushPanelStatus(null, { persist: false });
-          if (state.budgetExhausted) void postContinuationPromptIfNeeded(state.initialAgentId);
-          return;
-        }
-      }
-    });
-    stream.on("error", () => {});
-  }, STATUS_POLL_MS);
-  state.timer = timer;
-}
-
-async function postContinuationPromptIfNeeded(initialAgentId) {
-  try {
-    const panel = await forwardToExtension("panel.get", {});
-    const latestAgent = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent") ?? null;
-    if (latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length >= 4) return;
-    if (/would you like me to (?:keep going|continue)/i.test(String(latestAgent?.text || ""))) return;
-    const hasPartialResults = latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length > 0;
-    await forwardToExtension("panel.post", {
-      text: hasPartialResults
-        ? "Initial research pass complete. I stopped at the research safety limit, and the verified offers above are a partial result rather than an active search. Some intended market coverage remains. Would you like me to keep going with a deeper search?"
-        : "Initial research pass complete. I stopped at the research safety limit before finding enough verified offers; no search is currently running. Would you like me to keep going with a deeper search?",
-      links: [],
-    });
-    log("panel continuation prompt posted after iteration budget exhaustion");
-  } catch (error) {
-    log(`panel continuation prompt failed (${error?.message ?? error})`);
-  }
-}
-
-function stopTurnStatusTail(deliveryId) {
-  const tail = activeStatusTails.get(deliveryId);
-  if (tail) {
-    clearInterval(tail.timer);
-    activeStatusTails.delete(deliveryId);
-  }
-}
-// ---------------------------------------------------------------------------
 
 function handleExtensionMessage(message) {
   if (message?.type === "auth.request") {

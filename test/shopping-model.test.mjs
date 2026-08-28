@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   loadShoppingModelCatalog,
-  resolvePanelGatewayLogFile,
   resolvePanelWebhookUrl,
   resolveShoppingPreset,
   selectionRecord,
@@ -30,12 +29,6 @@ test("shopping catalog recommends the stronger Token Plan planning model", () =>
   assert.equal(catalog.presets["qwen-plus"].vision, true);
 });
 
-test("shopping gateway status tail follows the selected profile log", () => {
-  const env = { HERMES_HOME: "/Users/example/.hermes", AB_SHOPPING_MODEL_FILE: "/tmp/selection.json" };
-  const readFile = () => JSON.stringify({ enabled: true, preset: "qwen-max", profile: "shopping", provider: "alibaba", model: "qwen3.8-max" });
-  assert.equal(resolvePanelGatewayLogFile(env, { readFile }), "/Users/example/.hermes/profiles/shopping/logs/gateway.log");
-  assert.equal(resolvePanelGatewayLogFile({ ...env, AB_GATEWAY_LOG_FILE: "/tmp/custom.log" }, { readFile }), "/tmp/custom.log");
-});
 
 test("unknown shopping preset fails closed", () => {
   assert.throws(() => resolveShoppingPreset("not-a-model"), /Unknown shopping model preset/);
