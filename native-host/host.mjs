@@ -12,7 +12,8 @@ import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.
 import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
-import { archiveHarnessSession, listHarnessSessions, loadHarnessSession, promptHarnessSession, renameHarnessSession, titleFromUserPrompt } from "../lib/harness-sessions.mjs";
+import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
+import { harnessSessionAdapterInfo } from "../lib/harness-session-contract.mjs";
 
 let authState = await loadOrCreateAuthState();
 const pending = new Map();
@@ -24,6 +25,7 @@ let extensionVersion = "0.0.0";
 let previousTabs = null;
 let cleanedUp = false;
 let runtimeIdentity = null;
+let harnessSessionAdapter = null;
 
 // The launcher runs the host with stderr unattached, so also persist a
 // bounded log file — otherwise forward/status failures are invisible.
@@ -243,18 +245,18 @@ function recordEvent(event, data) {
 
 async function publishHarnessSessions(requestId) {
   try {
-    const sessions = await listHarnessSessions({ env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD } });
-    await forwardToExtension("panel.sessions.update", { requestId, sessions });
+    const sessions = await harnessSessionAdapter.listSessions();
+    await forwardToExtension("panel.sessions.update", { requestId, sessions, adapter: harnessSessionAdapterInfo(harnessSessionAdapter) });
     log(`harness sessions: published ${sessions.length} session${sessions.length === 1 ? "" : "s"}`);
   } catch (error) {
     log(`harness sessions: list failed (${error?.message ?? error})`);
-    await forwardToExtension("panel.sessions.update", { requestId, sessions: [], error: "Previous sessions are unavailable right now." }).catch(() => {});
+    await forwardToExtension("panel.sessions.update", { requestId, sessions: [], adapter: harnessSessionAdapterInfo(harnessSessionAdapter), error: "Previous sessions are unavailable right now." }).catch(() => {});
   }
 }
 
 async function publishHarnessSession(sessionId, requestId) {
   try {
-    const loaded = await loadHarnessSession(sessionId);
+    const loaded = await harnessSessionAdapter.loadSession(sessionId);
     await forwardToExtension("panel.session.loaded", { requestId, ...loaded });
   } catch (error) {
     log(`harness sessions: load failed (${error?.message ?? error})`);
@@ -264,7 +266,7 @@ async function publishHarnessSession(sessionId, requestId) {
 
 async function archivePanelHarnessSession(sessionId, requestId) {
   try {
-    const result = await archiveHarnessSession(sessionId);
+    const result = await harnessSessionAdapter.archiveSession(sessionId);
     if (!result.archived) throw new Error("Harness did not confirm that the session was archived");
     await forwardToExtension("panel.session.archived", { requestId, sessionId });
     await publishHarnessSessions();
@@ -276,7 +278,7 @@ async function archivePanelHarnessSession(sessionId, requestId) {
 
 async function renamePanelHarnessSession(sessionId, title, requestId) {
   try {
-    const renamed = await renameHarnessSession(sessionId, title);
+    const renamed = await harnessSessionAdapter.renameSession(sessionId, title);
     await forwardToExtension("panel.session.renamed", { requestId, ...renamed });
   } catch (error) {
     log(`harness sessions: rename failed (${error?.message ?? error})`);
@@ -288,7 +290,7 @@ async function forwardPanelMessageToHarnessSession(data) {
   try {
     const sessionId = sanitizeConversationId(data.conversationId);
     if (!sessionId) return;
-    await promptHarnessSession(sessionId, typeof data.text === "string" ? data.text : "");
+    await harnessSessionAdapter.resumeSession(sessionId, typeof data.text === "string" ? data.text : "");
     log(`panel→harness: queued prompt in ${sessionId}`);
   } catch (error) {
     log(`panel→harness: prompt failed (${error?.message ?? error})`);
@@ -308,6 +310,9 @@ import { fileURLToPath } from "node:url";
 // remaining movable with the project. Deployments may override the scope.
 const HARNESS_SESSION_CWD = process.env.AB_HARNESS_SESSION_CWD
   || dirname(dirname(fileURLToPath(import.meta.url)));
+harnessSessionAdapter = createDeepSeekHarnessSessionAdapter({
+  env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD },
+});
 
 function panelWebhookUrl() {
   return resolvePanelWebhookUrl(process.env);
@@ -376,10 +381,10 @@ async function forwardPanelMessageToHermes(data) {
         let harnessSessionId = null;
         try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
         if (harnessSessionId) {
-          const fallbackTitle = titleFromUserPrompt(data.text);
+          const fallbackTitle = harnessSessionAdapter.titleFromPrompt(data.text);
           let title = fallbackTitle;
           try {
-            title = (await renameHarnessSession(harnessSessionId, fallbackTitle)).title;
+            title = (await harnessSessionAdapter.renameSession(harnessSessionId, fallbackTitle)).title;
           } catch (error) {
             log(`panel→harness: automatic title failed (${error?.message ?? error})`);
           }

@@ -56,6 +56,8 @@ The connected harness owns durable sessions, titles, transcripts, and reasoning 
 
 Harness adapters are responsible for mapping their own session primitives into the bridge's list, load, resume, rename, and recoverable-remove behavior. A provider or harness name shown in the panel is identity metadata, not an architectural dependency.
 
+The versioned capability and privacy requirements are defined in the [harness session adapter contract](./harness-session-adapters.md).
+
 ## Domain capabilities
 
 Domain capabilities sit above the neutral browser and session layers:

@@ -8,9 +8,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFile(resolve(root, path), "utf8");
 
 test("contributor onboarding preserves the harness-neutral architecture", async () => {
-  const [contributing, architecture, support, readme] = await Promise.all([
+  const [contributing, architecture, adapters, support, readme] = await Promise.all([
     read("CONTRIBUTING.md"),
     read("docs/architecture.md"),
+    read("docs/harness-session-adapters.md"),
     read("SUPPORT.md"),
     read("README.md"),
   ]);
@@ -20,6 +21,9 @@ test("contributor onboarding preserves the harness-neutral architecture", async 
   assert.match(architecture, /The harness is the main brain\./);
   assert.match(architecture, /Shopping is the first mature example\./);
   assert.match(architecture, /snapshot → one atomic action → new snapshot/);
+  assert.match(adapters, /Main reasoning model, planning, and tool choices \| Connected harness/);
+  assert.match(adapters, /Private reasoning, tool requests, tool responses/);
+  assert.match(adapters, /New session is genuine/);
   assert.match(support, /response-quality form/i);
   assert.match(readme, /CONTRIBUTING\.md/);
   assert.match(readme, /docs\/architecture\.md/);
@@ -45,7 +49,7 @@ test("public collaboration forms protect private browser state", async () => {
 });
 
 test("new contributor documents contain no broken local Markdown links", async () => {
-  const paths = ["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "docs/architecture.md", "docs/public-beta.md", "docs/quick-start.md"];
+  const paths = ["README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SUPPORT.md", "docs/architecture.md", "docs/harness-session-adapters.md", "docs/public-beta.md", "docs/quick-start.md"];
   for (const path of paths) {
     const content = await read(path);
     for (const match of content.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
