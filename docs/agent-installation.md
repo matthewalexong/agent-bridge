@@ -1,10 +1,10 @@
-# Install Chrome Agent Bridge for an Agent
+# Install Agent Bridge for an Agent
 
-This guide is written for an MCP-compatible Agent that needs to install and connect Chrome Agent Bridge on the user's local machine. The Agent may run the terminal steps and prepare the MCP configuration. Chrome requires the user to complete one visible approval step: loading the extracted extension from `chrome://extensions`.
+This guide is written for a compatible AI harness or MCP agent that needs to install and connect Agent Bridge on the user's local machine. The agent may run the terminal steps and prepare the MCP configuration. Chrome requires the user to complete one visible approval step: loading the extracted extension from `chrome://extensions`.
 
 ## Trust boundary
 
-- Install only from `https://github.com/escapeWu/chrome-agent-bridge` and its GitHub Releases.
+- Install only from `https://github.com/matthewalexong/agent-bridge-rsi` and its GitHub Releases.
 - Never ask the user to paste the pairing token into chat when the Agent runs as the same local OS user. The MCP server reads `~/.chrome-agent-bridge/auth.json` automatically.
 - Treat the token as a full browser-control credential. Raw CDP can expose private page data, cookies, storage, request and response bodies, and credentials available to the attached tab.
 - Do not expose the loopback RPC port, forward it, or copy the token to another machine.
@@ -25,8 +25,8 @@ Requirements:
 Choose a permanent directory. The Native Messaging launcher stores an absolute path to this checkout, so do not move or delete it after installation.
 
 ```bash
-git clone https://github.com/escapeWu/chrome-agent-bridge.git
-cd chrome-agent-bridge
+git clone https://github.com/matthewalexong/agent-bridge-rsi.git
+cd agent-bridge-rsi
 npm ci
 npm run install-host
 ```
@@ -35,12 +35,12 @@ The released extension has the stable ID `hkedmoboloodflgcaidimhddljdnndcd`; the
 
 ## Step 2: ask the user to approve the extension
 
-1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/escapeWu/chrome-agent-bridge/releases).
+1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge-rsi/releases).
 2. Extract it into a permanent directory. Chrome cannot install this ZIP directly.
 3. Open `chrome://extensions` in Chrome.
 4. Enable **Developer mode**.
 5. Select **Load unpacked** and choose the extracted extension directory.
-6. Pin or open **Chrome Agent Bridge** and verify that its popup reports a connected local bridge.
+6. Pin or open **Agent Bridge** and verify that its popup reports a connected local bridge.
 
 This is the only required user-visible installation approval. The Agent must not attempt to bypass it.
 
@@ -53,7 +53,7 @@ Use the absolute path to the checkout. Do not place the token in this configurat
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/chrome-agent-bridge/mcp/server.mjs"]
+      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"]
     }
   }
 }
@@ -68,7 +68,7 @@ Only a deliberately separate local process should use the copied token:
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/chrome-agent-bridge/mcp/server.mjs"],
+      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"],
       "env": {
         "CHROME_AGENT_BRIDGE_TOKEN": "TOKEN_COPIED_LOCALLY_BY_THE_USER"
       }
@@ -86,7 +86,7 @@ The Extension ZIP contains only the Chrome extension. Standalone MCP configurati
 Install the `chrome-agent-control` Skill from:
 
 ```text
-https://github.com/escapeWu/chrome-agent-bridge/tree/main/skills/chrome-agent-control
+https://github.com/matthewalexong/agent-bridge-rsi/tree/main/skills/chrome-agent-control
 ```
 
 For Codex, invoke `$skill-installer` and ask it to install that GitHub Skill path. If the repository is installed as a Codex plugin bundle, `.codex-plugin/plugin.json` already registers both `.mcp.json` and the Skill; do not install a duplicate copy.
@@ -110,7 +110,7 @@ Do not guess a tab ID or inspect unrelated tabs.
 If `browser_status` reports offline:
 
 1. Confirm `npm run install-host` completed in the current checkout.
-2. Reload **Chrome Agent Bridge** from `chrome://extensions`.
+2. Reload **Agent Bridge** from `chrome://extensions`.
 3. Reopen its popup and check the connection state.
 4. Restart the MCP client if its server was configured while the client was already running.
 
@@ -154,7 +154,7 @@ Do not use Resource Timing, `performance.getEntriesByType("resource")`, or page-
 Update the local bridge in place so its absolute path remains stable:
 
 ```bash
-cd /absolute/path/to/chrome-agent-bridge
+cd /absolute/path/to/agent-bridge-rsi
 git pull --ff-only
 npm ci
 npm run install-host
@@ -167,8 +167,8 @@ Also update or reinstall the paired `chrome-agent-control` Skill. Plugin install
 ## Uninstall
 
 ```bash
-cd /absolute/path/to/chrome-agent-bridge
+cd /absolute/path/to/agent-bridge-rsi
 npm run uninstall-host
 ```
 
-Then remove **Chrome Agent Bridge** from `chrome://extensions`. The authentication file is deliberately left under `~/.chrome-agent-bridge/`; remove that private directory only if the user explicitly wants to delete the saved pairing credential and runtime state.
+Then remove **Agent Bridge** from `chrome://extensions`. The authentication file is deliberately left under `~/.chrome-agent-bridge/`; remove that private directory only if the user explicitly wants to delete the saved pairing credential and runtime state.

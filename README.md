@@ -1,24 +1,29 @@
-# Chrome Agent Bridge
+# Agent Bridge
 
 <p align="center">
-  <img src="./assets/chrome-agent-bridge-icon-512.png" width="160" alt="Chrome Agent Bridge icon">
+  <img src="./assets/chrome-agent-bridge-icon-512.png" width="160" alt="Agent Bridge icon">
 </p>
+
+<p align="center"><strong>Let AI agents work through your real Chrome browser.</strong></p>
 
 ## Project overview
 
-Chrome Agent Bridge connects MCP-compatible Agents to the user's existing Google Chrome session. It runs locally as a Chrome extension, Native Messaging host, and stdio MCP server; it does not launch a remote browser or send browser state through a hosted bridge.
+Agent Bridge connects compatible AI harnesses and MCP agents to the Google Chrome session the user already uses. It works with existing tabs, signed-in sessions, and browser state instead of launching an isolated remote browser or asking the user to copy credentials into a hosted automation service. The Chrome extension, Native Messaging host, and MCP server all run locally.
 
-The project provides:
+The core platform provides:
 
 - semantic page snapshots and atomic click, fill, key, and select actions;
 - tab navigation, screenshots, and lifecycle monitoring;
 - sanitized network monitoring plus an explicit unrestricted Raw CDP channel;
 - script collection, debugging, source-map, performance, and opt-in deep-network analysis;
-- local JavaScript, binary, protocol, and WebAssembly analysis that does not require Chrome.
+- local JavaScript, binary, protocol, and WebAssembly analysis that does not require Chrome;
+- a harness-connected side panel with resumable sessions and clear activity state.
 
 The user approves the unpacked extension once in Chrome. Local Agents then authenticate with a long-lived token stored under `~/.chrome-agent-bridge/`. ChatGPT OAuth and the official ChatGPT Chrome extension are not required.
 
-This is a clean-room, MIT-licensed implementation. It does not contain or redistribute OpenAI's proprietary Chrome extension, browser client, native host, or authentication code.
+Agent Bridge is domain-neutral: its browser connection, session layer, and tools can support research, development, operations, and other browser-based workflows. Evidence-driven shopping is the first flagship capability and reference implementation, not the boundary of the platform. Its shopping workflow helps a harness clarify an ambiguous request, map the market before recommending individual products, compare value tiers, verify current price and availability, and assess merchant and counterfeit risk.
+
+This MIT-licensed project is derived from [Chrome Agent Bridge](https://github.com/escapeWu/chrome-agent-bridge). Original attribution and the boundary between upstream work and this project's modifications are documented in [NOTICE.md](./NOTICE.md). The browser capability implementation does not contain or redistribute OpenAI's proprietary Chrome extension, browser client, native host, or authentication code.
 
 ## Architecture
 
@@ -54,11 +59,11 @@ Windows native-host installation is not implemented in the initial release.
 
 ## Install
 
-For an Agent-executable checklist, MCP configuration, verification steps, upgrades, and recovery guidance, see [Install Chrome Agent Bridge for an Agent](./docs/agent-installation.md).
+For an Agent-executable checklist, MCP configuration, verification steps, upgrades, and recovery guidance, see [Install Agent Bridge for an Agent](./docs/agent-installation.md).
 
 ### Install the released extension ZIP
 
-1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/escapeWu/chrome-agent-bridge/releases).
+1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge-rsi/releases).
 2. Extract the ZIP to a permanent local directory.
 3. Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select the extracted directory.
 
@@ -67,8 +72,8 @@ The release manifest carries a public development key, so every unpacked release
 ### Install the local Agent bridge
 
 ```bash
-git clone https://github.com/escapeWu/chrome-agent-bridge.git
-cd chrome-agent-bridge
+git clone https://github.com/matthewalexong/agent-bridge-rsi.git
+cd agent-bridge-rsi
 npm ci
 npm run install-host
 ```
@@ -94,7 +99,7 @@ Agents can use this section as an installation and connection checklist:
 1. Verify Node.js 18+ and Google Chrome are installed.
 2. Run `npm ci` and `npm run install-host` in the repository root. The released extension ID is built in.
 3. Ask the user to download and extract the Extension ZIP, then load its extracted directory from `chrome://extensions` with **Developer mode** enabled. This is the only required user-visible approval step.
-4. Ask the user to reload **Chrome Agent Bridge** after source, manifest, or native-host installation changes.
+4. Ask the user to reload **Agent Bridge** after source, manifest, or native-host installation changes.
 5. Add `mcp/server.mjs` to the Agent's MCP configuration using an absolute filesystem path, or install this repository as a Codex plugin. Copy the ready-to-use configuration from [docs/agent-installation.md](./docs/agent-installation.md).
 6. Install and enable the paired `chrome-agent-control` Skill. Do not treat MCP configuration alone as a complete Agent installation.
 7. Call `browser_status`, then `browser_list_tabs`. Do not begin browser actions until the bridge reports connected.
@@ -112,7 +117,7 @@ Use an absolute path when configuring a standalone MCP client:
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/chrome-agent-bridge/mcp/server.mjs"]
+      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"]
     }
   }
 }
@@ -122,7 +127,7 @@ The local Agent reads `~/.chrome-agent-bridge/auth.json` automatically. Set `CHR
 
 The repository is also a Codex plugin: `.codex-plugin/plugin.json` registers the MCP server and the `chrome-agent-control` skill.
 
-**Standalone MCP clients must install the paired Skill separately.** The Extension ZIP contains only the Chrome extension, and an MCP configuration exposes tools without teaching the Agent the required workflow. Follow [Install Chrome Agent Bridge for an Agent](./docs/agent-installation.md).
+**Standalone MCP clients must install the paired Skill separately.** The Extension ZIP contains only the Chrome extension, and an MCP configuration exposes tools without teaching the Agent the required workflow. Follow [Install Agent Bridge for an Agent](./docs/agent-installation.md).
 
 ## Tools
 

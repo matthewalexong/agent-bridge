@@ -45,7 +45,7 @@ const hostPath = path.join(bridgeDirectory(), "native-host-launcher");
 const target = manifestPath();
 const manifest = {
   name: HOST_NAME,
-  description: "Chrome Agent Bridge native messaging host",
+  description: "Agent Bridge native messaging host",
   path: hostPath,
   type: "stdio",
   allowed_origins: [`chrome-extension://${args.extensionId}/`],

@@ -135,7 +135,7 @@ tool(
   "browser_close_tab",
   {
     title: "Close bridge-created Chrome tab",
-    description: "Close a tab only when it was created by Chrome Agent Bridge in the current extension session.",
+    description: "Close a tab only when it was created by Agent Bridge in the current extension session.",
     inputSchema: { tabId: z.number().int().nonnegative() },
   },
   async (input) => asText(await callBridge("tabs.close", input)),

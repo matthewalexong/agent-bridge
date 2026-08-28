@@ -1,7 +1,7 @@
 {
-  "name": "chrome-agent-bridge",
+  "name": "agent-bridge",
   "version": "0.9.0",
-  "description": "A local Chrome Native Messaging to MCP bridge for user-approved browser automation.",
+  "description": "Connect AI harnesses and MCP agents to the user's existing Chrome session.",
   "type": "module",
   "private": true,
   "engines": {
@@ -30,10 +30,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/escapeWu/chrome-agent-bridge.git"
+    "url": "git+https://github.com/matthewalexong/agent-bridge-rsi.git"
   },
   "bugs": {
-    "url": "https://github.com/escapeWu/chrome-agent-bridge/issues"
+    "url": "https://github.com/matthewalexong/agent-bridge-rsi/issues"
   },
-  "homepage": "https://github.com/escapeWu/chrome-agent-bridge#readme"
+  "homepage": "https://github.com/matthewalexong/agent-bridge-rsi#readme"
 }

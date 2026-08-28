@@ -1819,7 +1819,7 @@ async function dispatch(method, params) {
     case "tabs.close": {
       await requireTab(params.tabId);
       if (!createdTabIds.has(params.tabId)) {
-        throw codedError("tab_not_owned", "Only tabs created by Chrome Agent Bridge can be closed");
+        throw codedError("tab_not_owned", "Only tabs created by Agent Bridge can be closed");
       }
       await chrome.tabs.remove(params.tabId);
       createdTabIds.delete(params.tabId);
