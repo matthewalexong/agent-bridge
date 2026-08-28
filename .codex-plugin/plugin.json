@@ -4,10 +4,10 @@
   "description": "Connect AI harnesses and MCP agents to the user's existing Chrome session, with local browser and analysis tools.",
   "author": {
     "name": "Agent Bridge contributors",
-    "url": "https://github.com/matthewalexong/agent-bridge-rsi"
+    "url": "https://github.com/matthewalexong/agent-bridge"
   },
-  "homepage": "https://github.com/matthewalexong/agent-bridge-rsi",
-  "repository": "https://github.com/matthewalexong/agent-bridge-rsi",
+  "homepage": "https://github.com/matthewalexong/agent-bridge",
+  "repository": "https://github.com/matthewalexong/agent-bridge",
   "license": "MIT",
   "keywords": [
     "chrome",
@@ -28,7 +28,7 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/matthewalexong/agent-bridge-rsi",
+    "websiteURL": "https://github.com/matthewalexong/agent-bridge",
     "defaultPrompt": [
       "Inspect my current Chrome tab and summarize the page.",
       "Monitor requests while I perform an action in Chrome.",

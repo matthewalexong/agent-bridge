@@ -4,7 +4,7 @@ This guide is written for a compatible AI harness or MCP agent that needs to ins
 
 ## Trust boundary
 
-- Install only from `https://github.com/matthewalexong/agent-bridge-rsi` and its GitHub Releases.
+- Install only from `https://github.com/matthewalexong/agent-bridge` and its GitHub Releases.
 - Never ask the user to paste the pairing token into chat when the Agent runs as the same local OS user. The MCP server reads `~/.chrome-agent-bridge/auth.json` automatically.
 - Treat the token as a full browser-control credential. Raw CDP can expose private page data, cookies, storage, request and response bodies, and credentials available to the attached tab.
 - Do not expose the loopback RPC port, forward it, or copy the token to another machine.
@@ -25,8 +25,8 @@ Requirements:
 Choose a permanent directory. The Native Messaging launcher stores an absolute path to this checkout, so do not move or delete it after installation.
 
 ```bash
-git clone https://github.com/matthewalexong/agent-bridge-rsi.git
-cd agent-bridge-rsi
+git clone https://github.com/matthewalexong/agent-bridge.git
+cd agent-bridge
 npm ci
 npm run install-host
 ```
@@ -35,7 +35,7 @@ The released extension has the stable ID `hkedmoboloodflgcaidimhddljdnndcd`; the
 
 ## Step 2: ask the user to approve the extension
 
-1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge-rsi/releases).
+1. Download `chrome-agent-bridge-extension-vX.Y.Z.zip` from [GitHub Releases](https://github.com/matthewalexong/agent-bridge/releases).
 2. Extract it into a permanent directory. Chrome cannot install this ZIP directly.
 3. Open `chrome://extensions` in Chrome.
 4. Enable **Developer mode**.
@@ -53,7 +53,7 @@ Use the absolute path to the checkout. Do not place the token in this configurat
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"]
+      "args": ["/absolute/path/to/agent-bridge/mcp/server.mjs"]
     }
   }
 }
@@ -68,7 +68,7 @@ Only a deliberately separate local process should use the copied token:
   "mcpServers": {
     "chrome-agent-bridge": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-bridge-rsi/mcp/server.mjs"],
+      "args": ["/absolute/path/to/agent-bridge/mcp/server.mjs"],
       "env": {
         "CHROME_AGENT_BRIDGE_TOKEN": "TOKEN_COPIED_LOCALLY_BY_THE_USER"
       }
@@ -86,7 +86,7 @@ The Extension ZIP contains only the Chrome extension. Standalone MCP configurati
 Install the `chrome-agent-control` Skill from:
 
 ```text
-https://github.com/matthewalexong/agent-bridge-rsi/tree/main/skills/chrome-agent-control
+https://github.com/matthewalexong/agent-bridge/tree/main/skills/chrome-agent-control
 ```
 
 For Codex, invoke `$skill-installer` and ask it to install that GitHub Skill path. If the repository is installed as a Codex plugin bundle, `.codex-plugin/plugin.json` already registers both `.mcp.json` and the Skill; do not install a duplicate copy.
@@ -154,7 +154,7 @@ Do not use Resource Timing, `performance.getEntriesByType("resource")`, or page-
 Update the local bridge in place so its absolute path remains stable:
 
 ```bash
-cd /absolute/path/to/agent-bridge-rsi
+cd /absolute/path/to/agent-bridge
 git pull --ff-only
 npm ci
 npm run install-host
@@ -167,7 +167,7 @@ Also update or reinstall the paired `chrome-agent-control` Skill. Plugin install
 ## Uninstall
 
 ```bash
-cd /absolute/path/to/agent-bridge-rsi
+cd /absolute/path/to/agent-bridge
 npm run uninstall-host
 ```
 
