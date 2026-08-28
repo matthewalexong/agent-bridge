@@ -57,6 +57,8 @@ The locally installed production ChatGPT Chrome extension was used only to under
 
 Windows native-host installation is not implemented in the initial release.
 
+For the shortest first installation, follow the [ten-minute quick start](./docs/quick-start.md). It includes the privacy-safe `npm run doctor` check and a troubleshooting decision tree.
+
 ## Install
 
 For an Agent-executable checklist, MCP configuration, verification steps, upgrades, and recovery guidance, see [Install Agent Bridge for an Agent](./docs/agent-installation.md).
