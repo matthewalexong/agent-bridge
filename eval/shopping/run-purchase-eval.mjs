@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { frontierCall } from "../../cascade/lib/frontier.mjs";
 import { judgePurchase } from "./lib/purchase-judge.mjs";
@@ -12,6 +12,7 @@ const arg = (name, fallback) => {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 const skillPath = resolve(arg("skill", join(here, "skills/purchase-decision-v1.md")));
+const recordedSkillPath = relative(resolve(here, "../.."), skillPath).split(sep).join("/");
 const taskDir = resolve(arg("task-dir", join(here, "tasks")));
 const runs = Math.max(1, Number(arg("runs", "1")));
 const modelTier = arg("model-tier", process.env.SHOPPING_EVAL_MODEL_TIER || "frontier");
@@ -70,7 +71,7 @@ const action = results.filter((r) => r.actionOk).length / total;
 const selection = results.filter((r) => r.selectionOk).length / total;
 const landed = results.filter((r) => r.landedOk).length / total;
 const evidence = results.reduce((sum, r) => sum + (r.evidenceScore || 0), 0) / total;
-const summary = { skill: skillPath, model_tier: modelTier, runs, tasks: total / runs, action, selection, landed, evidence, gate_pass: action === 1 && selection === 1 };
+const summary = { skill: recordedSkillPath, model_tier: modelTier, runs, tasks: total / runs, action, selection, landed, evidence, gate_pass: action === 1 && selection === 1 };
 console.log(`\nACTION ${(action * 100).toFixed(1)}% | SELECTION ${(selection * 100).toFixed(1)}% | LANDED ${(landed * 100).toFixed(1)}% | EVIDENCE ${(evidence * 100).toFixed(1)}%`);
 mkdirSync(join(here, "results"), { recursive: true });
 const out = join(here, "results", `${new Date().toISOString().replace(/[:.]/g, "-")}.json`);

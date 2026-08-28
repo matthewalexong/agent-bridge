@@ -6,3 +6,11 @@ dist/
 .chrome-agent-bridge/
 work/
 .playwright-cli/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+webhook-secret

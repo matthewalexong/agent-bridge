@@ -193,6 +193,8 @@ The clean-room capability analysis and migration boundaries are documented in [d
 
 This is an early developer release. Review the requested tab and action before allowing an agent to operate a signed-in site.
 
+Report vulnerabilities through the private process in [SECURITY.md](./SECURITY.md). Maintainers preparing a public release should complete the [public release security checklist](./docs/public-release-checklist.md) and run `npm run audit:public`.
+
 ## Development
 
 ```bash

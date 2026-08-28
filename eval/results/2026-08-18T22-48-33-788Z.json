@@ -1,6 +1,6 @@
 {
   "when": "2026-08-18T22:48:33.790Z",
-  "skillPath": "/Users/matthewong/Projects/agent-bridge/eval/skills/extract-verify-v3-buyer-frame.md",
+  "skillPath": "eval/skills/extract-verify-v3-buyer-frame.md",
   "model": "gemma-4-E2B-it",
   "overall": 0.7833333333333333,
   "results": [

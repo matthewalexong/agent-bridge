@@ -32,6 +32,7 @@ const arg = (flag, def) => {
   return i >= 0 && argv[i + 1] ? argv[i + 1] : def;
 };
 const skillPath = arg("--skill", path.join(__dirname, "skills", "extract-facts-v1.md"));
+const recordedSkillPath = path.relative(path.dirname(__dirname), path.resolve(skillPath)).split(path.sep).join("/");
 
 // ---- load inputs --------------------------------------------------------
 const skillText = fs.readFileSync(skillPath, "utf8");
@@ -201,7 +202,7 @@ async function main() {
   fs.mkdirSync(resultsDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const outFile = path.join(resultsDir, `${stamp}.json`);
-  fs.writeFileSync(outFile, JSON.stringify({ when: new Date().toISOString(), skillPath, model: MODEL, overall, results }, null, 2));
+  fs.writeFileSync(outFile, JSON.stringify({ when: new Date().toISOString(), skillPath: recordedSkillPath, model: MODEL, overall, results }, null, 2));
   console.log(`saved: ${outFile}`);
 }
 
