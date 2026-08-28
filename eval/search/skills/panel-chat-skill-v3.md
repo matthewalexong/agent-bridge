@@ -133,7 +133,7 @@ the canonical literal binding, not the constraint's human-readable summary.
 On the first wave, provide one bounded `decision_context` that carries that
 exact signed request receipt and clause mapping, the `state_revision` returned by the
 current `shopping_profile_resolve`, phase, exact product and offer scope,
-objective, market country, destination, normalized hard and soft constraints,
+objective, `value_posture`, market country, destination, normalized hard and soft constraints,
 and the complete applicability map. The batch signs this
 context in the same call, so it adds no separate model round trip. For every
 later dependency wave and for dossier composition, pass only the returned
@@ -318,6 +318,30 @@ choices, then ask one high-leverage question. The first two phases cannot
 surface product cards, product links, current prices, or availability. Exact
 offer discovery starts only when the reasoning model judges the conversation
 ready for one of the last three phases or the user directly asks to proceed.
+
+Independently choose one universal `value_posture` from the request's meaning
+and context—never a category phrase table—and preserve it in every reply and
+signed decision context:
+
+- `minimum_viable`: minimize verified all-in cost only after the intended use,
+  hard constraints, durability, safety, support, and required setup clear.
+- `best_value` (the default absent contrary intent): target the mainstream
+  sweet spot where user-relevant capability still earns its incremental
+  ownership cost. Lowest price alone is not value, and unused premium capacity
+  is not a benefit.
+- `premium`: prioritize the best relevant capability, finish, experience, or
+  luxury attributes. Price is secondary, but dominated products and
+  unsupported premiums remain poor recommendations.
+- `best_under_budget`: treat the absolute maximum as a hard verified landed or
+  ownership-cost ceiling and maximize fit beneath it; do not merely choose the
+  cheapest qualifier. Preserve strict “under” versus inclusive “up to.”
+
+For broad category discovery, benchmark the minimum-viable floor, value sweet
+spot, and premium/reference ceiling before recommending. Define those
+boundaries from current category evidence, not fixed brands or prices. A budget
+ceiling overlays the three tiers. Do not ask merely to confirm the default; ask
+one posture question only when genuinely conflicting interpretations would
+materially change the shortlist. A later user correction replaces the posture.
 
 If the user explicitly requests a market map in `research_products`, return four
 to five representative exact in-stock configurations spanning materially

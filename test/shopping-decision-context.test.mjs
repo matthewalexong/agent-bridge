@@ -26,6 +26,7 @@ test("decision context binds every decision-relevant request revision", () => {
   const identical = createShoppingDecisionContext(input());
   assert.equal(first.context_id, identical.context_id);
   assert.equal(first.evaluated_at, NOW);
+  assert.equal(first.value_posture, "best_value");
   assert.equal(createShoppingDecisionContext(input({ evaluated_at: "2099-01-01T00:00:00.000Z" })).context_id, first.context_id);
   assert.equal(verifyShoppingDecisionContext(first, NOW), true);
   assert.deepEqual(first.constraint_routes, [{ constraint_id: "budget", kind: "budget", status: "active", stages: ["preferences"], deferred_until: null }]);
@@ -34,11 +35,13 @@ test("decision context binds every decision-relevant request revision", () => {
   for (const changed of [
     input({ request_receipt: receipt(2) }),
     input({ profile_state_revision: 8 }),
+    input({ value_posture: "premium" }),
     input({ destination: { country_code: "CA" } }),
     input({ market_country_code: "CA" }),
     input({ constraints: [{ ...input().constraints[0], value: "USD 900" }] }),
     input({ applicability: applicability({ preferences: { required: true }, privacy: { required: true } }) }),
   ]) assert.notEqual(createShoppingDecisionContext(changed).context_id, first.context_id);
+  assert.throws(() => createShoppingDecisionContext(input({ value_posture: "fashionable" })), { code: "shopping_decision_context_invalid" });
 });
 
 test("decision context carries authorized-seller-only language into the exact counterfeit job", () => {

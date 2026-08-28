@@ -38,7 +38,7 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /Harvest ≥2 distinct current families per lane/i);
   assert.match(skill, /4-5 exact buy pages for an explicit market map/i);
   assert.match(skill, /As soon as 2 exact in-stock pages exist.*post those provisional cards before continuing/i);
-  assert.match(skill, /main reasoning brain chooses `shopping_phase` from meaning and chat context/i);
+  assert.match(skill, /main reasoning brain chooses `shopping_phase` and `value_posture` from meaning and chat context/i);
   assert.match(skill, /never a phrase table or local model/i);
   assert.match(skill, /`explore_category`, `define_requirements`, `research_products`, `compare_offers`, or `decide_purchase`/i);
   assert.match(skill, /first two.*ask one high-leverage question.*post no product cards, links, prices, or availability/i);
@@ -51,6 +51,20 @@ test("live panel shopping does not collapse broad technical categories to one br
   assert.match(skill, /Reddit questions.*recent dated community threads/i);
   assert.match(skill, /Community evidence informs fit, never price(?: or |\/)stock/i);
   assert.match(skill, /product shortlist must use signed candidates.*never bypass extraction with source cards/i);
+  assert.match(skill, /`minimum_viable`, `best_value` \(default\), `premium`, or `best_under_budget`/i);
+  assert.match(skill, /Broad discovery benchmarks the viable floor, value sweet spot, and premium ceiling; an absolute budget overlays them/i);
+});
+
+test("shopping value posture is universal, reasoned, and context-bound", async () => {
+  const skill = await fs.readFile(PANEL_SKILL, "utf8");
+  assert.match(skill, /choose one universal `value_posture`.*never a category phrase table/is);
+  assert.match(skill, /`minimum_viable`.*minimize verified all-in cost.*intended use/is);
+  assert.match(skill, /`best_value`.*default.*mainstream.*sweet spot/is);
+  assert.match(skill, /`premium`.*best relevant capability.*Price is secondary/is);
+  assert.match(skill, /`best_under_budget`.*hard verified landed or.*ownership-cost ceiling.*maximize fit/is);
+  assert.match(skill, /budget\s+ceiling overlays the three tiers|budget ceiling overlays those tiers/i);
+  assert.match(skill, /Do not ask merely to confirm the default/i);
+  assert.match(skill, /objective, `value_posture`, market country/i);
 });
 
 test("panel skill batches evidence domains without making local models architectural", async () => {
