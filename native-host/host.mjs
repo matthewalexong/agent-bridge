@@ -310,7 +310,7 @@ async function forwardPanelMessageToHarnessSession(data) {
     if (!sessionId) return;
     const question = pendingHarnessQuestions.get(sessionId);
     if (question) {
-      await harnessSessionAdapter.answerQuestion(question, typeof data.text === "string" ? data.text : "");
+      await harnessSessionAdapter.answerQuestion(question, typeof data.text === "string" ? data.text : "", data.questionAnswer);
       pendingHarnessQuestions.delete(sessionId);
       log(`panel→harness: answered interactive question in ${sessionId}`);
       monitorHarnessTurn(sessionId, data.messageId || data.conversationId);
@@ -375,7 +375,7 @@ function monitorHarnessTurn(sessionId, turnKey) {
     const existing = pendingHarnessQuestions.get(sessionId);
     if (existing?.rpcId === question.rpcId) return;
     pendingHarnessQuestions.set(sessionId, question);
-    await forwardToExtension("panel.post", { text: formatHarnessQuestion(question), links: [] });
+    await forwardToExtension("panel.post", { text: formatHarnessQuestion(question), question, links: [] });
     if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
     log(`harness→panel: relayed interactive question from ${sessionId}`);
   }).catch((error) => {

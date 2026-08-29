@@ -630,6 +630,20 @@ function recordPanelEntry(role, text, links, research) {
   return entry;
 }
 
+async function submitPanelQuestion(rawAnswers) {
+  const answers = Array.isArray(rawAnswers) ? rawAnswers : [];
+  if (!answers.length) throw codedError("invalid_request", "Choose an answer before continuing.");
+  const summary = answers.map((answer) => [...(answer.selected || []), answer.custom].filter(Boolean).join(", ")).filter(Boolean).join(" · ");
+  panelProgress = [];
+  setPanelStatus({ text: "Working…", phase: "working", persist: false });
+  const text = summary || "Answered the Harness questions.";
+  const entry = recordPanelEntry("user", text);
+  const turn = await nextConversationTurn();
+  emitBrowserEvent("panel.message", { role: "user", text, questionAnswer: answers, messageId: entry.id, conversationId: turn.conversationId, resume: turn.resume, harnessSession: turn.harnessSession });
+  broadcastPanel();
+  return { entry, conversationId: turn.conversationId };
+}
+
 async function submitPanelMessage(rawText) {
   const text = panelText(rawText);
   panelProgress = [];
@@ -2139,6 +2153,8 @@ async function dispatch(method, params) {
       return panelState();
     case "panel.send":
       return submitPanelMessage(params.text);
+    case "panel.question.answer":
+      return submitPanelQuestion(params.answers);
     case "panel.identify":
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
@@ -2203,6 +2219,7 @@ async function dispatch(method, params) {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
       const entry = recordPanelEntry("agent", text, links, panelProgress);
+      if (params.question && typeof params.question === "object") entry.question = params.question;
       panelProgress = [];
       panelStatus = null;
       clearPanelStatusExpiry();

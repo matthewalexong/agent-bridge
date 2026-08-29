@@ -81,6 +81,7 @@ function renderEntry(doc, transcript, entry) {
   body.textContent = entry.text;
   bubble.append(who, body);
   appendResearchTrail(doc, bubble, entry.research);
+  if (entry.role === "agent" && entry.question && Array.isArray(entry.question.questions)) appendQuestionCard(doc, bubble, entry.question);
   // Link cards (agent-cited products/pages). URLs are already protocol-
   // filtered to http(s) by the service worker; we still build everything
   // with DOM APIs so no markup can be injected.
@@ -231,6 +232,62 @@ function renderEntry(doc, transcript, entry) {
     if (cards.childElementCount > 0) bubble.append(cards);
   }
   transcript.append(bubble);
+}
+
+function appendQuestionCard(doc, bubble, interaction) {
+  const card = doc.createElement("div");
+  card.className = "question-card";
+  const answers = interaction.questions.map(() => ({ selected: [], custom: "" }));
+  let submit;
+  for (const [index, question] of interaction.questions.entries()) {
+    const section = doc.createElement("fieldset");
+    const legend = doc.createElement("legend");
+    legend.textContent = `${index + 1}. ${question.header || "Question"}`;
+    section.append(legend);
+    const prompt = doc.createElement("p");
+    prompt.className = "question-prompt";
+    prompt.textContent = question.question || "";
+    section.append(prompt);
+    const update = () => { if (submit) submit.disabled = !answers.some((answer) => answer.selected.length || answer.custom); };
+    for (const option of Array.isArray(question.options) ? question.options : []) {
+      const label = doc.createElement("label");
+      label.className = "question-option";
+      const input = doc.createElement("input");
+      input.type = question.multiSelect ? "checkbox" : "radio";
+      input.name = `question-${interaction.rpcId}-${question.id}`;
+      input.value = option.label;
+      input.addEventListener("change", () => {
+        answers[index].selected = question.multiSelect
+          ? [...section.querySelectorAll("input:checked")].map((node) => node.value)
+          : [input.value];
+        update();
+      });
+      const copy = doc.createElement("span");
+      copy.textContent = option.label;
+      label.append(input, copy);
+      if (option.description) { const description = doc.createElement("small"); description.textContent = option.description; label.append(description); }
+      section.append(label);
+    }
+    const custom = doc.createElement("textarea");
+    custom.rows = 2;
+    custom.placeholder = "Type your answer";
+    custom.addEventListener("input", () => { answers[index].custom = custom.value.trim(); update(); });
+    section.append(custom);
+    card.append(section);
+  }
+  submit = doc.createElement("button");
+  submit.type = "button";
+  submit.className = "question-submit primary";
+  submit.textContent = "Continue";
+  submit.disabled = true;
+  submit.addEventListener("click", async () => {
+    submit.disabled = true;
+    try {
+      await send({ type: "panel.question.answer", answers: interaction.questions.map((question, index) => ({ id: question.id, selected: answers[index].selected, ...(answers[index].custom ? { custom: answers[index].custom } : {}) })) });
+    } catch { submit.disabled = false; }
+  });
+  card.append(submit);
+  bubble.append(card);
 }
 
 function renderAll(doc, transcript, entries) {
