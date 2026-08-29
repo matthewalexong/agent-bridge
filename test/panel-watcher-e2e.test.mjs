@@ -47,7 +47,7 @@ test("panel chat full loop with real watcher and brain (no human)", async (conte
   const bridgeDir = await fs.mkdtemp(path.join(os.tmpdir(), "chrome-agent-loop-"));
   const child = spawn(process.execPath, [path.join(root, "native-host", "host.mjs")], {
     cwd: root,
-    env: { ...process.env, CHROME_AGENT_BRIDGE_DIR: bridgeDir },
+    env: { ...process.env, CHROME_AGENT_BRIDGE_DIR: bridgeDir, AB_HARNESS_SESSION_CWD: bridgeDir },
     stdio: ["pipe", "pipe", "pipe"],
   });
   let watcher = null;
