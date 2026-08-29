@@ -159,12 +159,17 @@ h1 {
   font-size: 11px;
 }
 .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #50ddff;
   background: transparent;
   border: 1px solid rgba(47, 215, 255, 0.22);
   border-radius: 8px;
   width: 29px;
   height: 29px;
+  padding: 0;
+  line-height: 1;
   cursor: pointer;
 }
 .icon-button.danger:not(:disabled) {
