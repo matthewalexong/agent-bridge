@@ -2292,6 +2292,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: true, result: setBrowserAccessPaused(message.paused) });
     return false;
   }
+  if (message?.type === "panel.question.answer") {
+    void submitPanelQuestion(message.answers).then(
+      (result) => sendResponse({ ok: true, result }),
+      (error) => sendResponse({ ok: false, error: errorPayload(error) }),
+    );
+    return true;
+  }
   if (message?.type === "panel.session.select") {
     void selectHarnessSession(message.sessionId).then(
       (result) => sendResponse({ ok: true, result }),
