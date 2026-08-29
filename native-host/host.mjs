@@ -274,6 +274,8 @@ async function publishHarnessSession(sessionId, requestId) {
     const loaded = await harnessSessionAdapter.loadSession(sessionId);
     deliveredHarnessMessages.set(sessionId, new Set(loaded.transcript.filter((entry) => entry.role === "agent").map((entry) => entry.id)));
     await forwardToExtension("panel.session.loaded", { requestId, ...loaded });
+    const current = (await harnessSessionAdapter.listSessions()).find((session) => session.id === sessionId);
+    if (current?.running) monitorHarnessTurn(sessionId, sessionId);
   } catch (error) {
     log(`harness sessions: load failed (${error?.message ?? error})`);
     await forwardToExtension("panel.session.loaded", { requestId, sessionId, error: "That session could not be loaded." }).catch(() => {});
