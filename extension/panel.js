@@ -260,6 +260,10 @@ function appendQuestionCard(doc, bubble, interaction) {
         answers[index].selected = question.multiSelect
           ? [...section.querySelectorAll("input:checked")].map((node) => node.value)
           : [input.value];
+        if (!question.multiSelect && answers[index].selected.length) {
+          answers[index].custom = "";
+          custom.value = "";
+        }
         update();
       });
       const copy = doc.createElement("span");
@@ -271,7 +275,14 @@ function appendQuestionCard(doc, bubble, interaction) {
     const custom = doc.createElement("textarea");
     custom.rows = 2;
     custom.placeholder = "Type your answer";
-    custom.addEventListener("input", () => { answers[index].custom = custom.value.trim(); update(); });
+    custom.addEventListener("input", () => {
+      answers[index].custom = custom.value.trim();
+      if (!question.multiSelect && answers[index].custom) {
+        answers[index].selected = [];
+        section.querySelectorAll("input:checked").forEach((node) => { node.checked = false; });
+      }
+      update();
+    });
     section.append(custom);
     card.append(section);
   }
