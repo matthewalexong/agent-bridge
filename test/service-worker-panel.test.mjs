@@ -463,7 +463,7 @@ test("a session catalog request made during extension reconnect is delivered onc
   }
 });
 
-test("a newly accepted harness session is titled in the picker without changing webhook follow-up routing", async () => {
+test("a newly accepted harness session becomes the canonical follow-up route", async () => {
   const harness = await loadHarness();
   try {
     const first = await harness.sendRuntime({ type: "panel.send", text: "Map the 128 GB local AI landscape" });
@@ -479,10 +479,11 @@ test("a newly accepted harness session is titled in the picker without changing 
     assert.ok(state.result.capabilities.includes("harness-session-rename:v1"));
 
     const followUp = await harness.sendRuntime({ type: "panel.send", text: "Tell me more about AMD" });
-    assert.equal(followUp.result.conversationId, first.result.conversationId);
+    assert.notEqual(followUp.result.conversationId, first.result.conversationId);
+    assert.equal(followUp.result.conversationId, "session-created");
     assert.equal(followUp.result.resume, true);
     const messageEvent = harness.nativeMessages.filter((message) => message.type === "event" && message.event === "panel.message").at(-1);
-    assert.equal(messageEvent.data.harnessSession, false);
+    assert.equal(messageEvent.data.harnessSession, true);
 
     const rename = await harness.sendRuntime({ type: "panel.session.rename", sessionId: "session-created", title: "AI workstations" });
     assert.equal(rename.ok, true);
@@ -516,10 +517,11 @@ test("session controls follow the connected harness adapter capabilities", async
   try {
     await harness.dispatch("sessions-read-only", "panel.sessions.update", {
       adapter: {
-        contractVersion: 1,
+        contractVersion: 2,
         id: "read-only-harness",
         displayName: "Read-only Harness",
         capabilities: [
+          "sessions.create:v1",
           "sessions.list:v1",
           "sessions.load-display-transcript:v1",
           "sessions.resume:v1",
@@ -549,7 +551,7 @@ test("a malformed advertised adapter fails closed", async () => {
   const harness = await loadHarness();
   try {
     await harness.dispatch("sessions-malformed", "panel.sessions.update", {
-      adapter: { contractVersion: 1, id: "broken-harness", displayName: "Broken", capabilities: ["sessions.rename:v1"] },
+      adapter: { contractVersion: 2, id: "broken-harness", displayName: "Broken", capabilities: ["sessions.rename:v1"] },
       sessions: [{ id: "session-broken", title: "Saved research", updatedAt: "2026-08-27T00:00:00.000Z", running: false }],
     });
     const state = await harness.sendRuntime({ type: "panel.get" });

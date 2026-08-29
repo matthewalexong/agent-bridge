@@ -10,6 +10,7 @@ import {
 import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
 
 const requiredCapabilities = [
+  CAPABILITY.CREATE,
   CAPABILITY.LIST,
   CAPABILITY.LOAD_DISPLAY_TRANSCRIPT,
   CAPABILITY.RESUME,
@@ -22,6 +23,7 @@ function minimalAdapter(overrides = {}) {
     id: "fixture-harness",
     displayName: "Fixture Harness",
     capabilities: requiredCapabilities,
+    async createSession() { return { sessionId: "session-created" }; },
     async listSessions() { return []; },
     async loadSession(sessionId) { return { sessionId, transcript: [], hasMore: false }; },
     async resumeSession() { return { accepted: true }; },
@@ -34,10 +36,10 @@ function reply(value) {
   return { ok: true, async json() { return { result: { ok: true, value } }; } };
 }
 
-test("the v1 contract accepts a minimal provider-neutral harness adapter", () => {
+test("the v2 contract accepts a minimal provider-neutral harness adapter", () => {
   const adapter = validateHarnessSessionAdapter(minimalAdapter());
   assert.deepEqual(harnessSessionAdapterInfo(adapter), {
-    contractVersion: 1,
+    contractVersion: 2,
     id: "fixture-harness",
     displayName: "Fixture Harness",
     capabilities: [...requiredCapabilities].sort(),
@@ -74,6 +76,7 @@ test("the DeepSeek adapter conforms without making DeepSeek part of the core con
       { sessionId: "session-main", updatedAt: 1000, running: false, blank: false, cwd: "/work", projections: { values: { title: "Market landscape" } } },
       { sessionId: "session-child", updatedAt: 900, running: false, blank: false, cwd: "/work", parentSessionId: "session-main", origin: "subagent" },
     ] });
+    if (request.method === "session.create") return reply({ sessionId: "session-created", agentPreset: "standard" });
     if (request.method === "workspace.list") return reply({ archivedSessionIds: [] });
     if (request.method === "session.history") return reply({ hasMore: false, events: [
       { event: { type: "user/message", seq: 1, time: 1000, data: { source: { kind: "user" }, content: [{ type: "text", text: "Map the market" }] } } },
@@ -95,6 +98,9 @@ test("the DeepSeek adapter conforms without making DeepSeek part of the core con
   assert.equal(supportsHarnessSessionCapability(info, CAPABILITY.RENAME), true);
   assert.equal(supportsHarnessSessionCapability(info, CAPABILITY.ARCHIVE), true);
   assert.equal(supportsHarnessSessionCapability(info, CAPABILITY.PIN), false);
+
+  assert.deepEqual(await adapter.createSession(), { sessionId: "session-created", agentPreset: "standard" });
+  assert.deepEqual(calls.at(-1).payload, { cwd: "/work" });
 
   const sessions = await adapter.listSessions();
   assert.deepEqual(sessions, [{ id: "session-main", title: "Market landscape", updatedAt: "1970-01-01T00:00:01.000Z", running: false }]);

@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import { appendFileSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import http from "node:http";
+import { dirname, join } from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import {
   loadOrCreateAuthState,
   renewAuthState,
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
-import { resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
@@ -29,10 +31,10 @@ let cleanedUp = false;
 let runtimeIdentity = null;
 let harnessSessionAdapter = null;
 let latestPanelTurnKey = null;
+const deliveredHarnessMessages = new Map();
 
 // The launcher runs the host with stderr unattached, so also persist a
 // bounded log file — otherwise forward/status failures are invisible.
-// (fs helpers come from the hoisted imports in the webhook section below.)
 const HOST_LOG_FILE = join(bridgeDirectory(), "host.log");
 function log(message) {
   const line = `[chrome-agent-bridge] ${message}\n`;
@@ -241,17 +243,13 @@ function recordEvent(event, data) {
     clearTimeout(waiter.timeout);
     waiter.resolve(result);
   }
-  // Direct panel → harness wiring: user messages typed in the side panel are
-  // forwarded to the active harness so a real agent turn handles them
-  // (replacing the standalone panel-watcher daemon). Fire-and-forget: a
-  // webhook failure must never break the event loop.
+  // The panel is a thin client for the connected harness. Every user message,
+  // including the first one in a new conversation, uses the harness's
+  // canonical session API. Agent Bridge does not rewrite or interpret it.
   if (event === "panel.message" && data?.role === "user") {
     latestPanelTurnKey = data.messageId || data.conversationId || `${Date.now()}`;
     if (data.harnessSession) void forwardPanelMessageToHarnessSession(data);
     else void forwardPanelMessageToHarness(data);
-  }
-  if (event === "panel.close" && data?.conversationId && !data.harnessSession) {
-    void endPanelConversation(data.conversationId);
   }
   if (event === "panel.sessions.list") void publishHarnessSessions(data?.requestId);
   if (event === "panel.session.select" && data?.sessionId) void publishHarnessSession(data.sessionId, data?.requestId);
@@ -273,6 +271,7 @@ async function publishHarnessSessions(requestId) {
 async function publishHarnessSession(sessionId, requestId) {
   try {
     const loaded = await harnessSessionAdapter.loadSession(sessionId);
+    deliveredHarnessMessages.set(sessionId, new Set(loaded.transcript.filter((entry) => entry.role === "agent").map((entry) => entry.id)));
     await forwardToExtension("panel.session.loaded", { requestId, ...loaded });
   } catch (error) {
     log(`harness sessions: load failed (${error?.message ?? error})`);
@@ -317,12 +316,6 @@ async function forwardPanelMessageToHarnessSession(data) {
   }
 }
 
-// --- Harness webhook forwarder --------------------------------------------
-import { appendFileSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { homedir } from "node:os";
-import { fileURLToPath } from "node:url";
-
 // In the bundled workspace layout the repository is a child of the harness
 // workspace and panel-created sessions live in its dedicated `panel` project.
 // Deployments can point this adapter at any other project folder.
@@ -335,52 +328,6 @@ const HARNESS_SESSION_CWD = process.env.AB_HARNESS_SESSION_CWD
 harnessSessionAdapter = createDeepSeekHarnessSessionAdapter({
   env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD },
 });
-
-function panelWebhookUrl() {
-  return resolvePanelWebhookUrl(process.env);
-}
-const HARNESS_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
-// Per-host-instance nonce. Extension restarts reset the panel message
-// counter to panel_1; without this nonce the gateway's idempotency cache
-// (1h TTL) would silently drop every early-ID message after a restart as
-// a "duplicate delivery".
-const HOST_INSTANCE = crypto.randomBytes(4).toString("hex");
-
-function readWebhookSecret() {
-  try {
-    return readFileSync(HARNESS_WEBHOOK_SECRET_FILE, "utf8").trim();
-  } catch {
-    return "";
-  }
-}
-
-async function postToHarnessWebhook(payload, deliveryId) {
-  const secret = readWebhookSecret();
-  if (!secret) {
-    log("panel→harness: webhook secret missing — skipping forward");
-    return null;
-  }
-  const body = JSON.stringify(payload);
-  const timestamp = String(Math.floor(Date.now() / 1000));
-  const signature = crypto
-    .createHmac("sha256", secret)
-    .update(`${timestamp}.${body}`)
-    .digest("hex");
-  const response = await fetch(panelWebhookUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-webhook-signature-v2": signature,
-      "x-webhook-timestamp": timestamp,
-      "x-request-id": deliveryId,
-    },
-    body,
-    signal: AbortSignal.timeout(5_000),
-  });
-  const status = response.status;
-  const text = (await response.text()).slice(0, 200);
-  return { status, text };
-}
 
 const sessionCatalogSyncTimers = new Set();
 const activeHarnessTurnMonitors = new Map();
@@ -422,6 +369,7 @@ function monitorHarnessTurn(sessionId, turnKey) {
       // the adapter never exposes a visible running=true transition.
       if (session && !session.running && (state.sawRunning || state.polls >= 2)) {
         activeHarnessTurnMonitors.delete(sessionId);
+        await relayHarnessResponses(sessionId);
         if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
         scheduleHarnessSessionCatalogSync();
         return;
@@ -440,64 +388,41 @@ function monitorHarnessTurn(sessionId, turnKey) {
   void poll();
 }
 
-async function forwardPanelMessageToHarness(data) {
+async function relayHarnessResponses(sessionId) {
   try {
-    const conversationId = sanitizeConversationId(data.conversationId);
-    const deliveryId = data.messageId
-      ? `${HOST_INSTANCE}:${data.messageId}`
-      : `${HOST_INSTANCE}:${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const result = await postToHarnessWebhook({
-      event_type: "panel.message",
-      text: typeof data.text === "string" ? data.text : "",
-      messageId: data.messageId ?? null,
-      conversation_id: conversationId,
-      resume: Boolean(data.resume && conversationId),
-      observedAt: new Date().toISOString(),
-    }, deliveryId);
-    if (!result) return;
-    log(`panel→harness: forwarded (HTTP ${result.status}) ${result.text}`);
-    if (result.status >= 200 && result.status < 300 && result.text.includes('"accepted"')) {
-      let harnessSessionId = null;
-      try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
-      if (!data.resume) {
-        if (harnessSessionId) {
-          const fallbackTitle = harnessSessionAdapter.titleFromPrompt(data.text);
-          let title = fallbackTitle;
-          try {
-            title = (await harnessSessionAdapter.renameSession(harnessSessionId, fallbackTitle)).title;
-          } catch (error) {
-            log(`panel→harness: automatic title failed (${error?.message ?? error})`);
-          }
-          await forwardToExtension("panel.session.started", {
-            sessionId: harnessSessionId,
-            title,
-            updatedAt: new Date().toISOString(),
-            running: true,
-          }).catch(() => {});
-        }
-      }
-      scheduleHarnessSessionCatalogSync();
-      if (harnessSessionId) monitorHarnessTurn(harnessSessionId, data.messageId || data.conversationId);
+    const loaded = await harnessSessionAdapter.loadSession(sessionId);
+    const delivered = deliveredHarnessMessages.get(sessionId) || new Set();
+    const fresh = loaded.transcript.filter((entry) => entry.role === "agent" && !delivered.has(entry.id));
+    for (const entry of fresh) {
+      delivered.add(entry.id);
+      await forwardToExtension("panel.post", { text: entry.text, links: [] });
     }
+    deliveredHarnessMessages.set(sessionId, delivered);
   } catch (error) {
-    log(`panel→harness: forward failed (${error?.message ?? error})`);
+    log(`panel→harness: response relay failed (${error?.message ?? error})`);
   }
 }
 
-async function endPanelConversation(conversationId) {
-  const id = sanitizeConversationId(conversationId);
-  if (!id) return;
+async function forwardPanelMessageToHarness(data) {
   try {
-    const deliveryId = `${HOST_INSTANCE}:end-${id}-${Date.now()}`;
-    const result = await postToHarnessWebhook({
-      event_type: "panel.message",
-      conversation_id: id,
-      end: true,
-      observedAt: new Date().toISOString(),
-    }, deliveryId);
-    if (result) log(`panel→harness: ended ${id} (HTTP ${result.status}) ${result.text}`);
+    const created = await harnessSessionAdapter.createSession();
+    const harnessSessionId = sanitizeConversationId(created?.sessionId);
+    if (!harnessSessionId) throw new Error("Harness did not create a usable session");
+    const text = typeof data.text === "string" ? data.text : "";
+    await forwardToExtension("panel.session.started", {
+      sessionId: harnessSessionId,
+      title: harnessSessionAdapter.titleFromPrompt(text),
+      updatedAt: new Date().toISOString(),
+      running: true,
+    });
+    await harnessSessionAdapter.resumeSession(harnessSessionId, text);
+    log(`panel→harness: created and queued prompt in ${harnessSessionId}`);
+    scheduleHarnessSessionCatalogSync();
+    monitorHarnessTurn(harnessSessionId, data.messageId || data.conversationId);
   } catch (error) {
-    log(`panel→harness: end failed (${error?.message ?? error})`);
+    log(`panel→harness: forward failed (${error?.message ?? error})`);
+    pushPanelStatus(null, { persist: false });
+    void forwardToExtension("panel.post", { text: "I couldn't start a harness session. Please check the connection and try again.", links: [] }).catch(() => {});
   }
 }
 

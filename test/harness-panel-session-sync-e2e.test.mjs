@@ -20,9 +20,8 @@ async function waitFor(predicate, timeoutMs, label) {
   throw new Error(`Timed out waiting for ${label}`);
 }
 
-test("new and resumed panel turns refresh sessions from the configured harness project", async (context) => {
+test("new and resumed panel turns use canonical sessions from the configured harness project", async (context) => {
   const bridgeDir = await fs.mkdtemp(path.join(os.tmpdir(), "agent-bridge-session-sync-"));
-  await fs.writeFile(path.join(bridgeDir, "webhook-secret"), "fixture-secret");
   const projectCwd = path.join(bridgeDir, "Agent Bridge");
   const apiCalls = [];
 
@@ -32,15 +31,18 @@ test("new and resumed panel turns refresh sessions from the configured harness p
     request.on("end", () => {
       const body = JSON.parse(raw || "{}");
       response.setHeader("content-type", "application/json");
-      if (request.url === "/panel-webhook") {
-        response.end(JSON.stringify({ accepted: true, sessionId: "session-panel" }));
-        return;
-      }
       apiCalls.push(body);
-      const value = body.method === "session.list"
+      const value = body.method === "session.create"
+        ? { sessionId: "session-panel", agentPreset: "standard" }
+        : body.method === "session.list"
         ? { items: [{ sessionId: "session-panel", updatedAt: Date.now(), running: false, blank: false, cwd: projectCwd, projections: { values: { title: "Scoped panel session" } } }] }
         : body.method === "workspace.list"
           ? { archivedSessionIds: [] }
+          : body.method === "session.history"
+            ? { hasMore: false, events: [
+              { event: { type: "user/message", seq: 1, time: 1_000, data: { source: { kind: "user" }, content: [{ type: "text", text: "Create a scoped session" }] } } },
+              { event: { type: "assistant/message", seq: 2, time: 2_000, data: { message: { content: [{ type: "text", text: "Canonical harness reply" }] } } } },
+            ] }
           : body.method === "session.rename"
             ? { title: body.payload.title }
             : { accepted: true };
@@ -55,7 +57,6 @@ test("new and resumed panel turns refresh sessions from the configured harness p
     env: {
       ...process.env,
       CHROME_AGENT_BRIDGE_DIR: bridgeDir,
-      AB_HARNESS_WEBHOOK_URL: `http://127.0.0.1:${port}/panel-webhook`,
       AB_HARNESS_SESSION_API_URL: `http://127.0.0.1:${port}/api`,
       AB_HARNESS_SESSION_CWD: projectCwd,
       AB_HARNESS_TURN_POLL_MS: "250",
@@ -93,6 +94,12 @@ test("new and resumed panel turns refresh sessions from the configured harness p
     "new session announcement",
   );
   assert.equal(started.params.sessionId, "session-panel");
+  assert.ok(apiCalls.some((call) => call.method === "session.create" && call.payload.cwd === projectCwd));
+  await waitFor(
+    () => apiCalls.some((call) => call.method === "session.prompt" && call.payload.sessionId === "session-panel" && call.payload.content[0].text === "Create a scoped session"),
+    2_000,
+    "canonical first prompt",
+  );
 
   const catalog = await waitFor(
     () => messages.find((message) => message.type === "request" && message.method === "panel.sessions.update" && message.params.sessions?.length),
@@ -106,6 +113,12 @@ test("new and resumed panel turns refresh sessions from the configured harness p
     2_000,
     "provider-neutral terminal status clear",
   );
+  const relayed = await waitFor(
+    () => messages.find((message) => message.type === "request" && message.method === "panel.post" && message.params.text === "Canonical harness reply"),
+    2_000,
+    "canonical harness response relay",
+  );
+  assert.deepEqual(relayed.params.links, []);
 
   child.stdin.write(encodeNativeMessage({
     type: "event",

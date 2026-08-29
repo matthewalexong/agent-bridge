@@ -1,6 +1,8 @@
-// Live side-panel sessions only need browser + shopping hubs.
-// The full catalog (CDP/analysis/checkout/watch/individual assessors)
-// stays available when AB_MCP_SURFACE=full (tests and debugger work).
+// The live side panel is deliberately a thin client for the connected
+// harness. It exposes Chrome capabilities only; the harness owns prompting,
+// planning, research, response delivery, and any domain-specific logic.
+// The full catalog remains available when AB_MCP_SURFACE=full for explicit
+// diagnostics and development, so the dormant shopping work stays reversible.
 
 export const MCP_SURFACE_PANEL = "panel";
 export const MCP_SURFACE_FULL = "full";
@@ -16,16 +18,6 @@ export const PANEL_TOOL_NAMES = Object.freeze([
   "browser_snapshot_batch",
   "browser_screenshot",
   "browser_act",
-  "browser_panel_identify",
-  "browser_panel_post",
-  "browser_panel_read",
-  "browser_panel_status",
-  "shopping_request_intake",
-  "shopping_listing_candidates",
-  "shopping_page_evidence",
-  "shopping_page_evidence_batch",
-  "shopping_evaluator_batch",
-  "shopping_decision_dossier",
 ]);
 
 const PANEL_TOOL_SET = new Set(PANEL_TOOL_NAMES);

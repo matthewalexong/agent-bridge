@@ -59,6 +59,7 @@ const SENSITIVE_BROWSER_ACTIONS = new Set(["network.start", "raw.attach"]);
 let browserAccess = defaultBrowserAccess();
 const pendingBrowserApprovals = new Map();
 const HARNESS_SESSION_CAPABILITIES = new Set([
+  "sessions.create:v1",
   "sessions.list:v1",
   "sessions.load-display-transcript:v1",
   "sessions.resume:v1",
@@ -452,13 +453,14 @@ function requestPanelSessionList(requestId) {
 
 const conversationMemory = { id: null, started: false, harnessSession: false };
 const REQUIRED_HARNESS_SESSION_CAPABILITIES = [
+  "sessions.create:v1",
   "sessions.list:v1",
   "sessions.load-display-transcript:v1",
   "sessions.resume:v1",
   "sessions.title-from-prompt:v1",
 ];
 const UNSUPPORTED_HARNESS_SESSION_ADAPTER = Object.freeze({
-  contractVersion: 1,
+  contractVersion: 2,
   id: "unsupported-adapter",
   displayName: "Unsupported harness adapter",
   capabilities: [],
@@ -557,17 +559,17 @@ function sanitizeHarnessSessionAdapter(value) {
   // descriptor is different: retain a capability-free sentinel so controls
   // fail closed instead of granting legacy compatibility.
   if (value == null) return null;
-  if (value.contractVersion !== 1 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id || "")) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
+  if (value.contractVersion !== 2 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id || "")) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
   const displayName = typeof value.displayName === "string" ? value.displayName.trim().slice(0, 80) : "";
   if (!displayName || !Array.isArray(value.capabilities)) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
   const capabilities = [...new Set(value.capabilities.filter((capability) => HARNESS_SESSION_CAPABILITIES.has(capability)))].sort();
   if (!REQUIRED_HARNESS_SESSION_CAPABILITIES.every((capability) => capabilities.includes(capability))) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
-  return { contractVersion: 1, id: value.id, displayName, capabilities };
+  return { contractVersion: 2, id: value.id, displayName, capabilities };
 }
 
 function supportsHarnessSessionCapability(capability) {
-  // A missing descriptor means an older compatible native host. Once a v1
-  // descriptor arrives, unsupported controls fail closed and disappear.
+  // A missing descriptor means an older compatible native host. Once a
+  // versioned descriptor arrives, unsupported controls fail closed and disappear.
   return panelSessionAdapter == null || panelSessionAdapter.capabilities.includes(capability);
 }
 
@@ -2156,6 +2158,7 @@ async function dispatch(method, params) {
       if (!session.id) return { started: false };
       panelSessions = [session, ...panelSessions.filter((candidate) => candidate.id !== session.id)].slice(0, 30);
       panelSessionSelection = session.id;
+      await writeStoredConversation(session.id, true, true);
       broadcastPanel();
       return { started: true, sessionId: session.id };
     }

@@ -14,16 +14,17 @@ Agent Bridge keeps durable conversation state in the connected harness. The exte
 
 No model provider is required by this contract. A harness may change its main model without changing the extension. Optional small or local models are harness-side optimizations only.
 
-## Contract v1
+## Contract v2
 
 An adapter exposes metadata plus methods whose names match its declared capabilities:
 
 ```js
 {
-  contractVersion: 1,
+  contractVersion: 2,
   id: "example-harness",
   displayName: "Example Harness",
   capabilities: [
+    "sessions.create:v1",
     "sessions.list:v1",
     "sessions.load-display-transcript:v1",
     "sessions.resume:v1",
@@ -31,6 +32,7 @@ An adapter exposes metadata plus methods whose names match its declared capabili
     "sessions.rename:v1",
     "sessions.archive:v1"
   ],
+  createSession,
   listSessions,
   loadSession,
   resumeSession,
@@ -46,6 +48,7 @@ The adapter ID is a stable lowercase kebab-case identifier. The display name is 
 
 | Capability | Method | Contract |
 | --- | --- | --- |
+| `sessions.create:v1` | `createSession()` | Creates one ordinary durable session through the harness's canonical session factory and returns `{sessionId, agentPreset?}`. It must not select a separate model, prompt, or domain workflow. |
 | `sessions.list:v1` | `listSessions()` | Returns at most 30 lightweight resumable top-level sessions as `{id, title, updatedAt, running}`. It must not include messages, reasoning, tool calls, credentials, or browser data. |
 | `sessions.load-display-transcript:v1` | `loadSession(sessionId)` | Returns `{sessionId, transcript, hasMore}`. Transcript entries use `{id, role, text, at}` and contain only user-visible user/assistant text. |
 | `sessions.resume:v1` | `resumeSession(sessionId, text)` | Sends the exact next user message to the explicitly selected durable harness session. |
@@ -71,15 +74,15 @@ Declaring a capability requires its method, and exposing an optional method requ
 
 ## Current compatibility
 
-| Integration | List | Display transcript | Resume | Initial title | Rename | Archive | Pin |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| DeepSeek Harness adapter | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Integration | Create | List | Display transcript | Resume | Initial title | Rename | Archive | Pin |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DeepSeek Harness adapter | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No |
 
 The DeepSeek implementation lives in `lib/harness-sessions.mjs`. DeepSeek-specific API calls remain inside that adapter; the contract, extension state, and panel controls do not import its session API.
 
 ## Adding an adapter
 
-1. Map the harness's durable session API to the normalized shapes above.
+1. Map the harness's canonical create, prompt, and durable session APIs to the normalized shapes above.
 2. Keep the list lightweight and project only display-safe user/assistant text when loading.
 3. Declare only capabilities the harness can acknowledge reliably.
 4. Call `validateHarnessSessionAdapter()` when constructing the adapter.

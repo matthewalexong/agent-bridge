@@ -137,7 +137,7 @@ The repository is also a Codex plugin: `.codex-plugin/plugin.json` registers the
 
 ## Tools
 
-The server exposes 100 tools: 23 browser primitives and 77 analysis tools grouped into three batches. The full names, prerequisites, exclusions, and recommended call chains are in [docs/analysis-tools.md](./docs/analysis-tools.md).
+The default live surface is deliberately small: it exposes the ten browser capabilities needed by the connected harness and no domain-specific reasoning or panel-delivery tools. Set `AB_MCP_SURFACE=full` only for explicit development or diagnostics; that surface exposes the complete browser, analysis, and dormant domain catalog. The full names, prerequisites, exclusions, and recommended call chains are in [docs/analysis-tools.md](./docs/analysis-tools.md).
 
 Browser primitives:
 
@@ -148,8 +148,12 @@ Browser primitives:
 - `browser_close_tab`
 - `browser_navigate`
 - `browser_snapshot`
+- `browser_snapshot_batch`
 - `browser_screenshot`
 - `browser_act`
+
+Full-surface browser primitives additionally include:
+
 - `browser_click`
 - `browser_fill`
 - `browser_watch_events`

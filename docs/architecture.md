@@ -37,6 +37,8 @@ The harness is the main brain. Agent Bridge transports capabilities and returns 
 4. The extension scopes the operation to the requested tab and returns a bounded result.
 5. The MCP server projects that result into the safe high-level contract or, for an explicitly attached Raw session, returns the requested CDP data.
 
+Side-panel conversation uses the harness's canonical session path. **New session** calls the adapter's native session-create operation, sends the user's text unchanged through the native prompt operation, and automatically projects ordinary assistant messages back into the panel. Agent Bridge does not classify, rewrite, plan, or generate a second response, and the harness model does not need a panel-posting tool.
+
 The loopback host listens only on `127.0.0.1`. The pairing token represents browser-control authority and stays in the local user's private bridge directory.
 
 ## Browser authorization
@@ -60,7 +62,7 @@ High-level element refs are invalidated after an action or navigation. The norma
 
 The connected harness owns durable sessions, titles, transcripts, and reasoning context. The side panel requests a lightweight catalog from the harness and stores only the active session reference for the life of the view. Selecting **New session** must not silently resume hidden context. Loading a prior session returns a display-safe transcript without private reasoning or tool traffic.
 
-Harness adapters are responsible for mapping their own session primitives into the bridge's list, load, resume, rename, and recoverable-remove behavior. A provider or harness name shown in the panel is identity metadata, not an architectural dependency.
+Harness adapters are responsible for mapping their own session primitives into the bridge's create, list, load, resume, rename, and recoverable-remove behavior. A provider or harness name shown in the panel is identity metadata, not an architectural dependency.
 
 The versioned capability and privacy requirements are defined in the [harness session adapter contract](./harness-session-adapters.md).
 
@@ -76,7 +78,7 @@ evidence collection and deterministic checks
 neutral Agent Bridge browser tools
 ```
 
-Shopping is the first mature example. Its product identity, market coverage, current availability, landed cost, merchant, counterfeit, safety, and preference checks must not leak into the generic browser protocol as hard-coded product-category behavior. Future domains should reuse browser evidence and add their own explicit policies and evaluations.
+Shopping is the first mature example. Its domain library is dormant on the default live surface while we measure the harness-native baseline. Product identity, market coverage, current availability, landed cost, merchant, counterfeit, safety, and preference checks must not leak into the generic browser protocol as hard-coded product-category behavior. Future controlled experiments may enable explicit domain tools without changing the harness-native conversation baseline.
 
 ## Source map
 
