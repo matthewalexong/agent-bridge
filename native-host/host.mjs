@@ -14,7 +14,7 @@ import {
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
-import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
+import { createDeepSeekHarnessSessionAdapter, formatHarnessQuestion } from "../lib/harness-sessions.mjs";
 import { harnessSessionAdapterInfo } from "../lib/harness-session-contract.mjs";
 
 const BRIDGE_VERSION = "0.9.1";
@@ -32,6 +32,7 @@ let runtimeIdentity = null;
 let harnessSessionAdapter = null;
 let latestPanelTurnKey = null;
 const deliveredHarnessMessages = new Map();
+const pendingHarnessQuestions = new Map();
 
 // The launcher runs the host with stderr unattached, so also persist a
 // bounded log file — otherwise forward/status failures are invisible.
@@ -305,6 +306,14 @@ async function forwardPanelMessageToHarnessSession(data) {
   try {
     const sessionId = sanitizeConversationId(data.conversationId);
     if (!sessionId) return;
+    const question = pendingHarnessQuestions.get(sessionId);
+    if (question) {
+      await harnessSessionAdapter.answerQuestion(question, typeof data.text === "string" ? data.text : "");
+      pendingHarnessQuestions.delete(sessionId);
+      log(`panel→harness: answered interactive question in ${sessionId}`);
+      monitorHarnessTurn(sessionId, data.messageId || data.conversationId);
+      return;
+    }
     await harnessSessionAdapter.resumeSession(sessionId, typeof data.text === "string" ? data.text : "");
     log(`panel→harness: queued prompt in ${sessionId}`);
     scheduleHarnessSessionCatalogSync();
@@ -355,8 +364,21 @@ function scheduleHarnessSessionCatalogSync() {
 function monitorHarnessTurn(sessionId, turnKey) {
   const previous = activeHarnessTurnMonitors.get(sessionId);
   if (previous?.timer) clearTimeout(previous.timer);
-  const state = { generation: (previous?.generation || 0) + 1, polls: 0, sawRunning: false, timer: null };
+  previous?.questionAbort?.abort();
+  const state = { generation: (previous?.generation || 0) + 1, polls: 0, sawRunning: false, timer: null, questionAbort: new AbortController() };
   activeHarnessTurnMonitors.set(sessionId, state);
+
+  void harnessSessionAdapter.waitForQuestion(sessionId, { signal: state.questionAbort.signal }).then(async (question) => {
+    if (activeHarnessTurnMonitors.get(sessionId) !== state) return;
+    const existing = pendingHarnessQuestions.get(sessionId);
+    if (existing?.rpcId === question.rpcId) return;
+    pendingHarnessQuestions.set(sessionId, question);
+    await forwardToExtension("panel.post", { text: formatHarnessQuestion(question), links: [] });
+    if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+    log(`harness→panel: relayed interactive question from ${sessionId}`);
+  }).catch((error) => {
+    if (error?.name !== "AbortError") log(`panel→harness: question stream unavailable (${error?.message ?? error})`);
+  });
 
   const poll = async () => {
     if (activeHarnessTurnMonitors.get(sessionId) !== state) return;
@@ -369,6 +391,8 @@ function monitorHarnessTurn(sessionId, turnKey) {
       // the adapter never exposes a visible running=true transition.
       if (session && !session.running && (state.sawRunning || state.polls >= 2)) {
         activeHarnessTurnMonitors.delete(sessionId);
+        state.questionAbort.abort();
+        pendingHarnessQuestions.delete(sessionId);
         await relayHarnessResponses(sessionId);
         if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
         scheduleHarnessSessionCatalogSync();
@@ -379,6 +403,8 @@ function monitorHarnessTurn(sessionId, turnKey) {
     }
     if (state.polls >= HARNESS_TURN_MAX_POLLS) {
       activeHarnessTurnMonitors.delete(sessionId);
+      state.questionAbort.abort();
+      pendingHarnessQuestions.delete(sessionId);
       if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
       return;
     }

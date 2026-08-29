@@ -7,7 +7,12 @@ import {
   supportsHarnessSessionCapability,
   validateHarnessSessionAdapter,
 } from "../lib/harness-session-contract.mjs";
-import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
+import {
+  answerHarnessQuestion,
+  createDeepSeekHarnessSessionAdapter,
+  formatHarnessQuestion,
+  waitForHarnessQuestion,
+} from "../lib/harness-sessions.mjs";
 
 const requiredCapabilities = [
   CAPABILITY.CREATE,
@@ -77,7 +82,7 @@ test("the DeepSeek adapter conforms without making DeepSeek part of the core con
       { sessionId: "session-child", updatedAt: 900, running: false, blank: false, cwd: "/work", parentSessionId: "session-main", origin: "subagent" },
     ] });
     if (request.method === "session.create") return reply({ sessionId: "session-created", agentPreset: "standard" });
-    if (request.method === "workspace.list") return reply({ archivedSessionIds: [] });
+    if (request.method === "workspace.list") return reply({ archivedSessionIds: [], items: [{ workspaceId: "workspace-main", path: "/work", title: "Fixture" }] });
     if (request.method === "session.history") return reply({ hasMore: false, events: [
       { event: { type: "user/message", seq: 1, time: 1000, data: { source: { kind: "user" }, content: [{ type: "text", text: "Map the market" }] } } },
       { event: { type: "assistant/message", seq: 2, time: 2000, data: { message: { content: [{ type: "reasoning", text: "private chain" }, { type: "text", text: "Which value tier matters most?" }, { type: "tool-call", name: "search" }] } } } },
@@ -100,7 +105,7 @@ test("the DeepSeek adapter conforms without making DeepSeek part of the core con
   assert.equal(supportsHarnessSessionCapability(info, CAPABILITY.PIN), false);
 
   assert.deepEqual(await adapter.createSession(), { sessionId: "session-created", agentPreset: "standard" });
-  assert.deepEqual(calls.at(-1).payload, { cwd: "/work" });
+  assert.deepEqual(calls.at(-1).payload, { workspaceId: "workspace-main" });
 
   const sessions = await adapter.listSessions();
   assert.deepEqual(sessions, [{ id: "session-main", title: "Market landscape", updatedAt: "1970-01-01T00:00:01.000Z", running: false }]);
@@ -124,4 +129,56 @@ test("the DeepSeek adapter conforms without making DeepSeek part of the core con
   assert.equal(adapter.titleFromPrompt("  Compare   current options. Then rank them."), "Compare current options.");
   assert.deepEqual(await adapter.renameSession("session-main", "  Current   options "), { sessionId: "session-main", title: "Current options" });
   assert.deepEqual(await adapter.archiveSession("session-main"), { sessionId: "session-main", archived: true });
+});
+
+test("interactive harness questions are rendered and answered through the canonical response channel", async () => {
+  const interaction = {
+    rpcId: "question-rpc-1",
+    sessionId: "session-question-1",
+    questions: [
+      { id: "kind", header: "Product type", question: "Desktop or laptop?", options: [{ label: "Desktop" }, { label: "Laptop" }] },
+      { id: "budget", header: "Budget", question: "What is your budget?", options: [] },
+    ],
+  };
+  const rendered = formatHarnessQuestion(interaction);
+  assert.match(rendered, /1\. Product type: Desktop or laptop\?/);
+  assert.match(rendered, /Reply with your choices in the same order\./);
+
+  let request;
+  await answerHarnessQuestion(interaction, "Desktop, around $3,500", {
+    env: { AB_HARNESS_SESSION_API_URL: "http://127.0.0.1:9999/api" },
+    fetchImpl: async (url, init) => {
+      request = { url, body: JSON.parse(init.body) };
+      return { ok: true, json: async () => ({ accepted: true }) };
+    },
+  });
+  assert.equal(request.url, "http://127.0.0.1:9999/api/respond");
+  assert.equal(request.body.type, "client-response");
+  assert.equal(request.body.rpcId, interaction.rpcId);
+  assert.deepEqual(request.body.result.value.answer.answers, [
+    { id: "kind", selected: [], custom: "Desktop, around $3,500" },
+    { id: "budget", selected: [], custom: "Desktop, around $3,500" },
+  ]);
+});
+
+test("the question watcher filters the Harness event stream to the selected session", async () => {
+  class FakeWebSocket {
+    listeners = new Map();
+    constructor() {
+      queueMicrotask(() => {
+        this.emit("message", { data: JSON.stringify({ rpcId: "other", payload: { type: "question/requested", sessionId: "session-other", questions: [] } }) });
+        this.emit("message", { data: JSON.stringify({ rpcId: "wanted", payload: { type: "question/requested", sessionId: "session-wanted", questions: [{ id: "q", question: "Which one?" }] } }) });
+      });
+    }
+    addEventListener(type, listener) { this.listeners.set(type, listener); }
+    removeEventListener() {}
+    close() {}
+    emit(type, event) { this.listeners.get(type)?.(event); }
+  }
+  const question = await waitForHarnessQuestion("session-wanted", {
+    env: { AB_HARNESS_SESSION_API_URL: "http://127.0.0.1:9999/api" },
+    WebSocketImpl: FakeWebSocket,
+  });
+  assert.equal(question.rpcId, "wanted");
+  assert.equal(question.questions[0].id, "q");
 });

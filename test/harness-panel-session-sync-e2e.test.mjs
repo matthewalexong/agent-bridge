@@ -37,7 +37,7 @@ test("new and resumed panel turns use canonical sessions from the configured har
         : body.method === "session.list"
         ? { items: [{ sessionId: "session-panel", updatedAt: Date.now(), running: false, blank: false, cwd: projectCwd, projections: { values: { title: "Scoped panel session" } } }] }
         : body.method === "workspace.list"
-          ? { archivedSessionIds: [] }
+          ? { archivedSessionIds: [], items: [{ workspaceId: "workspace-panel", path: projectCwd, title: "Agent Bridge", sessionIds: [] }] }
           : body.method === "session.history"
             ? { hasMore: false, events: [
               { event: { type: "user/message", seq: 1, time: 1_000, data: { source: { kind: "user" }, content: [{ type: "text", text: "Create a scoped session" }] } } },
@@ -94,7 +94,7 @@ test("new and resumed panel turns use canonical sessions from the configured har
     "new session announcement",
   );
   assert.equal(started.params.sessionId, "session-panel");
-  assert.ok(apiCalls.some((call) => call.method === "session.create" && call.payload.cwd === projectCwd));
+  assert.ok(apiCalls.some((call) => call.method === "session.create" && call.payload.workspaceId === "workspace-panel"));
   await waitFor(
     () => apiCalls.some((call) => call.method === "session.prompt" && call.payload.sessionId === "session-panel" && call.payload.content[0].text === "Create a scoped session"),
     2_000,

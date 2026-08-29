@@ -48,7 +48,7 @@ The adapter ID is a stable lowercase kebab-case identifier. The display name is 
 
 | Capability | Method | Contract |
 | --- | --- | --- |
-| `sessions.create:v1` | `createSession()` | Creates one ordinary durable session through the harness's canonical session factory and returns `{sessionId, agentPreset?}`. It must not select a separate model, prompt, or domain workflow. |
+| `sessions.create:v1` | `createSession()` | Resolves the configured harness workspace and creates one ordinary durable session through the harness's canonical session factory, returning `{sessionId, agentPreset?}`. It must not select a separate model, prompt, or domain workflow. |
 | `sessions.list:v1` | `listSessions()` | Returns at most 30 lightweight resumable top-level sessions as `{id, title, updatedAt, running}`. It must not include messages, reasoning, tool calls, credentials, or browser data. |
 | `sessions.load-display-transcript:v1` | `loadSession(sessionId)` | Returns `{sessionId, transcript, hasMore}`. Transcript entries use `{id, role, text, at}` and contain only user-visible user/assistant text. |
 | `sessions.resume:v1` | `resumeSession(sessionId, text)` | Sends the exact next user message to the explicitly selected durable harness session. |
