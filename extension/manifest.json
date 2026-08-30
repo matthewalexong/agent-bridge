@@ -8,6 +8,7 @@
     "activeTab",
     "debugger",
     "nativeMessaging",
+    "notifications",
     "scripting",
     "sidePanel",
     "tabs"

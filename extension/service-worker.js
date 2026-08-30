@@ -54,6 +54,7 @@ let panelSessionAdapter = null;
 const BROWSER_ACCESS_MODES = new Set(["observe", "ask", "routine"]);
 const BROWSER_ACCESS_SCOPES = new Set(["tab", "site", "browser"]);
 const BROWSER_APPROVAL_TTL_MS = 24_000;
+const BROWSER_APPROVAL_NOTIFICATION_PREFIX = "agent-bridge-browser-approval:";
 const ROUTINE_BROWSER_ACTIONS = new Set(["tabs.create", "tabs.close", "tabs.activate", "tabs.navigate", "page.click", "page.fill", "page.act"]);
 const SENSITIVE_BROWSER_ACTIONS = new Set(["network.start", "raw.attach"]);
 let browserAccess = defaultBrowserAccess();
@@ -107,10 +108,105 @@ function resetBrowserAccess() {
   rejectPendingBrowserApprovals("browser_permission_cancelled", "Pending browser actions were cancelled because the permission session ended.");
 }
 
+function approvalNotificationId(requestId) {
+  return `${BROWSER_APPROVAL_NOTIFICATION_PREFIX}${requestId}`;
+}
+
+function settlePromise(promise) {
+  if (promise && typeof promise.catch === "function") promise.catch(() => {});
+}
+
+function refreshApprovalIndicators() {
+  const count = pendingBrowserApprovals.size;
+  const badgeText = count === 0 ? "" : count > 9 ? "9+" : String(count);
+  try {
+    settlePromise(chrome.action?.setBadgeText?.({ text: badgeText }));
+    settlePromise(chrome.action?.setBadgeBackgroundColor?.({ color: "#c62828" }));
+    settlePromise(chrome.action?.setTitle?.({
+      title: count === 0
+        ? "Open Agent Bridge"
+        : `${count} browser approval${count === 1 ? "" : "s"} waiting`,
+    }));
+  } catch {
+    // Older Chrome builds and test harnesses may not expose badge APIs.
+  }
+}
+
+function clearApprovalNotification(requestId) {
+  try {
+    settlePromise(chrome.notifications?.clear?.(approvalNotificationId(requestId)));
+  } catch {
+    // Notifications are best-effort; the approval state remains authoritative.
+  }
+}
+
+function showApprovalNotification(request) {
+  refreshApprovalIndicators();
+  try {
+    const create = chrome.notifications?.create;
+    if (typeof create !== "function") return;
+    const notification = create(approvalNotificationId(request.id), {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: "Agent Bridge approval needed",
+      message: `${request.summary} — open Agent Bridge to approve or deny.`,
+      priority: 2,
+      requireInteraction: true,
+    });
+    // A very fast approval can race notification creation. If the request has
+    // already settled by the time Chrome creates it, remove the stale card.
+    if (notification && typeof notification.then === "function") {
+      notification.then(() => {
+        if (!pendingBrowserApprovals.has(request.id)) clearApprovalNotification(request.id);
+      }).catch(() => {});
+    }
+  } catch {
+    // The toolbar badge still surfaces the request when OS notifications are
+    // disabled or unavailable.
+  }
+}
+
+async function openApprovalPanel(request) {
+  let windowId = request?.windowId;
+  if (!Number.isInteger(windowId)) {
+    try {
+      const tabs = typeof chrome.tabs?.query === "function"
+        ? await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+        : [];
+      const [activeTab] = tabs;
+      windowId = Number.isInteger(activeTab?.windowId) ? activeTab.windowId : null;
+    } catch {
+      windowId = null;
+    }
+  }
+  if (!Number.isInteger(windowId)) return;
+  try {
+    if (typeof chrome.windows?.update === "function") await chrome.windows.update(windowId, { focused: true });
+  } catch {
+    // Focusing is best-effort; opening the panel may still succeed.
+  }
+  try {
+    if (typeof chrome.sidePanel?.open === "function") await chrome.sidePanel.open({ windowId });
+  } catch {
+    // The badge and notification remain available if this Chrome build cannot
+    // open a side panel from a notification click.
+  }
+}
+
+async function handleApprovalNotificationClick(notificationId) {
+  if (typeof notificationId !== "string" || !notificationId.startsWith(BROWSER_APPROVAL_NOTIFICATION_PREFIX)) return;
+  const requestId = notificationId.slice(BROWSER_APPROVAL_NOTIFICATION_PREFIX.length);
+  const request = pendingBrowserApprovals.get(requestId);
+  clearApprovalNotification(requestId);
+  if (request) await openApprovalPanel(request);
+}
+
 function expireBrowserApproval(id, request) {
   if (pendingBrowserApprovals.get(id) !== request) return;
   pendingBrowserApprovals.delete(id);
   clearTimeout(request.timer);
+  clearApprovalNotification(id);
+  refreshApprovalIndicators();
   request.reject(codedError("browser_permission_timeout", "Browser approval timed out. Request the action again if it is still needed."));
 }
 
@@ -118,8 +214,10 @@ function rejectPendingBrowserApprovals(code, message) {
   for (const [id, request] of pendingBrowserApprovals) {
     pendingBrowserApprovals.delete(id);
     clearTimeout(request.timer);
+    clearApprovalNotification(id);
     request.reject(codedError(code, message));
   }
+  refreshApprovalIndicators();
 }
 
 function clearPanelStatusExpiry() {
@@ -236,15 +334,34 @@ function safeDisplayUrl(value) {
 async function actionContext(method, params) {
   const tabId = Number.isInteger(params?.tabId) ? params.tabId : null;
   let origin = null;
-  if (method === "tabs.create" || method === "tabs.navigate") {
+  let windowId = null;
+  if (method === "tabs.create") {
     try { origin = new URL(String(params?.url)).origin; } catch {}
+  } else if (method === "tabs.navigate") {
+    try { origin = new URL(String(params?.url)).origin; } catch {}
+    if (tabId != null) {
+      try {
+        const tab = await chrome.tabs.get(tabId);
+        windowId = Number.isInteger(tab.windowId) ? tab.windowId : null;
+      } catch {}
+    }
   } else if (tabId != null) {
     try {
       const tab = await chrome.tabs.get(tabId);
       origin = new URL(tab.url).origin;
+      windowId = Number.isInteger(tab.windowId) ? tab.windowId : null;
     } catch {}
   }
-  return { tabId, origin };
+  if (windowId == null) {
+    try {
+      const tabs = typeof chrome.tabs?.query === "function"
+        ? await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+        : [];
+      const [activeTab] = tabs;
+      windowId = Number.isInteger(activeTab?.windowId) ? activeTab.windowId : null;
+    } catch {}
+  }
+  return { tabId, origin, windowId };
 }
 
 function routineScopeAllows(context) {
@@ -270,6 +387,7 @@ function requestBrowserApproval(method, params, context, risk, fingerprint) {
     summary: actionLabel(method, params),
     risk,
     tabId: context.tabId,
+    windowId: context.windowId,
     origin: context.origin,
     createdAt: new Date(now).toISOString(),
     expiresAt: new Date(now + BROWSER_APPROVAL_TTL_MS).toISOString(),
@@ -283,6 +401,7 @@ function requestBrowserApproval(method, params, context, risk, fingerprint) {
     broadcastPanel();
   }, BROWSER_APPROVAL_TTL_MS);
   pendingBrowserApprovals.set(request.id, request);
+  showApprovalNotification(request);
   broadcastPanel();
   return wait;
 }
@@ -327,6 +446,8 @@ function resolveBrowserApproval(rawRequestId, decision) {
   if (!request) throw codedError("approval_not_found", "That browser-action request is no longer pending.");
   pendingBrowserApprovals.delete(requestId);
   clearTimeout(request.timer);
+  clearApprovalNotification(request.id);
+  refreshApprovalIndicators();
   if (decision === "approve") request.resolve();
   else request.reject(codedError("browser_permission_denied", "The user denied this browser action in the Agent Bridge side panel."));
   emitBrowserEvent("panel.permission.resolved", { requestId, decision, method: request.method, risk: request.risk });
@@ -2246,6 +2367,9 @@ chrome.action.onClicked.addListener((tab) => {
     // sidePanel.open rejected the gesture (unsupported build); the panel
     // remains reachable from Chrome's toolbar menu.
   }
+});
+chrome.notifications?.onClicked?.addListener((notificationId) => {
+  void handleApprovalNotificationClick(notificationId);
 });
 chrome.runtime.onConnect?.addListener(registerPanelLifecyclePort);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

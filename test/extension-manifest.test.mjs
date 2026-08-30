@@ -22,6 +22,7 @@ test("extension manifest requests only the documented capability set", async () 
     "activeTab",
     "debugger",
     "nativeMessaging",
+    "notifications",
     "scripting",
     "sidePanel",
     "tabs",

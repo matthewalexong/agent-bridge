@@ -32,10 +32,16 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
   const nativeMessages = [];
   const broadcasts = [];
   const browserActions = [];
+  const notifications = [];
+  const notificationClears = [];
+  const badgeCalls = [];
+  const windowUpdates = [];
+  const sidePanelOpens = [];
   const nativeMessage = event();
   const runtimeMessage = event();
   const runtimeConnect = event();
   const actionClicked = event();
+  const notificationClicked = event();
   const port = {
     onMessage: nativeMessage,
     onDisconnect: event(),
@@ -57,7 +63,23 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
       onMessage: runtimeMessage,
       sendMessage: (message) => { broadcasts.push(message); return Promise.resolve(); },
     },
-    action: { onClicked: actionClicked },
+    action: {
+      onClicked: actionClicked,
+      setBadgeText(details) { badgeCalls.push({ type: "text", ...details }); return Promise.resolve(); },
+      setBadgeBackgroundColor(details) { badgeCalls.push({ type: "background", ...details }); return Promise.resolve(); },
+      setTitle(details) { badgeCalls.push({ type: "title", ...details }); return Promise.resolve(); },
+    },
+    notifications: {
+      async create(id, options) { notifications.push({ id, options }); return id; },
+      async clear(id) { notificationClears.push(id); return true; },
+      onClicked: notificationClicked,
+    },
+    windows: {
+      async update(windowId, values) { windowUpdates.push({ windowId, values }); return { id: windowId, ...values }; },
+    },
+    sidePanel: {
+      async open(details) { sidePanelOpens.push(details); },
+    },
     storage: {
       session: {
         async get(keys) {
@@ -90,6 +112,11 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
     nativeMessages,
     broadcasts,
     browserActions,
+    notifications,
+    notificationClears,
+    badgeCalls,
+    windowUpdates,
+    sidePanelOpens,
     sender,
     sendRuntime: (message) => new Promise((resolve) => {
       runtimeMessage.listener(message, sender, resolve);
@@ -101,6 +128,7 @@ async function loadHarness({ sessionStore = new Map(), nativeAvailable = true } 
     },
     setNativeAvailable(value) { nativeAvailable = Boolean(value); },
     triggerConnect() { actionClicked.listener(); },
+    async triggerNotificationClick(id) { await notificationClicked.listener(id); await flush(); },
     dispatch: async (id, method, params) => {
       await nativeMessage.listener({ type: "request", id, method, params }, port);
       await flush();
@@ -220,6 +248,44 @@ test("Ask before acting holds the exact browser action until the user approves i
   }
 });
 
+test("pending approvals surface outside the side panel and notification clicks reopen it", async () => {
+  const harness = await loadHarness();
+  try {
+    const operation = harness.dispatch("notification-navigate", "tabs.navigate", {
+      tabId: 42,
+      url: "https://example.com/next?secret=should-not-leak",
+    });
+    await wait(0);
+
+    assert.equal(harness.notifications.length, 1);
+    const notification = harness.notifications[0];
+    assert.equal(notification.options.title, "Agent Bridge approval needed");
+    assert.equal(notification.options.message, "Navigate to https://example.com/next — open Agent Bridge to approve or deny.");
+    assert.equal(notification.options.requireInteraction, true);
+    assert.equal(harness.badgeCalls.findLast((call) => call.type === "text").text, "1");
+
+    // Clicking the OS notification only brings the authoritative side panel
+    // back; it must not approve the waiting action by itself.
+    await harness.triggerNotificationClick(notification.id);
+    assert.deepEqual(harness.windowUpdates.at(-1), { windowId: 7, values: { focused: true } });
+    assert.deepEqual(harness.sidePanelOpens.at(-1), { windowId: 7 });
+    assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 1);
+
+    const pending = await harness.sendRuntime({ type: "panel.get" });
+    await harness.sendRuntime({
+      type: "panel.permission.resolve",
+      requestId: pending.result.browserAccess.pending[0].id,
+      decision: "approve",
+    });
+    await operation;
+    assert.equal((await waitNativeResponse(harness, "notification-navigate")).ok, true);
+    assert.ok(harness.notificationClears.includes(notification.id));
+    assert.equal(harness.badgeCalls.findLast((call) => call.type === "text").text, "");
+  } finally {
+    harness.restore();
+  }
+});
+
 test("routine access is scope-bound while sensitive and consequential actions still ask", async () => {
   const harness = await loadHarness();
   try {
@@ -284,6 +350,7 @@ test("mode changes cancel pending actions and duplicate requests cannot double-e
   try {
     const first = harness.dispatch("pending-first", "tabs.navigate", { tabId: 42, url: "https://example.com/pending" });
     await wait(0);
+    const firstNotificationId = harness.notifications[0]?.id;
     await harness.dispatch("pending-duplicate", "tabs.navigate", { tabId: 42, url: "https://example.com/pending" });
     const duplicate = await waitNativeResponse(harness, "pending-duplicate");
     assert.equal(duplicate.ok, false);
@@ -295,6 +362,7 @@ test("mode changes cancel pending actions and duplicate requests cannot double-e
     assert.equal(cancelled.ok, false);
     assert.equal(cancelled.error.code, "browser_permission_changed");
     assert.equal(harness.browserActions.length, 0);
+    assert.ok(harness.notificationClears.includes(firstNotificationId));
     assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 0);
   } finally {
     harness.restore();
@@ -308,12 +376,14 @@ test("pending browser approval expires without changing browser state", async (c
     void harness.dispatch("permission-expiry", "tabs.navigate", { tabId: 42, url: "https://example.com/expired" });
     await flush();
     assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 1);
+    const notificationId = harness.notifications[0]?.id;
     context.mock.timers.tick(24_001);
     await flush();
     const response = await waitNativeResponse(harness, "permission-expiry");
     assert.equal(response.ok, false);
     assert.equal(response.error.code, "browser_permission_timeout");
     assert.equal(harness.browserActions.length, 0);
+    assert.ok(harness.notificationClears.includes(notificationId));
     assert.equal((await harness.sendRuntime({ type: "panel.get" })).result.browserAccess.pending.length, 0);
   } finally {
     harness.restore();
