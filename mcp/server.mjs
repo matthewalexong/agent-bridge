@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { BridgeOfflineError, callBridge } from "../lib/bridge-client.mjs";
+import { ensureBridgeConnected } from "../lib/browser-launch.mjs";
 import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cdp-analysis-tools.mjs";
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
 import { registerShoppingTools } from "./register-shopping-tools.mjs";
@@ -58,7 +59,7 @@ function asError(error) {
             message: error instanceof Error ? error.message : String(error),
             recovery:
               code === "bridge_offline"
-                ? "Ensure the unpacked extension and native host are installed, reload the extension, then retry."
+                ? "Call browser_ensure_connected to open Chrome and wait for the bridge. If it still fails, ensure the unpacked extension and native host are installed, reload the extension, then retry."
                 : code === "unauthorized"
                   ? "Reload the local token or renew it from the side panel's settings menu, then retry."
                   : "Inspect current browser state before retrying.",
@@ -96,6 +97,19 @@ tool(
     inputSchema: {},
   },
   async () => asText(await callBridge("browser.status")),
+);
+
+tool(
+  "browser_ensure_connected",
+  {
+    title: "Ensure browser connected",
+    description:
+      "If the Agent Bridge is offline because Chrome is closed, open Chrome with its default profile and wait for the extension and native host to reconnect. Returns whether the bridge is connected, whether Chrome was opened, and how long it waited. Call this before browser work when browser_status reports the bridge as offline.",
+    inputSchema: {
+      timeoutMs: z.number().int().min(1_000).max(60_000).optional().default(30_000),
+    },
+  },
+  async ({ timeoutMs }) => asText(await ensureBridgeConnected({ timeoutMs })),
 );
 
 tool(

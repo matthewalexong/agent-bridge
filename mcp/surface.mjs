@@ -9,6 +9,7 @@ export const MCP_SURFACE_FULL = "full";
 
 export const PANEL_TOOL_NAMES = Object.freeze([
   "browser_status",
+  "browser_ensure_connected",
   "browser_list_tabs",
   "browser_open_tab",
   "browser_close_tab",
