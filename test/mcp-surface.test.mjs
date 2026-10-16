@@ -76,10 +76,10 @@ test("panel conversation tools omit accumulated research trails from model respo
   });
 });
 
-test("panel surface keeps hubs and hides analysis/checkout tools", () => {
+test("panel surface exposes browser capabilities without domain or delivery logic", () => {
   assert.equal(shouldRegisterMcpTool("browser_snapshot", MCP_SURFACE_PANEL), true);
-  assert.equal(shouldRegisterMcpTool("shopping_evaluator_batch", MCP_SURFACE_PANEL), true);
-  assert.equal(shouldRegisterMcpTool("browser_panel_post", MCP_SURFACE_PANEL), true);
+  assert.equal(shouldRegisterMcpTool("shopping_evaluator_batch", MCP_SURFACE_PANEL), false);
+  assert.equal(shouldRegisterMcpTool("browser_panel_post", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("collect_code", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("debugger_pause", MCP_SURFACE_PANEL), false);
   assert.equal(shouldRegisterMcpTool("shopping_checkout_terms_accept", MCP_SURFACE_PANEL), false);
@@ -95,7 +95,7 @@ test("panel surface keeps hubs and hides analysis/checkout tools", () => {
   }
   assert.equal(shouldRegisterMcpTool("collect_code", MCP_SURFACE_FULL), true);
   assert.ok(PANEL_TOOL_NAMES.length <= 20);
-  assert.ok(PANEL_TOOL_NAMES.includes("shopping_evaluator_batch"));
+  assert.equal(PANEL_TOOL_NAMES.some((name) => name.startsWith("shopping_") || name.startsWith("browser_panel_")), false);
 });
 
 test("panel slims fat shopping schemas and descriptions", () => {

@@ -25,7 +25,7 @@ Agent Bridge lets compatible local AI harnesses and MCP agents work through the 
 
 Download the extension ZIP and `SHA256SUMS.txt` from the release assets. Verify the checksum, extract the ZIP into a permanent directory, and load that directory from `chrome://extensions` with **Developer mode** enabled. Then follow [the Agent installation guide](https://github.com/matthewalexong/agent-bridge/blob/main/docs/agent-installation.md) for the local host, MCP registration, paired Skill, and connection test.
 
-The release ZIP must contain `manifest.json`, the background service worker, popup files, side-panel files, and four icon sizes at its archive root. It contains no pairing credential or user browser data.
+The release ZIP must contain `manifest.json`, the background service worker, side-panel files, and four icon sizes at its archive root. It contains no pairing credential or user browser data.
 
 ## Safety
 

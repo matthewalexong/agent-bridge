@@ -25,5 +25,19 @@ test("host installer dry-run emits a valid native host manifest", async () => {
   assert.ok(path.isAbsolute(result.manifest.path));
   assert.ok(path.isAbsolute(result.nodePath));
   assert.ok(path.isAbsolute(result.hostModulePath));
+  assert.equal(result.harnessWebhookUrl, "http://127.0.0.1:3080/panel-webhook");
+  assert.equal(result.harnessSessionCwd, path.join(path.dirname(root), "panel"));
   assert.match(result.manifest.path, /native-host-launcher$/);
+});
+
+test("host installer accepts provider-neutral harness routing overrides", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [
+    path.join(root, "scripts", "install-host.mjs"),
+    "--dry-run",
+    "--harness-webhook-url", "http://127.0.0.1:9000/panel",
+    "--harness-session-cwd", "/tmp/agent-bridge-project",
+  ]);
+  const result = JSON.parse(stdout);
+  assert.equal(result.harnessWebhookUrl, "http://127.0.0.1:9000/panel");
+  assert.equal(result.harnessSessionCwd, "/tmp/agent-bridge-project");
 });

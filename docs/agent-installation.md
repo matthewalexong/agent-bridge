@@ -42,7 +42,7 @@ After loading or reloading the extension, run `npm run doctor`. A ready installa
 3. Open `chrome://extensions` in Chrome.
 4. Enable **Developer mode**.
 5. Select **Load unpacked** and choose the extracted extension directory.
-6. Pin or open **Agent Bridge** and verify that its popup reports a connected local bridge.
+6. Pin or open **Agent Bridge** — its toolbar button opens the side panel — and verify that the panel status reports a connected local bridge.
 
 This is the only required user-visible installation approval. The Agent must not attempt to bypass it.
 
@@ -114,7 +114,7 @@ If `browser_status` reports offline:
 1. Run `npm run doctor` and resolve the first failed check.
 2. Confirm `npm run install-host` completed in the current checkout.
 3. Reload **Agent Bridge** from `chrome://extensions`.
-4. Reopen its popup and check the connection state.
+4. Reopen the side panel from the toolbar button and check the connection state.
 5. Restart the MCP client if its server was configured while the client was already running.
 
 The shorter [quick start and troubleshooting tree](./quick-start.md) maps every doctor check to its next safe action.

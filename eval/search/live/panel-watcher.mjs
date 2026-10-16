@@ -95,12 +95,18 @@ async function handleMessage(text, context) {
 let cursor = null; // null = initialize to current stream position on first poll
 let running = true;
 
-process.on("SIGINT", () => { running = false; console.error("\n[watcher] stopping..."); });
-process.on("SIGTERM", () => { running = false; });
+// Leaving the bridge at once, so the side panel stops naming this watcher
+// without waiting for the host's liveness check.
+function stop() {
+  running = false;
+  void callBridge("clients.detach", { clientPid: process.pid }, { timeoutMs: 2_000 }).catch(() => {});
+}
+process.on("SIGINT", () => { console.error("\n[watcher] stopping..."); stop(); });
+process.on("SIGTERM", () => stop());
 
 async function identify() {
   try {
-    const res = await callBridge("panel.identify", { agent: agentName });
+    const res = await callBridge("panel.identify", { agent: agentName, clientPid: process.pid });
     console.error(`[watcher] identified as "${res.agent.name}" (since ${res.agent.since})`);
   } catch (e) {
     // panel.identify requires v0.9.0+; degrade gracefully on older versions.

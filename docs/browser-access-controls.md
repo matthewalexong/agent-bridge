@@ -15,9 +15,9 @@ Routine access can be scoped to the current tab, current site, or all tabs. Curr
 ## Approval lifecycle
 
 1. The extension classifies a requested operation before dispatching it to Chrome.
-2. If approval is required, the exact call waits for up to 24 seconds and appears in the side panel with a bounded summary. Fill values and raw parameters are not displayed.
+2. If approval is required, the exact call waits for up to 24 seconds and appears in the side panel with a bounded summary. The toolbar badge and a persistent Chrome notification also surface the request when the side panel is closed. Fill values and raw parameters are not displayed.
 3. **Approve once** continues only that waiting call. It does not mint a reusable permission token.
-4. **Deny**, timeout, mode changes, pausing, and side-panel closure cancel the waiting call.
+4. **Deny**, timeout, mode changes, pausing, and side-panel closure cancel the waiting call; each also clears its notification and toolbar badge state.
 5. The extension resets to **Ask before acting** when the side-panel session closes or the service worker restarts.
 
 An identical concurrent call is rejected while the first is pending, preventing approval floods and accidental double execution.
@@ -38,4 +38,4 @@ Missing or malformed permission state fails closed to **Ask before acting**. An 
 
 ## Trust boundary
 
-The side-panel runtime message is the only interface that changes access mode or resolves an approval. These operations are not exposed as MCP tools or native-host dispatch methods. Harnesses can read the current panel state but cannot approve their own browser requests.
+The side-panel runtime message is the only interface that changes access mode or resolves an approval. A notification click only focuses the request's Chrome window and opens the side panel; it never approves the action. These operations are not exposed as MCP tools or native-host dispatch methods. Harnesses can read the current panel state but cannot approve their own browser requests.

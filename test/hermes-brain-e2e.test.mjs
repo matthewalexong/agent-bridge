@@ -86,7 +86,7 @@ test("hermes-brain answers on the real panel wire (no human)", async (context) =
   // --- Boot real native host. ---
   const child = spawn(process.execPath, [path.join(root, "native-host", "host.mjs")], {
     cwd: root,
-    env: { ...process.env, CHROME_AGENT_BRIDGE_DIR: bridgeDir },
+    env: { ...process.env, CHROME_AGENT_BRIDGE_DIR: bridgeDir, AB_HARNESS_SESSION_CWD: bridgeDir },
     stdio: ["pipe", "pipe", "pipe"],
   });
   let watcher = null;

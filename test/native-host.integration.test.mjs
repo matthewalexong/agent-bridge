@@ -58,6 +58,12 @@ test("native host forwards authenticated loopback RPC to the extension stream", 
   assert.equal(runtime.schemaVersion, 2);
   assert.equal("token" in runtime, false);
 
+  child.stdin.write(encodeNativeMessage({ type: "auth.request", id: "auth-status", action: "status" }));
+  const authStatus = await nextMessage((message) => message.type === "auth.response" && message.id === "auth-status");
+  assert.equal(authStatus.ok, true);
+  assert.equal(authStatus.result.available, true);
+  assert.equal("token" in authStatus.result, false);
+
   child.stdin.write(encodeNativeMessage({ type: "auth.request", id: "auth-get", action: "get" }));
   const getAuth = await nextMessage((message) => message.type === "auth.response" && message.id === "auth-get");
   assert.equal(getAuth.ok, true);
