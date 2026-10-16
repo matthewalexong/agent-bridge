@@ -14,6 +14,7 @@ import {
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
+import { createClientRegistry } from "../lib/client-registry.mjs";
 import { createDeepSeekHarnessSessionAdapter, formatHarnessQuestion } from "../lib/harness-sessions.mjs";
 import { harnessSessionAdapterInfo } from "../lib/harness-session-contract.mjs";
 
@@ -107,6 +108,49 @@ async function handleAuthRequest(message) {
   } catch (error) {
     sendNative({ type: "auth.response", id: message.id, ok: false, error: serializeError(error) });
   }
+}
+
+// Which harness processes are attached. The side panel shows their names, and
+// a harness that exits is dropped from the label.
+const clientRegistry = createClientRegistry();
+let publishedAgentLabel;
+
+// Identifying always republishes, because the extension can restart and forget
+// the label. The periodic prune republishes only when the set of clients changed.
+async function publishAgentLabel({ force = false } = {}) {
+  const label = clientRegistry.label();
+  if (!force && label === publishedAgentLabel) return;
+  try {
+    await forwardToExtension("panel.identify", { agent: label });
+    publishedAgentLabel = label;
+  } catch {
+    // The extension is not connected yet; the next heartbeat or prune retries.
+    publishedAgentLabel = undefined;
+  }
+}
+
+// The response keeps the shape callers already read ({ name, since }). Its name
+// is the combined label of every attached client.
+function agentResponse() {
+  const label = clientRegistry.label();
+  return label == null ? null : { name: label, since: new Date().toISOString() };
+}
+
+async function identifyClient(params) {
+  clientRegistry.prune();
+  clientRegistry.identify({
+    pid: Number.isInteger(params.clientPid) ? params.clientPid : null,
+    agent: params.agent,
+  });
+  void publishAgentLabel({ force: true });
+  return { identified: true, agent: agentResponse() };
+}
+
+async function detachClient(params) {
+  clientRegistry.prune();
+  if (Number.isInteger(params.clientPid)) clientRegistry.detach(params.clientPid);
+  void publishAgentLabel({ force: true });
+  return { detached: true, agent: agentResponse() };
 }
 
 function forwardToExtension(method, params) {
@@ -544,7 +588,11 @@ const server = http.createServer(async (request, response) => {
       const result =
         payload.method === "events.poll"
           ? await pollEvents(payload.params ?? {})
-          : await forwardToExtension(payload.method, payload.params ?? {});
+          : payload.method === "panel.identify"
+            ? await identifyClient(payload.params ?? {})
+            : payload.method === "clients.detach"
+              ? await detachClient(payload.params ?? {})
+              : await forwardToExtension(payload.method, payload.params ?? {});
       response.statusCode = 200;
       response.end(JSON.stringify({ ok: true, result }));
     } catch (error) {
@@ -553,6 +601,12 @@ const server = http.createServer(async (request, response) => {
     }
   });
 });
+
+// Checks liveness every few seconds, so a harness that exits without detaching
+// still drops out of the label.
+setInterval(() => {
+  if (clientRegistry.prune()) void publishAgentLabel();
+}, 5_000).unref();
 
 server.listen(0, "127.0.0.1", async () => {
   const address = server.address();

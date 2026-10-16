@@ -842,6 +842,11 @@ function broadcastPanel() {
   }
 }
 
+function clearPanelAgent() {
+  panelAgent = null;
+  broadcastPanel();
+}
+
 function setPanelAgent(name) {
   if (typeof name !== "string") {
     throw codedError("invalid_request", "agent name must be a string");
@@ -2277,6 +2282,11 @@ async function dispatch(method, params) {
     case "panel.question.answer":
       return submitPanelQuestion(params.answers);
     case "panel.identify":
+      // The native host sends null when no harness is attached, which clears the label.
+      if (params.agent == null || params.agent === "") {
+        clearPanelAgent();
+        return { identified: false, agent: null };
+      }
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
       return { status: setPanelStatus(params), progress: panelProgress };

@@ -25,12 +25,11 @@ const configuredPanelAgentName = String(process.env.CHROME_AGENT_BRIDGE_AGENT_NA
 async function syncConfiguredPanelIdentity() {
   if (!configuredPanelAgentName) return;
   try {
-    const panel = await callBridge("panel.get");
-    if (panel?.agent?.name == null) await callBridge("panel.identify", { agent: configuredPanelAgentName });
+    // Sent on every heartbeat. The native host keeps this process listed while
+    // it is alive and drops it when the process exits.
+    await callBridge("panel.identify", { agent: configuredPanelAgentName, clientPid: process.pid });
   } catch {
-    // The side panel/native host may start after this MCP process. A bounded
-    // local heartbeat retries without inference and never overwrites another
-    // non-null agent identity.
+    // The native host may start after this MCP process; the next heartbeat retries.
   }
 }
 
@@ -339,6 +338,7 @@ tool(
   },
   async (input) => asText(await callBridge("panel.identify", {
     agent: input.agent ?? process.env.CHROME_AGENT_BRIDGE_AGENT_NAME ?? "MCP Agent",
+    clientPid: process.pid,
   })),
 );
 
@@ -423,7 +423,7 @@ tool(
         shoppingCandidateRegistry.binding(input.candidate_set_id, candidateId),
       ))
       : [];
-    if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
+    if (input.agent != null) await callBridge("panel.identify", { agent: input.agent, clientPid: process.pid });
     const sourceLinks = input.kind === "products" ? [] : (input.source_snapshot_ids ?? []).map((snapshotId) => {
       const { receipt } = browserEvidenceRegistry.resolve(snapshotId);
       const url = new URL(receipt.url);
@@ -593,6 +593,20 @@ registerShoppingTools({
 });
 
 await server.connect(new StdioServerTransport());
+
+// Tell the native host this process is leaving, so the side panel stops naming
+// it. The host would also notice on its next liveness check.
+let leaving = false;
+async function leaveBridge() {
+  if (leaving) return;
+  leaving = true;
+  await callBridge("clients.detach", { clientPid: process.pid }, { timeoutMs: 2_000 }).catch(() => {});
+  process.exit(0);
+}
+process.stdin.on("end", () => void leaveBridge());
+process.on("SIGTERM", () => void leaveBridge());
+process.on("SIGINT", () => void leaveBridge());
+
 if (configuredPanelAgentName) {
   void syncConfiguredPanelIdentity();
   const identityTimer = setInterval(() => void syncConfiguredPanelIdentity(), 15_000);
