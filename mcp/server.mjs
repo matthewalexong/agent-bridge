@@ -141,14 +141,31 @@ tool(
   async (input) => asText(await callBridge("tabs.close", input)),
 );
 
+// Shared by browser_navigate and browser_act; the extension applies the
+// defaults (extension/page-settle.js), so older callers are unaffected.
+const settleInputSchema = {
+  waitUntil: z
+    .enum(["none", "load", "settled"])
+    .optional()
+    .describe('When to return. "settled" (default): after the load completes and the DOM stays unchanged for 400 ms. "load": after the load completes. "none": immediately.'),
+  timeoutMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(20_000)
+    .optional()
+    .describe("Longest wait for the page to settle, default 10000. A timeout still succeeds, with settled:false and a reason."),
+};
+
 tool(
   "browser_navigate",
   {
     title: "Navigate Chrome tab",
-    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL. The extension enforces the side-panel browser-access mode and may hold this exact call for approval.",
+    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL and wait for the page to settle. The result reports settled, elapsedMs, and a reason when settled is false. The extension enforces the side-panel browser-access mode and may hold this exact call for approval.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       url: z.string().url().or(z.literal("about:blank")),
+      ...settleInputSchema,
     },
   },
   async (input) => asText(await callBridge("tabs.navigate", input)),
@@ -230,7 +247,7 @@ tool(
   {
     title: "Act on page element",
     description:
-      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. The extension enforces the side-panel browser-access mode and may hold this exact call for approval. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls.",
+      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. The extension enforces the side-panel browser-access mode and may hold this exact call for approval. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls. Afterwards it waits for any load the action started and for the DOM to settle; the result reports settled, navigated, and elapsedMs.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       kind: z.enum(["click", "fill", "press", "select"]).optional(),
@@ -245,6 +262,7 @@ tool(
         .optional()
         .default(false)
         .describe("Set true only after explicit user confirmation for a potentially submitting click."),
+      ...settleInputSchema,
     },
   },
   async (input) => {

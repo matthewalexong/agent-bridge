@@ -1,3 +1,5 @@
+import { createPageSettle, settleOptions } from "./page-settle.js";
+
 const HOST_NAME = "com.escape_wu.chrome_agent_bridge";
 const MAX_SNAPSHOT_CHARS = 50_000;
 const AUTH_REQUEST_TIMEOUT_MS = 5_000;
@@ -15,6 +17,9 @@ const MAX_RAW_POLL_LIMIT = 200;
 const MAX_RAW_RESULT_BYTES = 3_000_000;
 const MAX_RAW_EVENT_BYTES = 2_500_000;
 const MAX_RAW_POLL_BYTES = 2_500_000;
+// The native host abandons a request after 30 s (lib/config.mjs). Approval
+// waits count against that, so settling stops early enough to still answer.
+const REQUEST_SETTLE_BUDGET_MS = 27_000;
 let nativePort = null;
 let reconnectTimer = null;
 let reconnectDelayMs = 1_000;
@@ -29,6 +34,7 @@ const rawSessionByTabId = new Map();
 const rawSessionByChildSessionId = new Map();
 const pageSnapshotsByTabId = new Map();
 const pageActionChains = new Map();
+const pageSettle = createPageSettle(chrome);
 const PANEL_MAX_ENTRIES = 200;
 const PANEL_LIFECYCLE_PORT = "agent-bridge-panel-lifecycle";
 const PANEL_CLOSE_GRACE_MS = 300;
@@ -1273,14 +1279,19 @@ function serializePageAction(tabId, operation) {
   });
 }
 
-async function pageAction(params) {
+function settleOptionsFor(params, receivedAt) {
+  return settleOptions(params, { budgetEndsAt: receivedAt + REQUEST_SETTLE_BUDGET_MS });
+}
+
+async function pageAction(params, receivedAt = Date.now()) {
   const allowedKinds = new Set(["click", "fill", "press", "select"]);
   if (!allowedKinds.has(params.kind)) {
     throw codedError("invalid_action", "kind must be click, fill, press, or select");
   }
+  const waitOptions = settleOptionsFor(params, receivedAt);
   const tab = await requireTab(params.tabId);
   assertScriptable(tab);
-  return serializePageAction(params.tabId, async () => {
+  const perform = async () => {
     const locator = await actionLocator(params.tabId, params);
     const marker = `cab-${crypto.randomUUID()}`;
     let prepared = null;
@@ -1376,6 +1387,10 @@ async function pageAction(params) {
         }
       }
     }
+  };
+  return serializePageAction(params.tabId, async () => {
+    const { value, settle } = await pageSettle.run(params.tabId, "action", waitOptions, perform);
+    return { ...value, ...settle };
   });
 }
 
@@ -2079,6 +2094,7 @@ function handleRawDebuggerDetach(source) {
 }
 
 async function dispatch(method, params) {
+  const receivedAt = Date.now();
   await enforceBrowserAccess(method, params);
   switch (method) {
     case "browser.status":
@@ -2106,9 +2122,14 @@ async function dispatch(method, params) {
     case "tabs.activate":
       return activateTab(params.tabId);
     case "tabs.navigate": {
+      const waitOptions = settleOptionsFor(params, receivedAt);
       await requireTab(params.tabId);
       pageSnapshotsByTabId.delete(params.tabId);
-      return publicTab(await chrome.tabs.update(params.tabId, { url: safeUrl(params.url) }));
+      const url = safeUrl(params.url);
+      const { value: tab, settle } = await pageSettle.run(params.tabId, "navigation", waitOptions, () => chrome.tabs.update(params.tabId, { url }));
+      // After settling, report where the tab ended up (redirects included).
+      const latest = settle ? await chrome.tabs.get(params.tabId).catch(() => tab) : tab;
+      return { ...publicTab(latest), ...settle };
     }
     case "page.snapshot":
       return snapshotTab(params.tabId, Math.min(params.maxChars || MAX_SNAPSHOT_CHARS, MAX_SNAPSHOT_CHARS));
@@ -2119,11 +2140,11 @@ async function dispatch(method, params) {
       return { dataUrl, tabId: params.tabId };
     }
     case "page.click":
-      return pageAction({ ...params, kind: "click" });
+      return pageAction({ ...params, kind: "click" }, receivedAt);
     case "page.fill":
-      return pageAction({ ...params, kind: "fill" });
+      return pageAction({ ...params, kind: "fill" }, receivedAt);
     case "page.act":
-      return pageAction(params);
+      return pageAction(params, receivedAt);
     case "network.start":
       return startNetworkSession(params);
     case "network.poll":
@@ -2319,6 +2340,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.tabs.onCreated.addListener((tab) => emitBrowserEvent("tab.created", publicTab(tab)));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url || changeInfo.status === "loading") pageSnapshotsByTabId.delete(tabId);
+  pageSettle.handleTabUpdated(tabId, changeInfo);
   emitBrowserEvent("tab.updated", {
     tabId,
     changeInfo: {
@@ -2333,6 +2355,7 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   createdTabIds.delete(tabId);
   pageSnapshotsByTabId.delete(tabId);
   pageActionChains.delete(tabId);
+  pageSettle.handleTabRemoved(tabId);
   const sessionId = networkSessionByTabId.get(tabId);
   const session = sessionId ? networkSessions.get(sessionId) : null;
   if (session) {

@@ -369,6 +369,14 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.deepEqual(pageAct.inputSchema.properties.kind.enum, ["click", "fill", "press", "select"]);
   assert.equal(pageAct.inputSchema.properties.ref.pattern, "^e\\d+$");
 
+  const navigate = tools.find((tool) => tool.name === "browser_navigate");
+  for (const settleTool of [navigate, pageAct]) {
+    assert.deepEqual(settleTool.inputSchema.properties.waitUntil.enum, ["none", "load", "settled"]);
+    assert.equal(settleTool.inputSchema.properties.timeoutMs.maximum, 20_000);
+    assert.equal(settleTool.inputSchema.required.includes("waitUntil"), false, "existing callers omit waitUntil");
+    assert.equal(settleTool.inputSchema.required.includes("timeoutMs"), false, "existing callers omit timeoutMs");
+  }
+
   const panelStatus = tools.find((tool) => tool.name === "browser_panel_status");
   assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 1000);
   assert.equal(panelStatus.inputSchema.properties.text.maxLength, 1000);
