@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.32.0",
     "acorn": "^8.15.0",
     "acorn-walk": "^8.3.4",
-    "zod": "3.25.76"
+    "zod": "4.6.7"
   },
   "license": "MIT",
   "repository": {
