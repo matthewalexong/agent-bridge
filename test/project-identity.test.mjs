@@ -28,7 +28,7 @@ test("public metadata presents the domain-neutral Agent Bridge identity", async 
   assert.equal(mcp.mcpServers["chrome-agent-bridge"].title, "Agent Bridge");
   assert.match(readme, /^# Agent Bridge$/m);
   assert.match(readme, /Let AI agents work through your real Chrome browser\./);
-  assert.match(readme, /Shopping is the first flagship capability/i);
+  assert.match(readme, /Domain logic, such as a shopping workflow, belongs in harness skills/i);
 });
 
 test("lineage is explicit while compatibility identifiers remain stable", async () => {

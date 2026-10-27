@@ -76,14 +76,14 @@ evidence collection and deterministic checks
 neutral Agent Bridge browser tools
 ```
 
-Shopping is the first mature example. Its product identity, market coverage, current availability, landed cost, merchant, counterfeit, safety, and preference checks must not leak into the generic browser protocol as hard-coded product-category behavior. Future domains should reuse browser evidence and add their own explicit policies and evaluations.
+Domain logic lives in harness skills, not in this repository. A domain such as shopping must not leak into the generic browser protocol as hard-coded product-category behavior; it should reuse the neutral browser tools and keep its own explicit policies and evaluations.
 
 ## Source map
 
 - `extension/` — Manifest V3 extension, side panel, popup, and browser execution boundary.
 - `native-host/` — Native Messaging and authenticated loopback bridge.
 - `mcp/` — MCP server and tool registration.
-- `lib/` — shared browser projections, session adapters, analyzers, and domain logic.
+- `lib/` — shared browser projections, session adapters, and analyzers.
 - `skills/` — paired workflow instructions for compatible agents.
 - `test/` — deterministic regression and integration tests.
 - `eval/` — supplemental model and domain evaluation fixtures.

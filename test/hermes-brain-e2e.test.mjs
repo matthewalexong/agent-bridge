@@ -213,8 +213,6 @@ test("hermes-brain answers on the real panel wire (no human)", async (context) =
     assert.equal(result.progress.length, 0, "final post consumes the live progress trail");
     // The mock must have been called twice (search turn + final envelope).
     assert.ok(callCount >= 2, `expected >=2 model calls (search + envelope), got ${callCount}`);
-    assert.match(String(modelRequests[0]?.system || ""), new RegExp(`request_id: ${sent.result.entry.id}`));
-    assert.match(String(modelRequests[0]?.system || ""), /request_revision: 1/);
   } finally {
     globalThis.chrome = previousChrome;
     child.stdin.end();

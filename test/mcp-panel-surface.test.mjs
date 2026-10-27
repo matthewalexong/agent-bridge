@@ -36,25 +36,5 @@ test("default MCP server advertises the compact panel surface only", async (cont
   assert.deepEqual(tools.map((tool) => tool.name).sort(), [...PANEL_TOOL_NAMES].sort());
   const advertised = JSON.stringify(tools);
   assert.ok(advertised.length < 25_000, `advertised catalog is ${advertised.length} chars`);
-  const dossier = tools.find((tool) => tool.name === "shopping_decision_dossier");
-  assert.ok(dossier, "dossier stays on the panel surface");
-  assert.ok(JSON.stringify(dossier.inputSchema || {}).length < 2_000, "dossier schema must stay slim");
-  for (const hidden of ["shopping_identity_resolve", "shopping_preference_rank", "shopping_product_evidence", "shopping_candidate_coverage", "shopping_offer_analyze"]) {
-    assert.equal(tools.some((tool) => tool.name === hidden), false, `${hidden} must stay behind shopping_evaluator_batch`);
-  }
   for (const hidden of ["browser_click", "browser_fill"]) assert.equal(tools.some((tool) => tool.name === hidden), false, `${hidden} must stay behind browser_act`);
-});
-
-test("live panel skill stays small and does not replace judgment with keywords", async () => {
-  const skill = await fs.readFile(path.join(root, "eval/search/skills/agent-bridge-panel.md"), "utf8");
-  assert.ok(skill.length < 4400, `skill is ${skill.length} chars`);
-  assert.match(skill, /Do \*\*not\*\* `tool_describe`/);
-  assert.match(skill, /Never `web_extract`/);
-  assert.match(skill, /your judgment/);
-  assert.match(skill, /Do not invent a keyword table/);
-  assert.match(skill, /Never introduce yourself/);
-  assert.match(skill, /research now/);
-  assert.match(skill, /kind=products/);
-  assert.match(skill, /one chat until the user clears/);
-  assert.doesNotMatch(skill, /if query includes/i);
 });
