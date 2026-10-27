@@ -20,6 +20,8 @@ if (manifest.version !== packageJson.version) {
 const allowedFiles = [
   "manifest.json",
   "service-worker.js",
+  "page-frames.js",
+  "frame-scripts.js",
   "popup.html",
   "popup.css",
   "popup.js",

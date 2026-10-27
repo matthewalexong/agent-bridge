@@ -367,7 +367,7 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
 
   const pageAct = tools.find((tool) => tool.name === "browser_act");
   assert.deepEqual(pageAct.inputSchema.properties.kind.enum, ["click", "fill", "press", "select"]);
-  assert.equal(pageAct.inputSchema.properties.ref.pattern, "^e\\d+$");
+  assert.equal(pageAct.inputSchema.properties.ref.pattern, "^(?:f[1-9]\\d*)?e\\d+$");
 
   const panelStatus = tools.find((tool) => tool.name === "browser_panel_status");
   assert.equal(panelStatus.inputSchema.properties.summary.maxLength, 1000);

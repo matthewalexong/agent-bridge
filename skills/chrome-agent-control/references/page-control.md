@@ -9,7 +9,7 @@ Read this reference for tab management, visible page inspection, screenshots, na
 - `browser_activate_tab`: Activate a tab and focus its window.
 - `browser_close_tab`: Close only a tab created by the bridge in the current extension session.
 - `browser_navigate`: Navigate an existing tab to a safe URL.
-- `browser_snapshot`: Return visible text and a semantic interactive snapshot with short-lived refs such as `e1`.
+- `browser_snapshot`: Return visible text and a semantic interactive snapshot with short-lived refs such as `e1`. The snapshot includes controls inside open shadow roots and inside iframes. Iframe controls are listed under an `- iframe ... [frame=f1]` line with frame-scoped refs such as `f1e3`; use them with `browser_act` exactly like main-frame refs.
 - `browser_screenshot`: Capture the visible viewport.
 - `browser_act`: Perform one atomic `click`, `fill`, `press`, or native `select` action by current ref. Consequential submitters require `confirmed=true` after explicit confirmation.
 - `browser_click` / `browser_fill`: Selector-based compatibility tools. Prefer `browser_act` for new work.
@@ -54,7 +54,8 @@ Use `kind:"select"` only for a native `<select>`. For ARIA combobox/listbox widg
 
 - Supported URLs are `http:`, `https:`, `file:`, and `about:blank`. File URLs may require the user to enable file access for the extension. Chrome-internal pages cannot be inspected or scripted.
 - `tab_not_found`: refresh the tab list and select again.
-- `stale_ref` or `action_target_not_found`: take a fresh snapshot and select a current ref.
+- `stale_ref` or `action_target_not_found`: take a fresh snapshot and select a current ref. A frame-scoped ref also goes stale when its iframe navigates or reloads.
+- `frame_position_unavailable` or `frame_focus_unavailable`: the extension could not locate or focus the iframe that holds the ref. Take a fresh snapshot; for a press, click the ref first.
 - `action_target_moved` or `element_not_receiving_pointer`: inspect a fresh snapshot or screenshot; do not repeat blindly.
 - `selector_not_found`: selector compatibility calls require a fresh current selector.
 - `restricted_page`: ask the user to open a normal web page.

@@ -23,6 +23,9 @@ test("release ZIP contains only the load-unpacked extension at archive root", as
   const entries = listing.trim().split("\n").sort();
   assert.equal(entries.includes("manifest.json"), true);
   assert.equal(entries.includes("service-worker.js"), true);
+  // The service worker is an ES module; its imports must ship with it.
+  assert.equal(entries.includes("page-frames.js"), true);
+  assert.equal(entries.includes("frame-scripts.js"), true);
   assert.equal(entries.includes("popup.html"), true);
   assert.equal(entries.includes("panel.html"), true);
   assert.equal(entries.includes("panel.css"), true);

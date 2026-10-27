@@ -1,3 +1,6 @@
+import { inspectPreparedFocus, locateChildFrame } from "./frame-scripts.js";
+import { frameAncestry, mergeFrameSnapshots, parseActionRef } from "./page-frames.js";
+
 const HOST_NAME = "com.escape_wu.chrome_agent_bridge";
 const MAX_SNAPSHOT_CHARS = 50_000;
 const AUTH_REQUEST_TIMEOUT_MS = 5_000;
@@ -784,16 +787,43 @@ async function activateTab(tabId) {
   return publicTab(await chrome.tabs.update(tabId, { active: true }));
 }
 
-async function execute(tabId, func, args = []) {
+// `frame` is null for the main frame, or the { frameId, documentId } of a
+// subframe from the latest snapshot. Targeting the documentId means a frame
+// that navigated since the snapshot fails instead of running in a new page.
+function scriptTarget(tabId, frame) {
+  if (!frame) return { tabId };
+  return frame.documentId ? { tabId, documentIds: [frame.documentId] } : { tabId, frameIds: [frame.frameId] };
+}
+
+async function execute(tabId, func, args = [], frame = null) {
   const tab = await requireTab(tabId);
   assertScriptable(tab);
-  const [{ result }] = await chrome.scripting.executeScript({
-    target: { tabId },
-    func,
-    args,
-  });
+  let injection;
+  try {
+    [injection] = await chrome.scripting.executeScript({
+      target: scriptTarget(tabId, frame),
+      func,
+      args,
+    });
+  } catch (error) {
+    if (!frame) throw error;
+    throw codedError("stale_ref", "The frame that held this ref navigated or closed. Take a fresh browser_snapshot and retry.");
+  }
+  const result = injection?.result;
   if (result?.error) throw codedError(result.error.code, result.error.message);
   return result;
+}
+
+async function executeInAllFrames(tabId, func, args = []) {
+  const tab = await requireTab(tabId);
+  assertScriptable(tab);
+  try {
+    return await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, func, args });
+  } catch {
+    // A subframe Chrome refuses to script (an error page, for example) can
+    // fail the whole multi-frame injection. Fall back to the main frame alone.
+    return chrome.scripting.executeScript({ target: { tabId }, func, args });
+  }
 }
 
 function snapshotPage(maxChars) {
@@ -803,14 +833,47 @@ function snapshotPage(maxChars) {
     "slider", "spinbutton", "switch", "tab", "textbox", "treeitem",
   ]);
   const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  // closest() that also climbs out of shadow roots through their hosts.
+  const closestComposed = (element, selector) => {
+    for (let node = element; node;) {
+      const match = node.closest(selector);
+      if (match) return match;
+      const root = node.getRootNode();
+      node = root instanceof ShadowRoot ? root.host : null;
+    }
+    return null;
+  };
   const isVisible = (element) => {
-    if (element.closest("[aria-hidden='true'],[inert]")) return false;
+    if (closestComposed(element, "[aria-hidden='true'],[inert]")) return false;
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
     return style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0" &&
       rect.width > 0 && rect.height > 0;
   };
+  let usesShadowDom = false;
+  for (const element of document.querySelectorAll("*")) {
+    if (element.shadowRoot) {
+      usesShadowDom = true;
+      break;
+    }
+  }
+  // Matches in document order, entering each open shadow root right after its
+  // host. Pages without shadow roots keep the plain querySelectorAll result.
+  const deepQueryAll = (selector) => {
+    if (!usesShadowDom) return [...document.querySelectorAll(selector)];
+    const found = [];
+    const visit = (scope) => {
+      const matches = new Set(scope.querySelectorAll(selector));
+      for (const element of scope.querySelectorAll("*")) {
+        if (matches.has(element)) found.push(element);
+        if (element.shadowRoot) visit(element.shadowRoot);
+      }
+    };
+    visit(document);
+    return found;
+  };
 
+  // Selectors are relative to the element's own root (document or shadow root).
   const selectorFor = (element) => {
     if (element.id) return `#${CSS.escape(element.id)}`;
     const testId = element.getAttribute("data-testid");
@@ -819,8 +882,9 @@ function snapshotPage(maxChars) {
     let current = element;
     while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.body && segments.length < 8) {
       const tag = current.tagName.toLowerCase();
-      const siblings = current.parentElement
-        ? [...current.parentElement.children].filter((child) => child.tagName === current.tagName)
+      const parent = current.parentElement || (current.parentNode instanceof ShadowRoot ? current.parentNode : null);
+      const siblings = parent
+        ? [...parent.children].filter((child) => child.tagName === current.tagName)
         : [];
       const suffix = siblings.length > 1 ? `:nth-of-type(${siblings.indexOf(current) + 1})` : "";
       segments.unshift(`${tag}${suffix}`);
@@ -848,10 +912,15 @@ function snapshotPage(maxChars) {
     return "textbox";
   };
 
+  // aria-labelledby ids resolve inside the element's own shadow root.
+  const idScope = (element) => {
+    const root = element.getRootNode();
+    return typeof root.getElementById === "function" ? root : document;
+  };
   const accessibleName = (element) => {
     const labelledBy = normalize(element.getAttribute("aria-labelledby"));
     const labelledText = labelledBy
-      ? labelledBy.split(" ").map((id) => normalize(document.getElementById(id)?.textContent)).filter(Boolean).join(" ")
+      ? labelledBy.split(" ").map((id) => normalize(idScope(element).getElementById(id)?.textContent)).filter(Boolean).join(" ")
       : "";
     const labels = element.labels ? [...element.labels].map((label) => normalize(label.textContent)).filter(Boolean).join(" ") : "";
     const inputValue = element instanceof HTMLInputElement && ["button", "submit", "reset"].includes(element.type)
@@ -889,11 +958,22 @@ function snapshotPage(maxChars) {
     "a[href]", "button", "summary", "input:not([type='hidden'])", "label", "select", "textarea",
     "[contenteditable='true']", "[tabindex]:not([tabindex='-1'])", roleSelector,
   ].join(",");
+  const shadowHostsFor = (element) => {
+    const hosts = [];
+    for (let root = element.getRootNode(); root instanceof ShadowRoot; root = root.host.getRootNode()) {
+      hosts.unshift(selectorFor(root.host));
+    }
+    return hosts.length ? hosts : undefined;
+  };
+  // A subframe with no viewport (display:none or 0x0) shows nothing.
+  const isSubframe = window !== window.top;
+  const hiddenFrame = isSubframe && (innerWidth === 0 || innerHeight === 0);
   const roleNameCounts = new Map();
+  // One line per element, in the same order: mergeFrameSnapshots relies on it.
   const snapshotLines = [];
   const elements = [];
 
-  for (const element of [...document.querySelectorAll(interactiveSelector)].filter(isVisible).slice(0, 500)) {
+  for (const element of hiddenFrame ? [] : deepQueryAll(interactiveSelector).filter(isVisible).slice(0, 500)) {
     const role = element.getAttribute("role") || implicitRole(element) || "generic";
     if (element.hasAttribute("role") && !interactiveRoles.has(role) && !element.matches("[tabindex]:not([tabindex='-1'])")) {
       continue;
@@ -922,6 +1002,7 @@ function snapshotPage(maxChars) {
       testId: element.getAttribute("data-testid") || undefined,
       tag: element.tagName.toLowerCase(),
       type: element.getAttribute("type") || undefined,
+      shadowHosts: shadowHostsFor(element),
     };
     const linkDetails = observedLinkDetails(element, role);
     elements.push({
@@ -936,6 +1017,7 @@ function snapshotPage(maxChars) {
       checked,
       selected,
       expanded,
+      ...(locator.shadowHosts ? { shadowHosts: locator.shadowHosts } : {}),
       ...linkDetails,
       _locator: locator,
     });
@@ -948,14 +1030,50 @@ function snapshotPage(maxChars) {
     snapshotLines.push(`- ${role}${name ? ` "${name.replace(/"/g, '\\"')}"` : ""} [ref=${ref}]${states.length ? ` [${states.join(", ")}]` : ""}`);
   }
 
-  return {
+  const bodyText = hiddenFrame ? "" : document.body?.innerText || "";
+  const result = {
     title: document.title,
     url: location.href,
-    text: (document.body?.innerText || "").slice(0, maxChars),
-    truncated: (document.body?.innerText || "").length > maxChars,
+    text: bodyText.slice(0, maxChars),
+    truncated: bodyText.length > maxChars,
     snapshot: snapshotLines.join("\n"),
     elements,
   };
+
+  // Frame bookkeeping for mergeFrameSnapshots (page-frames.js), which strips
+  // these fields. A frame finds its index in parent.frames by identity, which
+  // works across origins; frames inside shadow roots are not listed there.
+  result._childFrames = deepQueryAll("iframe, frame").map((owner) => {
+    let index = -1;
+    for (let candidate = 0; candidate < window.length; candidate += 1) {
+      if (window[candidate] === owner.contentWindow) {
+        index = candidate;
+        break;
+      }
+    }
+    return { index, visible: isVisible(owner) };
+  }).filter((owner) => owner.index >= 0);
+  if (isSubframe) {
+    let path = [];
+    try {
+      for (let current = window; current !== current.top;) {
+        const parent = current.parent;
+        let index = -1;
+        for (let candidate = 0; candidate < parent.length; candidate += 1) {
+          if (parent[candidate] === current) {
+            index = candidate;
+            break;
+          }
+        }
+        path.unshift(index);
+        current = parent;
+      }
+    } catch {
+      path = null;
+    }
+    result._frame = { path, href: location.href, width: innerWidth, height: innerHeight };
+  }
+  return result;
 }
 
 async function prepareActionTarget(locator, marker, kind, confirmed) {
@@ -965,12 +1083,57 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
     "slider", "spinbutton", "switch", "tab", "textbox", "treeitem",
   ]);
   const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  const closestComposed = (element, selector) => {
+    for (let node = element; node;) {
+      const match = node.closest(selector);
+      if (match) return match;
+      const root = node.getRootNode();
+      node = root instanceof ShadowRoot ? root.host : null;
+    }
+    return null;
+  };
   const isVisible = (element) => {
-    if (element.closest("[aria-hidden='true'],[inert]")) return false;
+    if (closestComposed(element, "[aria-hidden='true'],[inert]")) return false;
     const style = getComputedStyle(element);
     const rect = element.getBoundingClientRect();
     return style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0" &&
       rect.width > 0 && rect.height > 0;
+  };
+  // Same traversal as snapshotPage so role/name nth counts line up.
+  const deepQueryAll = (selector) => {
+    let usesShadowDom = false;
+    for (const element of document.querySelectorAll("*")) {
+      if (element.shadowRoot) {
+        usesShadowDom = true;
+        break;
+      }
+    }
+    if (!usesShadowDom) return [...document.querySelectorAll(selector)];
+    const found = [];
+    const visit = (scope) => {
+      const matches = new Set(scope.querySelectorAll(selector));
+      for (const element of scope.querySelectorAll("*")) {
+        if (matches.has(element)) found.push(element);
+        if (element.shadowRoot) visit(element.shadowRoot);
+      }
+    };
+    visit(document);
+    return found;
+  };
+  const elementFromPointDeep = (x, y) => {
+    let hit = document.elementFromPoint(x, y);
+    while (hit?.shadowRoot) {
+      const inner = hit.shadowRoot.elementFromPoint(x, y);
+      if (!inner || inner === hit) break;
+      hit = inner;
+    }
+    return hit;
+  };
+  const containsComposed = (ancestor, node) => {
+    for (let current = node; current; current = current instanceof ShadowRoot ? current.host : current.parentNode) {
+      if (current === ancestor) return true;
+    }
+    return false;
   };
   const implicitRole = (element) => {
     const tag = element.tagName.toLowerCase();
@@ -990,10 +1153,14 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
     if (type === "hidden") return "";
     return "textbox";
   };
+  const idScope = (element) => {
+    const root = element.getRootNode();
+    return typeof root.getElementById === "function" ? root : document;
+  };
   const accessibleName = (element) => {
     const labelledBy = normalize(element.getAttribute("aria-labelledby"));
     const labelledText = labelledBy
-      ? labelledBy.split(" ").map((id) => normalize(document.getElementById(id)?.textContent)).filter(Boolean).join(" ")
+      ? labelledBy.split(" ").map((id) => normalize(idScope(element).getElementById(id)?.textContent)).filter(Boolean).join(" ")
       : "";
     const labels = element.labels ? [...element.labels].map((label) => normalize(label.textContent)).filter(Boolean).join(" ") : "";
     const inputValue = element instanceof HTMLInputElement && ["button", "submit", "reset"].includes(element.type)
@@ -1011,20 +1178,28 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
     ...[...interactiveRoles].map((role) => `[role="${role}"]`),
   ].join(",");
   const roleMatches = locator.role
-    ? [...document.querySelectorAll(candidateSelector)].filter((element) =>
+    ? deepQueryAll(candidateSelector).filter((element) =>
       isVisible(element) &&
       (element.getAttribute("role") || implicitRole(element) || "generic") === locator.role &&
       accessibleName(element) === locator.name)
     : [];
   let element = roleMatches[locator.nth || 0];
-  if (!element && locator.id) element = document.getElementById(locator.id);
-  if (!element && locator.testId) {
-    element = [...document.querySelectorAll("[data-testid]")]
+  // id, test id, and selector fallbacks are relative to the element's shadow
+  // root, reached through the recorded chain of shadow host selectors.
+  let scope = document;
+  try {
+    for (const hostSelector of locator.shadowHosts || []) scope = scope?.querySelector(hostSelector)?.shadowRoot || null;
+  } catch {
+    scope = null;
+  }
+  if (!element && scope && locator.id) element = scope.getElementById(locator.id);
+  if (!element && scope && locator.testId) {
+    element = [...scope.querySelectorAll("[data-testid]")]
       .find((candidate) => candidate.getAttribute("data-testid") === locator.testId);
   }
-  if (!element && locator.selector) {
+  if (!element && scope && locator.selector) {
     try {
-      element = document.querySelector(locator.selector);
+      element = scope.querySelector(locator.selector);
     } catch {
       return { error: { code: "invalid_selector", message: `Invalid selector: ${locator.selector}` } };
     }
@@ -1078,6 +1253,9 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
   });
   rect = element.getBoundingClientRect();
   element.setAttribute("data-cab-action-target", marker);
+  // Attribute selectors cannot reach into shadow roots, so later calls in this
+  // frame find shadow targets through this isolated-world registry instead.
+  if (element.getRootNode() !== document) (globalThis.__cabActionTargets ??= new Map()).set(marker, element);
   if (["fill", "press", "select"].includes(kind)) element.focus();
   const points = [
     [rect.left + rect.width / 2, rect.top + rect.height / 2],
@@ -1087,11 +1265,12 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
     [rect.left + rect.width / 2, rect.top + rect.height * 3 / 4],
   ];
   const point = points.find(([x, y]) => {
-    const hit = document.elementFromPoint(x, y);
-    return hit && (hit === element || element.contains(hit));
+    const hit = elementFromPointDeep(x, y);
+    return hit && containsComposed(element, hit);
   });
   if (kind === "click" && !point) {
     element.removeAttribute("data-cab-action-target");
+    globalThis.__cabActionTargets?.delete(marker);
     return { error: { code: "element_not_receiving_pointer", message: "Another element covers the action target." } };
   }
   return {
@@ -1107,17 +1286,36 @@ async function prepareActionTarget(locator, marker, kind, confirmed) {
 }
 
 function inspectPreparedTarget(marker, x, y) {
-  const element = document.querySelector(`[data-cab-action-target="${marker}"]`);
+  const registered = globalThis.__cabActionTargets?.get(marker);
+  const element = document.querySelector(`[data-cab-action-target="${marker}"]`) ||
+    (registered?.isConnected && registered.getAttribute("data-cab-action-target") === marker ? registered : null);
   if (!element) return { ok: false, reason: "target_removed" };
-  const hit = document.elementFromPoint(x, y);
+  const elementFromPointDeep = (pointX, pointY) => {
+    let found = document.elementFromPoint(pointX, pointY);
+    while (found?.shadowRoot) {
+      const inner = found.shadowRoot.elementFromPoint(pointX, pointY);
+      if (!inner || inner === found) break;
+      found = inner;
+    }
+    return found;
+  };
+  const containsComposed = (ancestor, node) => {
+    for (let current = node; current; current = current instanceof ShadowRoot ? current.host : current.parentNode) {
+      if (current === ancestor) return true;
+    }
+    return false;
+  };
+  const hit = elementFromPointDeep(x, y);
   return {
-    ok: Boolean(hit && (hit === element || element.contains(hit))),
+    ok: Boolean(hit && containsComposed(element, hit)),
     hit: hit ? { tag: hit.tagName.toLowerCase(), role: hit.getAttribute("role"), text: String(hit.innerText || "").trim().slice(0, 80) } : null,
   };
 }
 
 function performPreparedDomAction(marker, kind, value) {
-  const element = document.querySelector(`[data-cab-action-target="${marker}"]`);
+  const registered = globalThis.__cabActionTargets?.get(marker);
+  const element = document.querySelector(`[data-cab-action-target="${marker}"]`) ||
+    (registered?.isConnected && registered.getAttribute("data-cab-action-target") === marker ? registered : null);
   if (!element) return { error: { code: "action_target_not_found", message: "The action target disappeared." } };
   if (kind === "fill") {
     if (element.isContentEditable) {
@@ -1152,38 +1350,37 @@ function performPreparedDomAction(marker, kind, value) {
 }
 
 function cleanupPreparedTarget(marker) {
-  const element = document.querySelector(`[data-cab-action-target="${marker}"]`);
+  const registered = globalThis.__cabActionTargets?.get(marker);
+  const element = document.querySelector(`[data-cab-action-target="${marker}"]`) ||
+    (registered?.isConnected && registered.getAttribute("data-cab-action-target") === marker ? registered : null);
   if (element) element.removeAttribute("data-cab-action-target");
+  globalThis.__cabActionTargets?.delete(marker);
   return { cleaned: Boolean(element) };
 }
 
 async function snapshotTab(tabId, maxChars) {
-  const result = await execute(tabId, snapshotPage, [maxChars]);
+  const injections = await executeInAllFrames(tabId, snapshotPage, [maxChars]);
+  const merged = mergeFrameSnapshots(injections, { maxChars });
+  if (!merged) throw codedError("snapshot_unavailable", "The page did not return a snapshot. Retry once it finishes loading.");
   const snapshotId = `snapshot_${crypto.randomUUID()}`;
-  const refs = new Map();
-  const elements = (result?.elements || []).map((element) => {
-    if (typeof element.ref === "string" && element._locator) refs.set(element.ref, element._locator);
-    const { _locator, ...publicElement } = element;
-    return publicElement;
-  });
   pageSnapshotsByTabId.set(tabId, {
     id: snapshotId,
-    url: result.url,
-    refs,
+    url: merged.result.url,
+    refs: merged.refs,
+    frames: merged.frames,
     createdAt: new Date().toISOString(),
   });
   return {
-    ...result,
-    elements,
+    ...merged.result,
     snapshotId,
-    refCount: refs.size,
+    refCount: merged.refs.size,
   };
 }
 
 async function actionLocator(tabId, params) {
   if (params.ref != null) {
-    if (typeof params.ref !== "string" || !/^e\d+$/.test(params.ref)) {
-      throw codedError("invalid_ref", "ref must look like e1, e2, and so on");
+    if (!parseActionRef(params.ref)) {
+      throw codedError("invalid_ref", "ref must look like e1, e2, and so on, or f1e2 for an element inside a frame");
     }
     const snapshot = pageSnapshotsByTabId.get(tabId);
     if (!snapshot) {
@@ -1194,11 +1391,15 @@ async function actionLocator(tabId, params) {
       pageSnapshotsByTabId.delete(tabId);
       throw codedError("stale_ref", "The tab navigated after the snapshot. Take a fresh browser_snapshot and retry.");
     }
-    const locator = snapshot.refs.get(params.ref);
-    if (!locator) {
+    const entry = snapshot.refs.get(params.ref);
+    if (!entry) {
       throw codedError("stale_ref", `Unknown ref ${params.ref}. Take a fresh browser_snapshot and retry.`);
     }
-    return { ...locator, ref: params.ref, snapshotId: snapshot.id };
+    const located = { ...entry.locator, ref: params.ref, snapshotId: snapshot.id };
+    if (entry.frameId !== 0) {
+      located.frame = { frameId: entry.frameId, documentId: entry.documentId, ancestry: frameAncestry(snapshot.frames, entry.frameId) };
+    }
+    return located;
   }
   if (typeof params.selector === "string" && params.selector.length > 0 && params.selector.length <= 2_000) {
     return { selector: params.selector };
@@ -1273,6 +1474,31 @@ function serializePageAction(tabId, operation) {
   });
 }
 
+// Maps a point in a subframe's viewport to top-level page coordinates for CDP
+// input by asking each ancestor frame where its child's owner element sits.
+async function pagePointForFrame(tabId, frame, point) {
+  const message = "This frame's position on the page is unknown, so it cannot be clicked. Take a fresh browser_snapshot and retry.";
+  if (!frame.ancestry) throw codedError("frame_position_unavailable", message);
+  let current = { x: point.x, y: point.y };
+  for (const step of frame.ancestry) {
+    const located = await execute(tabId, locateChildFrame, [step.child, current.x, current.y, "point"], step.parent);
+    if (!Number.isFinite(located?.x) || !Number.isFinite(located?.y)) throw codedError("frame_position_unavailable", message);
+    current = { x: located.x, y: located.y };
+  }
+  return current;
+}
+
+// Keyboard events go to the page's focused frame, so focus each frame owner
+// from the top down before pressing keys inside a subframe.
+async function focusFrameChain(tabId, frame) {
+  const message = "Keyboard focus could not move into the frame that holds the action target. Click the ref first, then retry the press.";
+  if (!frame.ancestry) throw codedError("frame_focus_unavailable", message);
+  for (const step of [...frame.ancestry].reverse()) {
+    const focus = await execute(tabId, locateChildFrame, [step.child, 0, 0, "focus"], step.parent);
+    if (!focus?.focused) throw codedError("frame_focus_unavailable", message);
+  }
+}
+
 async function pageAction(params) {
   const allowedKinds = new Set(["click", "fill", "press", "select"]);
   if (!allowedKinds.has(params.kind)) {
@@ -1281,29 +1507,31 @@ async function pageAction(params) {
   const tab = await requireTab(params.tabId);
   assertScriptable(tab);
   return serializePageAction(params.tabId, async () => {
-    const locator = await actionLocator(params.tabId, params);
+    const { frame = null, ...locator } = await actionLocator(params.tabId, params);
     const marker = `cab-${crypto.randomUUID()}`;
     let prepared = null;
     try {
       if (params.kind === "click") {
         const result = await withPageDebugger(params.tabId, async (target) => {
           for (let attempt = 1; attempt <= 2; attempt += 1) {
-            prepared = await execute(params.tabId, prepareActionTarget, [locator, marker, "click", params.confirmed === true]);
-            const hit = await execute(params.tabId, inspectPreparedTarget, [marker, prepared.x, prepared.y]);
+            prepared = await execute(params.tabId, prepareActionTarget, [locator, marker, "click", params.confirmed === true], frame);
+            const hit = await execute(params.tabId, inspectPreparedTarget, [marker, prepared.x, prepared.y], frame);
             if (!hit?.ok) {
               if (attempt < 2) {
-                await execute(params.tabId, cleanupPreparedTarget, [marker]);
+                await execute(params.tabId, cleanupPreparedTarget, [marker], frame);
                 continue;
               }
               throw codedError("action_target_moved", `The target moved before click (${hit?.reason || "hit test changed"}). Take a fresh snapshot.`);
             }
+            // prepared.x/y are frame-local; CDP input needs top-level coordinates.
+            const point = frame ? await pagePointForFrame(params.tabId, frame, prepared) : { x: prepared.x, y: prepared.y };
             await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
-              type: "mouseMoved", x: prepared.x, y: prepared.y, button: "none", buttons: 0,
+              type: "mouseMoved", x: point.x, y: point.y, button: "none", buttons: 0,
             });
-            const hovered = await execute(params.tabId, inspectPreparedTarget, [marker, prepared.x, prepared.y]);
+            const hovered = await execute(params.tabId, inspectPreparedTarget, [marker, prepared.x, prepared.y], frame);
             if (!hovered?.ok) {
               if (attempt < 2) {
-                await execute(params.tabId, cleanupPreparedTarget, [marker]);
+                await execute(params.tabId, cleanupPreparedTarget, [marker], frame);
                 continue;
               }
               throw codedError("action_target_moved", "Hover moved or covered the target before mouse press. Take a fresh snapshot.");
@@ -1311,19 +1539,19 @@ async function pageAction(params) {
             let mouseDown = false;
             try {
               await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
-                type: "mousePressed", x: prepared.x, y: prepared.y, button: "left", buttons: 1, clickCount: 1,
+                type: "mousePressed", x: point.x, y: point.y, button: "left", buttons: 1, clickCount: 1,
               });
               mouseDown = true;
               await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
-                type: "mouseReleased", x: prepared.x, y: prepared.y, button: "left", buttons: 0, clickCount: 1,
+                type: "mouseReleased", x: point.x, y: point.y, button: "left", buttons: 0, clickCount: 1,
               });
               mouseDown = false;
-              return { clicked: true, point: { x: prepared.x, y: prepared.y }, target: prepared.target, attempts: attempt };
+              return { clicked: true, point, target: prepared.target, attempts: attempt };
             } finally {
               if (mouseDown) {
                 try {
                   await chrome.debugger.sendCommand(target, "Input.dispatchMouseEvent", {
-                    type: "mouseReleased", x: prepared.x, y: prepared.y, button: "left", buttons: 0, clickCount: 1,
+                    type: "mouseReleased", x: point.x, y: point.y, button: "left", buttons: 0, clickCount: 1,
                   });
                 } catch {
                   // Avoid masking the original failure while releasing a potentially held button.
@@ -1337,12 +1565,17 @@ async function pageAction(params) {
         return { ...result, ref: params.ref, snapshotId: locator.snapshotId, needsSnapshot: true };
       }
 
-      prepared = await execute(params.tabId, prepareActionTarget, [locator, marker, params.kind, params.confirmed === true]);
+      if (frame && params.kind === "press") await focusFrameChain(params.tabId, frame);
+      prepared = await execute(params.tabId, prepareActionTarget, [locator, marker, params.kind, params.confirmed === true], frame);
       if (params.kind === "press") {
         if (typeof params.key !== "string" || params.key.length === 0 || params.key.length > 40) {
           throw codedError("invalid_action", "press requires a key string");
         }
         const descriptor = keyDescriptor(params.key);
+        if (frame) {
+          const focus = await execute(params.tabId, inspectPreparedFocus, [marker], frame);
+          if (!focus?.focused) throw codedError("frame_focus_unavailable", "The action target did not keep keyboard focus inside its frame. Click the ref first, then retry the press.");
+        }
         const result = await withPageDebugger(params.tabId, async (target) => {
           await chrome.debugger.sendCommand(target, "Input.dispatchKeyEvent", { type: "keyDown", ...descriptor });
           const { text, ...keyUpDescriptor } = descriptor;
@@ -1356,7 +1589,7 @@ async function pageAction(params) {
         if (typeof params.value !== "string" || params.value.length > 100_000) {
           throw codedError("invalid_action", "fill requires a string value of at most 100000 characters");
         }
-        const result = await execute(params.tabId, performPreparedDomAction, [marker, "fill", params.value]);
+        const result = await execute(params.tabId, performPreparedDomAction, [marker, "fill", params.value], frame);
         pageSnapshotsByTabId.delete(params.tabId);
         return { ...result, ref: params.ref, snapshotId: locator.snapshotId, needsSnapshot: true };
       }
@@ -1364,13 +1597,13 @@ async function pageAction(params) {
       if (!Array.isArray(values) || values.length === 0 || values.length > 100 || values.some((value) => typeof value !== "string" || value.length > 1_000)) {
         throw codedError("invalid_action", "select requires value or values containing 1 to 100 strings");
       }
-      const result = await execute(params.tabId, performPreparedDomAction, [marker, "select", values]);
+      const result = await execute(params.tabId, performPreparedDomAction, [marker, "select", values], frame);
       pageSnapshotsByTabId.delete(params.tabId);
       return { ...result, ref: params.ref, snapshotId: locator.snapshotId, needsSnapshot: true };
     } finally {
       if (prepared) {
         try {
-          await execute(params.tabId, cleanupPreparedTarget, [marker]);
+          await execute(params.tabId, cleanupPreparedTarget, [marker], frame);
         } catch {
           // Cleanup is best-effort when a successful action navigates or replaces the target.
         }
