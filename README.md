@@ -167,6 +167,8 @@ Browser primitives:
 
 Prefer `browser_snapshot → browser_act(ref) → browser_snapshot`. `browser_click` and `browser_fill` remain selector-based compatibility tools.
 
+`browser_navigate` and `browser_act` return once the page has settled, so the next snapshot sees the rendered page: the extension waits for the tab's load to complete (following redirects) and then for 400 ms without DOM mutations. An action that starts no load returns after that one quiet window. The wait is capped by `timeoutMs` (default 10000, at most 20000); on timeout the call still succeeds with `settled: false`, `elapsedMs`, and a `reason` (`load_timeout`, `dom_busy`, `tab_closed`, or `dom_unavailable`). Pass `waitUntil: "load"` to skip the DOM check or `waitUntil: "none"` for the previous return-at-once behavior.
+
 Analysis groups:
 
 - Local JavaScript inspection, deobfuscation, AST transforms, and bounded crypto test vectors
