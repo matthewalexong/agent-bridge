@@ -964,14 +964,16 @@ test("MCP server exposes the browser and analysis tool surface", async (context)
   assert.equal(panelPosts[2].links[0].history_context, undefined, "caller-supplied history cannot become verified history context");
   assert.match(panelPosts[2].text, / · wait$/);
 
+  // Captured just before the evaluation, so the offers stay inside the 30-day freshness window whenever the suite runs.
+  const valueCapturedAt = new Date(Date.parse(testNow) - 60_000).toISOString();
   const shoppingValue = await client.callTool({
     name: "shopping_value_assess",
     arguments: {
       evaluated_at: testNow,
       basis: { id: "filter-count", source: "net_quantity", dimension: "count", unit: "each", conditions_complete: true, conditions: {}, quality_equivalence_required: false },
       offers: [
-        { id: "A", product_id: "filter-x", exact_identity: true, captured_at: "2026-08-22T19:59:00.000Z", landed_total: { value: 34, evidence_status: "verified", source_id: "checkout-a" }, package: { pack_count: { value: 1, evidence_status: "verified", source_id: "listing-a" }, net_quantity: { value: 2, unit: "each", evidence_status: "verified", source_id: "listing-a" } } },
-        { id: "B", product_id: "filter-x", exact_identity: true, captured_at: "2026-08-22T19:59:00.000Z", landed_total: { value: 48, evidence_status: "verified", source_id: "checkout-b" }, package: { pack_count: { value: 1, evidence_status: "verified", source_id: "listing-b" }, net_quantity: { value: 3, unit: "each", evidence_status: "verified", source_id: "listing-b" } } },
+        { id: "A", product_id: "filter-x", exact_identity: true, captured_at: valueCapturedAt, landed_total: { value: 34, evidence_status: "verified", source_id: "checkout-a" }, package: { pack_count: { value: 1, evidence_status: "verified", source_id: "listing-a" }, net_quantity: { value: 2, unit: "each", evidence_status: "verified", source_id: "listing-a" } } },
+        { id: "B", product_id: "filter-x", exact_identity: true, captured_at: valueCapturedAt, landed_total: { value: 48, evidence_status: "verified", source_id: "checkout-b" }, package: { pack_count: { value: 1, evidence_status: "verified", source_id: "listing-b" }, net_quantity: { value: 3, unit: "each", evidence_status: "verified", source_id: "listing-b" } } },
       ],
     },
   });
