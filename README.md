@@ -21,7 +21,7 @@ The core platform provides:
 
 The user approves the unpacked extension once in Chrome. Local Agents then authenticate with a long-lived token stored under `~/.chrome-agent-bridge/`. ChatGPT OAuth and the official ChatGPT Chrome extension are not required.
 
-Agent Bridge is domain-neutral: its browser connection, session layer, and tools can support research, development, operations, and other browser-based workflows. Evidence-driven shopping is the first flagship capability and reference implementation, not the boundary of the platform. Its shopping workflow helps a harness clarify an ambiguous request, map the market before recommending individual products, compare value tiers, verify current price and availability, and assess merchant and counterfeit risk.
+Agent Bridge is domain-neutral: its browser connection, session layer, and tools can support research, development, operations, and other browser-based workflows. Domain logic, such as a shopping workflow, belongs in harness skills; the bridge itself stays a general browser-navigation layer.
 
 This MIT-licensed project is derived from [Chrome Agent Bridge](https://github.com/escapeWu/chrome-agent-bridge). Original attribution and the boundary between upstream work and this project's modifications are documented in [NOTICE.md](./NOTICE.md). The browser capability implementation does not contain or redistribute OpenAI's proprietary Chrome extension, browser client, native host, or authentication code.
 
@@ -166,6 +166,8 @@ Browser primitives:
 - `browser_cdp_detach`
 
 Prefer `browser_snapshot → browser_act(ref) → browser_snapshot`. `browser_click` and `browser_fill` remain selector-based compatibility tools.
+
+`browser_navigate` and `browser_act` return once the page has settled, so the next snapshot sees the rendered page: the extension waits for the tab's load to complete (following redirects) and then for 400 ms without DOM mutations. An action that starts no load returns after that one quiet window. The wait is capped by `timeoutMs` (default 10000, at most 20000); on timeout the call still succeeds with `settled: false`, `elapsedMs`, and a `reason` (`load_timeout`, `dom_busy`, `tab_closed`, or `dom_unavailable`). Pass `waitUntil: "load"` to skip the DOM check or `waitUntil: "none"` for the previous return-at-once behavior.
 
 Analysis groups:
 

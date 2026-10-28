@@ -5,19 +5,12 @@ import { z } from "zod";
 import { BridgeOfflineError, callBridge } from "../lib/bridge-client.mjs";
 import { clearCdpAnalysisSession, registerCdpAnalysisTools } from "./register-cdp-analysis-tools.mjs";
 import { registerLocalAnalysisTools } from "./register-local-analysis-tools.mjs";
-import { registerShoppingTools } from "./register-shopping-tools.mjs";
-import { captureBrowserSnapshotsBatch, createBrowserEvidenceRegistry } from "../lib/shopping-browser-evidence.mjs";
-import { createShoppingCandidateRegistry } from "../lib/shopping-candidate-registry.mjs";
-import { appendShoppingRecommendationSummary, createShoppingRecommendationRegistry, shoppingRecommendationCardDetails, shoppingRecommendationEvidenceCards } from "../lib/shopping-recommendation-registry.mjs";
-import { advertisedDescription, compactPanelRead, compactPanelSnapshot, compactPanelStatusResult, defaultEvaluatorResultChars, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool, shouldSlimPanelSchema, validatePanelPost, validatePanelProductClaims } from "./surface.mjs";
+import { advertisedDescription, compactPanelRead, compactPanelSnapshot, compactPanelStatusResult, resolveMcpSurface, serializeToolPayload, shouldRegisterMcpTool } from "./surface.mjs";
 
 const server = new McpServer({
   name: "chrome-agent-bridge",
   version: "0.9.0",
 });
-const browserEvidenceRegistry = createBrowserEvidenceRegistry();
-const shoppingCandidateRegistry = createShoppingCandidateRegistry();
-const shoppingRecommendationRegistry = createShoppingRecommendationRegistry();
 const mcpSurface = resolveMcpSurface();
 const configuredPanelAgentName = String(process.env.CHROME_AGENT_BRIDGE_AGENT_NAME || "").trim().slice(0, 80);
 
@@ -69,17 +62,9 @@ function asError(error) {
   };
 }
 
-function advertisedToolConfig(name, config) {
-  const next = { ...config, description: advertisedDescription(config.description, mcpSurface) };
-  if (shouldSlimPanelSchema(name, mcpSurface) && config.inputSchema && typeof config.inputSchema === "object") {
-    next.inputSchema = Object.fromEntries(Object.keys(config.inputSchema).map((key) => [key, z.any()]));
-  }
-  return next;
-}
-
 function tool(name, config, handler) {
   if (!shouldRegisterMcpTool(name, mcpSurface)) return;
-  server.registerTool(name, advertisedToolConfig(name, config), async (input) => {
+  server.registerTool(name, { ...config, description: advertisedDescription(config.description, mcpSurface) }, async (input) => {
     try {
       return await handler(input);
     } catch (error) {
@@ -141,14 +126,31 @@ tool(
   async (input) => asText(await callBridge("tabs.close", input)),
 );
 
+// Shared by browser_navigate and browser_act; the extension applies the
+// defaults (extension/page-settle.js), so older callers are unaffected.
+const settleInputSchema = {
+  waitUntil: z
+    .enum(["none", "load", "settled"])
+    .optional()
+    .describe('When to return. "settled" (default): after the load completes and the DOM stays unchanged for 400 ms. "load": after the load completes. "none": immediately.'),
+  timeoutMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(20_000)
+    .optional()
+    .describe("Longest wait for the page to settle, default 10000. A timeout still succeeds, with settled:false and a reason."),
+};
+
 tool(
   "browser_navigate",
   {
     title: "Navigate Chrome tab",
-    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL. The extension enforces the side-panel browser-access mode and may hold this exact call for approval.",
+    description: "Navigate an existing tab to an HTTP, HTTPS, file, or about:blank URL and wait for the page to settle. The result reports settled, elapsedMs, and a reason when settled is false. The extension enforces the side-panel browser-access mode and may hold this exact call for approval.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       url: z.string().url().or(z.literal("about:blank")),
+      ...settleInputSchema,
     },
   },
   async (input) => asText(await callBridge("tabs.navigate", input)),
@@ -159,7 +161,7 @@ tool(
   {
     title: "Snapshot page",
     description:
-      "Read bounded visible page text plus semantic short-lived refs. The response includes snapshotId; pass it to shopping_page_evidence. Use a ref with browser_act, then take a fresh snapshot after every action.",
+      "Read bounded visible page text plus semantic short-lived refs. Use a ref with browser_act, then take a fresh snapshot after every action.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       maxChars: z.number().int().min(1_000).max(50_000).optional().default(8_000),
@@ -167,24 +169,21 @@ tool(
   },
   async (input) => {
     const result = await callBridge("page.snapshot", input);
-    const evidence_receipt = browserEvidenceRegistry.capture({
-      tab_id: input.tabId,
-      snapshot: result,
-      captured_at: result.captured_at || result.capturedAt || null,
-    });
     // Hermes consumes the text content. Repeating a large snapshot again as
-    // structuredContent can cross its spillover threshold, hiding snapshotId
-    // from the very next shopping evidence call and wasting recovery turns.
-    return asPanelText(compactPanelSnapshot({ ...result, evidence_receipt }, mcpSurface));
+    // structuredContent can cross its spillover threshold, hiding the refs the
+    // very next browser_act needs and wasting recovery turns.
+    return asPanelText(compactPanelSnapshot(result, mcpSurface));
   },
 );
+
+const SNAPSHOT_BATCH_MAX_CHARS = 120_000;
 
 tool(
   "browser_snapshot_batch",
   {
     title: "Snapshot several independent pages concurrently",
     description:
-      "Capture 1-8 distinct Chrome tabs concurrently and issue a signed browser evidence receipt for each successful snapshot. Use after opening independent evidence-domain pages; failures remain per-tab and do not discard successful captures. The total visible-text budget is bounded.",
+      "Capture 1-8 distinct Chrome tabs concurrently. Use after opening independent pages; failures remain per-tab and do not discard successful captures. The total visible-text budget is bounded.",
     inputSchema: {
       pages: z.array(z.object({
         tabId: z.number().int().nonnegative(),
@@ -193,15 +192,20 @@ tool(
     },
   },
   async (input) => {
-    const results = await captureBrowserSnapshotsBatch(input.pages, {
-      snapshot: (page) => callBridge("page.snapshot", page),
-      capture: (entry) => browserEvidenceRegistry.capture(entry),
-    });
-    return asPanelText({
-      results: results.map((entry) => entry.status === "complete"
-        ? { ...entry, snapshot: compactPanelSnapshot(entry.snapshot, mcpSurface) }
-        : entry),
-    });
+    if (new Set(input.pages.map((page) => page.tabId)).size !== input.pages.length) {
+      throw Object.assign(new Error("Browser snapshot batch cannot repeat a tab"), { code: "browser_snapshot_batch_invalid" });
+    }
+    if (input.pages.reduce((sum, page) => sum + page.maxChars, 0) > SNAPSHOT_BATCH_MAX_CHARS) {
+      throw Object.assign(new Error("Browser snapshot batch exceeds the total character budget"), { code: "browser_snapshot_batch_invalid" });
+    }
+    const results = await Promise.all(input.pages.map(async (page) => {
+      try {
+        return { tab_id: page.tabId, status: "complete", snapshot: compactPanelSnapshot(await callBridge("page.snapshot", page), mcpSurface) };
+      } catch (error) {
+        return { tab_id: page.tabId, status: "error", error: { code: error?.code || "bridge_error", message: error?.message || String(error) } };
+      }
+    }));
+    return asPanelText({ results });
   },
 );
 
@@ -230,12 +234,12 @@ tool(
   {
     title: "Act on page element",
     description:
-      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. The extension enforces the side-panel browser-access mode and may hold this exact call for approval. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls.",
+      "Perform one atomic high-level action. Prefer a ref from the latest browser_snapshot. The extension enforces the side-panel browser-access mode and may hold this exact call for approval. Clicks run a complete CDP mouse sequence inside one request; press supports common navigation keys; select is for native <select> controls. Afterwards it waits for any load the action started and for the DOM to settle; the result reports settled, navigated, and elapsedMs.",
     inputSchema: {
       tabId: z.number().int().nonnegative(),
       kind: z.enum(["click", "fill", "press", "select"]).optional(),
       action: z.enum(["click", "fill", "press", "select"]).optional().describe("Compatibility alias for kind."),
-      ref: z.string().regex(/^e\d+$/).optional().describe("Short-lived ref from the latest browser_snapshot on the same tab."),
+      ref: z.string().regex(/^(?:f[1-9]\d*)?e\d+$/).optional().describe("Short-lived ref from the latest browser_snapshot on the same tab. Elements inside iframes have frame-scoped refs such as f1e3."),
       selector: z.string().min(1).max(2_000).optional().describe("Compatibility fallback when no snapshot ref is available."),
       value: z.string().max(100_000).optional().describe("Required for fill; accepted as one value for select."),
       values: z.array(z.string().max(1_000)).min(1).max(100).optional().describe("Values or labels for native select."),
@@ -245,6 +249,7 @@ tool(
         .optional()
         .default(false)
         .describe("Set true only after explicit user confirmation for a potentially submitting click."),
+      ...settleInputSchema,
     },
   },
   async (input) => {
@@ -358,76 +363,22 @@ tool(
   {
     title: "Post a reply to the side panel",
     description:
-      "Post a reply into the extension's side panel chat. Research updates are attached automatically. For product recommendations, choose exact-page-hydrated candidate_ids from the short-lived candidate_set_id; Agent Bridge reconstructs cards with signed current item price, observed seller, and availability. Verified cards must match the exact candidate-offer evidence bound to the final dossier; changed or rehydrated cards fail closed, and concise available verified cost, delivery, return, protection, and risk details are appended automatically. Unhydrated candidates and model-authored product links are rejected. Source_snapshot_ids are only a no-surviving-product fallback and cannot carry a shortlist, price/stock, winner, or market-exclusivity claim.",
+      "Post a reply into the extension's side panel chat. Research updates are attached automatically. Optional links render as page cards under the reply; use pages you actually opened.",
     inputSchema: {
       text: z.string().min(1).max(20_000),
-      kind: z.enum(["products", "question", "none"]).describe("products = recommendations bound to a candidate set. question = one product-specific ask. none = no listing to show."),
-      shopping_phase: z.enum(["explore_category", "define_requirements", "research_products", "compare_offers", "decide_purchase"]).optional().describe("Main-reasoning-model judgment of the user's current shopping journey phase. Required for product cards. Early phases structurally reject cards and links."),
-      value_posture: z.enum(["minimum_viable", "best_value", "premium", "best_under_budget"]).optional().default("best_value").describe("Main-reasoning-model judgment of the user's universal value posture. Default best_value; a stated all-in cap uses best_under_budget."),
       agent: z.string().min(1).max(80).optional().describe("Identify as this agent before posting (first reply)."),
-      candidate_set_id: z.string().regex(/^cset_[a-f0-9]{24}$/).optional().describe("Short-lived set ID from shopping_listing_candidates. Required for products."),
-      candidate_ids: z.array(z.string().regex(/^listing_[a-f0-9]{16}$/)).min(1).max(5).optional().describe("Chosen IDs from that candidate set, in display order. Required for products."),
-      recommendation_state: z.enum(["provisional", "verified"]).optional().describe("Required for products. Provisional is visibly labeled; verified requires final dossier references."),
-      availability_requirement: z.enum(["in_stock_only", "allow_unknown"]).optional().default("in_stock_only").describe("Product cards default to explicit signed in-stock offers. Use allow_unknown only for a clearly labeled research lead, never an in-stock shortlist."),
-      recommendation_refs: z.array(z.object({ recommendation_id: z.string().regex(/^shopping_recommendation_[a-f0-9]{32}$/), dossier_id: z.string().min(1).max(160), phase: z.enum(["product_recommendation", "offer_recommendation"]), candidate_id: z.string().regex(/^listing_[a-f0-9]{16}$/) }).strict()).min(1).max(5).optional(),
-      source_snapshot_ids: z.array(z.string().min(1).max(160)).min(1).max(5).optional().describe("For question/none replies only: fresh snapshot IDs from pages actually opened. Agent Bridge reconstructs safe clickable source cards."),
       links: z.array(z.object({
         url: z.string().url(),
         title: z.string().max(200).optional(),
         image: z.string().url().optional().describe("Thumbnail image URL shown on the card."),
         price: z.string().max(40).optional(),
-      })).max(5).optional().describe("Optional non-product page cards. Rejected for kind=products."),
+      })).max(5).optional().describe("Optional page cards shown under the reply."),
     },
   },
   async (input) => {
-    if (input.kind === "products" && Array.isArray(input.links) && input.links.length > 0) {
-      let inferred;
-      try {
-        inferred = shoppingCandidateRegistry.matchHydratedLinks(input.links);
-      } catch {
-        return asText({ posted: false, error: "kind=products rejects model-authored links unless every URL exactly matches one current signed hydrated candidate set; pass candidate_set_id and candidate_ids." });
-      }
-      if (input.candidate_set_id != null && input.candidate_set_id !== inferred.candidate_set_id) {
-        return asText({ posted: false, error: "Product links conflict with candidate_set_id." });
-      }
-      if (Array.isArray(input.candidate_ids) && JSON.stringify(input.candidate_ids) !== JSON.stringify(inferred.candidate_ids)) {
-        return asText({ posted: false, error: "Product links conflict with candidate_ids." });
-      }
-      input = {
-        ...input,
-        ...inferred,
-        recommendation_state: input.recommendation_state ?? "provisional",
-        links: [],
-      };
-    }
-    const rejected = validatePanelPost(input);
-    if (rejected) return asText({ posted: false, error: rejected });
-    const verifiedSummaries = input.kind === "products" && input.recommendation_state === "verified"
-      ? input.candidate_ids.map((candidateId, index) => shoppingRecommendationRegistry.authorize(
-        input.recommendation_refs[index],
-        candidateId,
-        shoppingCandidateRegistry.binding(input.candidate_set_id, candidateId),
-      ))
-      : [];
     if (input.agent != null) await callBridge("panel.identify", { agent: input.agent });
-    const sourceLinks = input.kind === "products" ? [] : (input.source_snapshot_ids ?? []).map((snapshotId) => {
-      const { receipt } = browserEvidenceRegistry.resolve(snapshotId);
-      const url = new URL(receipt.url);
-      if (!["http:", "https:"].includes(url.protocol)) throw Object.assign(new Error("Source cards require a fresh HTTP(S) browser snapshot"), { code: "panel_source_snapshot_invalid" });
-      return { url: url.href, title: String(receipt.title || url.hostname).slice(0, 200) };
-    });
-    const links = input.kind === "products"
-      ? shoppingCandidateRegistry.cards(input.candidate_set_id, input.candidate_ids)
-      : [...sourceLinks, ...(input.links ?? [])].filter((link, index, all) => all.findIndex((item) => item.url === link.url) === index).slice(0, 5);
-    for (let index = 0; index < verifiedSummaries.length; index += 1) Object.assign(links[index], shoppingRecommendationCardDetails(verifiedSummaries[index]));
-    const claimRejected = input.kind === "products" ? validatePanelProductClaims({ text: input.text, links, recommendation_state: input.recommendation_state, availability_requirement: input.availability_requirement }) : null;
-    if (claimRejected) return asText({ posted: false, error: claimRejected });
-    if (verifiedSummaries.length && links.length < 5) links.push(...shoppingRecommendationEvidenceCards(verifiedSummaries, 5 - links.length));
-    let text = input.kind === "products" && input.recommendation_state === "provisional" && !/^provisional results\b/i.test(input.text)
-      ? `Provisional results — ${input.text}`
-      : input.text;
-    if (verifiedSummaries.length) text = appendShoppingRecommendationSummary(text, verifiedSummaries);
-    return asText(await callBridge("panel.post", { text, links }));
+    const links = (input.links ?? []).filter((link, index, all) => all.findIndex((item) => item.url === link.url) === index);
+    return asText(await callBridge("panel.post", { text: input.text, links }));
   },
 );
 
@@ -561,22 +512,6 @@ tool(
 
 registerLocalAnalysisTools({ tool, asText });
 registerCdpAnalysisTools({ tool, asText });
-registerShoppingTools({
-  tool,
-  asText,
-  resolveBrowserSnapshot: (snapshotId, options) => browserEvidenceRegistry.resolve(snapshotId, options),
-  storeListingCandidateSet: (artifact) => shoppingCandidateRegistry.store(artifact),
-  resolveListingCandidateSet: (candidateSetId) => shoppingCandidateRegistry.resolve(candidateSetId),
-  hydrateListingCandidateSet: (artifact) => shoppingCandidateRegistry.hydrate(artifact),
-  bindShoppingRecommendationOffers: (contextId, artifact) => shoppingRecommendationRegistry.bindCandidateOffers(contextId, artifact),
-  storeShoppingRecommendation: (dossier, stages) => shoppingRecommendationRegistry.store(dossier, stages),
-  resolvePanelRequest: async (requestId) => {
-    const panel = await callBridge("panel.get");
-    const matches = (panel?.transcript || []).filter((entry) => entry?.role === "user" && entry?.id === requestId);
-    if (matches.length !== 1) throw Object.assign(new Error("User request ID does not resolve to exactly one current panel message"), { code: "shopping_request_not_found" });
-    return { request_id: requestId, request_revision: 1, text: matches[0].text, captured_at: matches[0].at };
-  },
-});
 
 await server.connect(new StdioServerTransport());
 if (configuredPanelAgentName) {

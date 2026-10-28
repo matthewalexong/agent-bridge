@@ -10,7 +10,6 @@ Agent Bridge lets compatible local AI harnesses and MCP agents work through the 
 - Sanitized request lifecycle monitoring.
 - Explicit tab-scoped Raw Chrome DevTools Protocol sessions for advanced work.
 - Bounded local JavaScript, binary, protocol, source-map, and WebAssembly analysis.
-- Evidence-driven shopping as the first mature domain capability and evaluation suite.
 
 ## Developer-beta limitations
 

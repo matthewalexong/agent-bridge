@@ -6,9 +6,7 @@ This repository's contributors have extended and repositioned that foundation as
 
 - a harness-connected Chrome side panel with durable, resumable sessions;
 - clearer activity, session naming, history, and recovery behavior;
-- general browser-control and analysis integrations;
-- an evidence-driven shopping capability used as the first reference workflow;
-- shopping research, price and availability evidence, value-tier, merchant-trust, counterfeit-risk, and evaluation systems; and
+- general browser-control and analysis integrations; and
 - additional tests, policies, documentation, and token-efficiency work.
 
 The modified project is maintained independently. References to the upstream project identify its origin and do not imply endorsement of this fork.

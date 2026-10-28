@@ -23,6 +23,14 @@ test("release ZIP contains only the load-unpacked extension at archive root", as
   const entries = listing.trim().split("\n").sort();
   assert.equal(entries.includes("manifest.json"), true);
   assert.equal(entries.includes("service-worker.js"), true);
+  assert.equal(entries.includes("page-settle.js"), true);
+  assert.equal(entries.includes("page-frames.js"), true);
+  assert.equal(entries.includes("frame-scripts.js"), true);
+  // The worker is an ES module: every file it imports must ship with it.
+  const worker = await fs.readFile(path.join(root, "extension/service-worker.js"), "utf8");
+  for (const [, imported] of worker.matchAll(/^import\s[^;]*?from\s+"\.\/([^"]+)";/gm)) {
+    assert.equal(entries.includes(imported), true, `${imported} is imported by the service worker but not packaged`);
+  }
   assert.equal(entries.includes("popup.html"), true);
   assert.equal(entries.includes("panel.html"), true);
   assert.equal(entries.includes("panel.css"), true);
