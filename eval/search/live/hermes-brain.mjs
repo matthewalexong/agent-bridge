@@ -42,7 +42,7 @@ async function publishProgress({ phase, summary, evidence = [], next = null }) {
 
 function loadSkill() {
   const path = process.env.AB_SKILL_FILE
-    || join(__dirname, "../skills/panel-chat-skill-v3.md");
+    || join(__dirname, "../skills/panel-chat-skill-v2.md");
   try {
     return readFileSync(path, "utf8");
   } catch {
@@ -90,8 +90,6 @@ async function main() {
 
   const skill = loadSkill();
   const transcript = parseTranscript();
-  const messageId = String(process.env.AB_MESSAGE_ID || "").trim();
-  const messageRevision = String(process.env.AB_MESSAGE_REVISION || "1").trim();
   const searches = []; // log of {query, results}
   const evidenceCache = new Map();
 
@@ -109,8 +107,7 @@ async function main() {
 
   // System prompt: skill + tool protocol
   const system = [
-    skill || "You are a helpful shopping assistant.",
-    ...(messageId ? ["", "## TRUSTED CURRENT REQUEST IDENTITY", `request_id: ${messageId}`, `request_revision: ${messageRevision}`, "Use these runtime-provided values for any shopping decision context; never invent replacements."] : []),
+    skill || "You are a helpful research assistant.",
     "",
     "## OUTPUT PROTOCOL",
     "You have a search tool. To use it, reply with EXACTLY:",

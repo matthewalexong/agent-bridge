@@ -9,7 +9,7 @@ import {
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
-import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
+import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/panel-webhook.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
 import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";

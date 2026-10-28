@@ -20,7 +20,7 @@ test("contributor onboarding preserves the harness-neutral architecture", async 
   assert.match(contributing, /harness owns the main reasoning model/i);
   assert.match(contributing, /optional optimizations rather than architectural dependencies/i);
   assert.match(architecture, /The harness is the main brain\./);
-  assert.match(architecture, /Shopping is the first mature example\./);
+  assert.match(architecture, /Domain logic lives in harness skills, not in this repository\./);
   assert.match(architecture, /snapshot → one atomic action → new snapshot/);
   assert.match(access, /cannot approve their own browser requests/i);
   assert.match(access, /Approve once.*only that waiting call/s);

@@ -24,7 +24,7 @@ const forbiddenFiles = [
   /(^|\/)(?:id_rsa|id_ed25519)$/,
 ];
 
-const allowedAbsolutePathFixtures = new Set(["test/shopping-model.test.mjs"]);
+const allowedAbsolutePathFixtures = new Set();
 
 export function scanText(file, text) {
   const findings = [];

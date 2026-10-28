@@ -21,7 +21,7 @@ The core platform provides:
 
 The user approves the unpacked extension once in Chrome. Local Agents then authenticate with a long-lived token stored under `~/.chrome-agent-bridge/`. ChatGPT OAuth and the official ChatGPT Chrome extension are not required.
 
-Agent Bridge is domain-neutral: its browser connection, session layer, and tools can support research, development, operations, and other browser-based workflows. Evidence-driven shopping is the first flagship capability and reference implementation, not the boundary of the platform. Its shopping workflow helps a harness clarify an ambiguous request, map the market before recommending individual products, compare value tiers, verify current price and availability, and assess merchant and counterfeit risk.
+Agent Bridge is domain-neutral: its browser connection, session layer, and tools can support research, development, operations, and other browser-based workflows. Domain logic, such as a shopping workflow, belongs in harness skills; the bridge itself stays a general browser-navigation layer.
 
 This MIT-licensed project is derived from [Chrome Agent Bridge](https://github.com/escapeWu/chrome-agent-bridge). Original attribution and the boundary between upstream work and this project's modifications are documented in [NOTICE.md](./NOTICE.md). The browser capability implementation does not contain or redistribute OpenAI's proprietary Chrome extension, browser client, native host, or authentication code.
 

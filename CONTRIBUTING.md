@@ -11,7 +11,7 @@ The core architecture is deliberately neutral:
 - The connected harness owns the main reasoning model and durable conversation context.
 - The extension stores only the active view/session reference needed by the open side panel, not a hidden copy of the conversation.
 - Local or inexpensive models may assist with narrow, low-risk tasks, but they are optional optimizations rather than architectural dependencies.
-- Shopping is the first mature reference capability, not a restriction on the platform.
+- Domain logic, such as a shopping workflow, belongs in harness skills rather than in the bridge.
 
 Read [the architecture guide](./docs/architecture.md) before changing component boundaries, authentication, session ownership, browser permissions, or the Raw CDP surface. Browser-action changes must preserve the [access-control contract](./docs/browser-access-controls.md), and harness integrations must follow the [session adapter contract](./docs/harness-session-adapters.md).
 
@@ -20,7 +20,7 @@ Read [the architecture guide](./docs/architecture.md) before changing component 
 - **Browser control:** semantic snapshots, atomic actions, tabs, screenshots, lifecycle events, and sanitized network monitoring.
 - **Harness integration:** MCP registration, paired Agent Skills, side-panel identity, progress, and harness-owned session adapters.
 - **Analysis:** bounded local analyzers or explicit Raw CDP workflows with reliable cleanup.
-- **Domain capability:** evidence and evaluation layers built above the neutral browser bridge. Shopping is the current reference implementation.
+- **Domain capability:** evidence and evaluation layers built above the neutral browser bridge.
 - **Contributor experience:** installation, documentation, testing, accessibility, issue triage, and release tooling.
 
 For a substantial behavior change, open a feature request before investing in a large implementation. Small fixes, tests, and documentation corrections can go directly to a pull request.
