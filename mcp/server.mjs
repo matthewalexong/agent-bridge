@@ -239,7 +239,7 @@ tool(
       tabId: z.number().int().nonnegative(),
       kind: z.enum(["click", "fill", "press", "select"]).optional(),
       action: z.enum(["click", "fill", "press", "select"]).optional().describe("Compatibility alias for kind."),
-      ref: z.string().regex(/^e\d+$/).optional().describe("Short-lived ref from the latest browser_snapshot on the same tab."),
+      ref: z.string().regex(/^(?:f[1-9]\d*)?e\d+$/).optional().describe("Short-lived ref from the latest browser_snapshot on the same tab. Elements inside iframes have frame-scoped refs such as f1e3."),
       selector: z.string().min(1).max(2_000).optional().describe("Compatibility fallback when no snapshot ref is available."),
       value: z.string().max(100_000).optional().describe("Required for fill; accepted as one value for select."),
       values: z.array(z.string().max(1_000)).min(1).max(100).optional().describe("Values or labels for native select."),

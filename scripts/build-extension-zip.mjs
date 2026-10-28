@@ -21,6 +21,8 @@ const allowedFiles = [
   "manifest.json",
   "service-worker.js",
   "page-settle.js",
+  "page-frames.js",
+  "frame-scripts.js",
   "popup.html",
   "popup.css",
   "popup.js",
