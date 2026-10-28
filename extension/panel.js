@@ -81,6 +81,7 @@ function renderEntry(doc, transcript, entry) {
   body.textContent = entry.text;
   bubble.append(who, body);
   appendResearchTrail(doc, bubble, entry.research);
+  if (entry.role === "agent" && entry.question && Array.isArray(entry.question.questions)) appendQuestionCard(doc, bubble, entry.question);
   // Link cards (agent-cited products/pages). URLs are already protocol-
   // filtered to http(s) by the service worker; we still build everything
   // with DOM APIs so no markup can be injected.
@@ -233,6 +234,73 @@ function renderEntry(doc, transcript, entry) {
   transcript.append(bubble);
 }
 
+function appendQuestionCard(doc, bubble, interaction) {
+  const card = doc.createElement("div");
+  card.className = "question-card";
+  const answers = interaction.questions.map(() => ({ selected: [], custom: "" }));
+  let submit;
+  for (const [index, question] of interaction.questions.entries()) {
+    const section = doc.createElement("fieldset");
+    const legend = doc.createElement("legend");
+    legend.textContent = `${index + 1}. ${question.header || "Question"}`;
+    section.append(legend);
+    const prompt = doc.createElement("p");
+    prompt.className = "question-prompt";
+    prompt.textContent = question.question || "";
+    section.append(prompt);
+    const update = () => { if (submit) submit.disabled = !answers.some((answer) => answer.selected.length || answer.custom); };
+    for (const option of Array.isArray(question.options) ? question.options : []) {
+      const label = doc.createElement("label");
+      label.className = "question-option";
+      const input = doc.createElement("input");
+      input.type = question.multiSelect ? "checkbox" : "radio";
+      input.name = `question-${interaction.rpcId}-${question.id}`;
+      input.value = option.label;
+      input.addEventListener("change", () => {
+        answers[index].selected = question.multiSelect
+          ? [...section.querySelectorAll("input:checked")].map((node) => node.value)
+          : [input.value];
+        if (!question.multiSelect && answers[index].selected.length) {
+          answers[index].custom = "";
+          custom.value = "";
+        }
+        update();
+      });
+      const copy = doc.createElement("span");
+      copy.textContent = option.label;
+      label.append(input, copy);
+      if (option.description) { const description = doc.createElement("small"); description.textContent = option.description; label.append(description); }
+      section.append(label);
+    }
+    const custom = doc.createElement("textarea");
+    custom.rows = 2;
+    custom.placeholder = "Type your answer";
+    custom.addEventListener("input", () => {
+      answers[index].custom = custom.value.trim();
+      if (!question.multiSelect && answers[index].custom) {
+        answers[index].selected = [];
+        section.querySelectorAll("input:checked").forEach((node) => { node.checked = false; });
+      }
+      update();
+    });
+    section.append(custom);
+    card.append(section);
+  }
+  submit = doc.createElement("button");
+  submit.type = "button";
+  submit.className = "question-submit primary";
+  submit.textContent = "Continue";
+  submit.disabled = true;
+  submit.addEventListener("click", async () => {
+    submit.disabled = true;
+    try {
+      await send({ type: "panel.question.answer", answers: interaction.questions.map((question, index) => ({ id: question.id, selected: answers[index].selected, ...(answers[index].custom ? { custom: answers[index].custom } : {}) })) });
+    } catch { submit.disabled = false; }
+  });
+  card.append(submit);
+  bubble.append(card);
+}
+
 function renderAll(doc, transcript, entries) {
   transcript.querySelectorAll(".msg").forEach((node) => node.remove());
   const empty = doc.querySelector("#empty");
@@ -341,8 +409,157 @@ function setThinking(doc, transcript, status, progress = []) {
   }
 }
 
+const TOKEN_PREFIX_LENGTH = 8;
+const TOKEN_SUFFIX_LENGTH = 6;
+
+export function maskToken(token) {
+  if (typeof token !== "string" || token.length < TOKEN_PREFIX_LENGTH + TOKEN_SUFFIX_LENGTH) {
+    return "Unavailable";
+  }
+  return `${token.slice(0, TOKEN_PREFIX_LENGTH)}••••••••••••••••${token.slice(-TOKEN_SUFFIX_LENGTH)}`;
+}
+
+function formatTimestamp(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? "Unknown" : date.toLocaleString();
+}
+
+/**
+ * Settings menu (⋮) in the panel header. Holds the local authentication
+ * token controls ported from the retired toolbar popup: masked display,
+ * reveal toggle, copy, and a two-step renew (the previous token is
+ * invalidated immediately, so the first click only arms confirmation).
+ */
+function startTokenMenu(doc, clipboard = navigator.clipboard) {
+  const toggle = doc.querySelector("#menu-toggle");
+  const popover = doc.querySelector("#menu-popover");
+  const tokenElement = doc.querySelector("#token");
+  const rotated = doc.querySelector("#token-rotated");
+  const notice = doc.querySelector("#token-notice");
+  const showHide = doc.querySelector("#toggle-token");
+  const copy = doc.querySelector("#copy-token");
+  const renew = doc.querySelector("#renew-token");
+
+  let token = null;
+  let revealed = false;
+  let renewArmed = false;
+  let renewTimer = null;
+
+  function renderToken() {
+    tokenElement.textContent = token ? (revealed ? token : maskToken(token)) : "Unavailable";
+    showHide.textContent = revealed ? "Hide" : "Show";
+  }
+
+  function setEnabled(on) {
+    showHide.disabled = !on;
+    copy.disabled = !on;
+    renew.disabled = !on;
+  }
+
+  function refresh(result) {
+    token = result?.token ?? null;
+    revealed = false;
+    setEnabled(token !== null);
+    rotated.textContent = result?.rotatedAt
+      ? `Last renewed: ${formatTimestamp(result.rotatedAt)}`
+      : "The token stays valid until you renew it.";
+    renderToken();
+  }
+
+  function fail(error) {
+    token = null;
+    setEnabled(false);
+    notice.textContent = error instanceof Error ? error.message : String(error);
+    renderToken();
+  }
+
+  function clearToken() {
+    token = null;
+    revealed = false;
+    setEnabled(false);
+    renderToken();
+  }
+
+  function closeMenu({ restoreFocus = false } = {}) {
+    popover.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+    clearTimeout(renewTimer);
+    renewArmed = false;
+    renew.textContent = "Renew";
+    renew.classList.remove("confirm");
+    clearToken();
+    if (restoreFocus) toggle.focus();
+  }
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!popover.hidden) {
+      closeMenu();
+      return;
+    }
+    popover.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+    // Fresh state on every open; the bridge may have rotated the token since.
+    send({ type: "auth.get" }).then((result) => {
+      refresh(result);
+      showHide.focus();
+    }, fail);
+  });
+  doc.addEventListener("click", (event) => {
+    if (!popover.hidden && !popover.contains(event.target) && event.target !== toggle) closeMenu();
+  });
+  doc.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !popover.hidden) closeMenu({ restoreFocus: true });
+  });
+
+  showHide.addEventListener("click", () => {
+    revealed = !revealed;
+    renderToken();
+  });
+
+  copy.addEventListener("click", async () => {
+    if (!token) return;
+    try {
+      await clipboard.writeText(token);
+      notice.textContent = "Token copied. Do not paste it into untrusted pages or chats.";
+    } catch (error) {
+      notice.textContent = error instanceof Error ? error.message : "Could not copy token";
+    }
+  });
+
+  renew.addEventListener("click", async () => {
+    if (!renewArmed) {
+      renewArmed = true;
+      renew.textContent = "Confirm renew";
+      renew.classList.add("confirm");
+      notice.textContent = "Renewing immediately invalidates the previous token.";
+      renewTimer = setTimeout(() => {
+        renewArmed = false;
+        renew.textContent = "Renew";
+        renew.classList.remove("confirm");
+      }, 10_000);
+      return;
+    }
+    clearTimeout(renewTimer);
+    renewArmed = false;
+    renew.disabled = true;
+    renew.textContent = "Renewing…";
+    try {
+      refresh(await send({ type: "auth.renew" }));
+      notice.textContent = "Token renewed. The previous token is no longer valid.";
+    } catch (error) {
+      fail(error);
+    } finally {
+      renew.textContent = "Renew";
+      renew.classList.remove("confirm");
+    }
+  });
+
+  return { fail, closeMenu };
+}
+
 export function startPanel(doc = document) {
-  // This long-lived port scopes Hermes context to this side-panel document.
+  // This long-lived port scopes the active harness context to this side-panel document.
   // Disconnect means the panel closed; the service worker allows a short
   // reconnect grace period so an ordinary document reload keeps its session.
   const lifecyclePort = chrome.runtime.connect({ name: "agent-bridge-panel-lifecycle" });
@@ -372,6 +589,7 @@ export function startPanel(doc = document) {
   let connected = false;
   let agentName = null;
   let harnessName = null;
+  const tokenMenu = startTokenMenu(doc);
 
   function setStatus() {
     if (!connected) {
@@ -560,16 +778,17 @@ export function startPanel(doc = document) {
     })
     .catch(() => {});
   void send({ type: "panel.sessions.refresh" });
-  send({ type: "auth.get" })
+  send({ type: "auth.status" })
     .then(() => {
       connected = true;
       setStatus();
       sendButton.disabled = false;
     })
-    .catch(() => {
+    .catch((error) => {
       connected = false;
       setStatus();
       sendButton.disabled = true;
+      tokenMenu.fail(error);
     });
   input.focus();
 }

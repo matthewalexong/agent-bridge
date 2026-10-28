@@ -54,11 +54,13 @@ let panelSessionAdapter = null;
 const BROWSER_ACCESS_MODES = new Set(["observe", "ask", "routine"]);
 const BROWSER_ACCESS_SCOPES = new Set(["tab", "site", "browser"]);
 const BROWSER_APPROVAL_TTL_MS = 24_000;
+const BROWSER_APPROVAL_NOTIFICATION_PREFIX = "agent-bridge-browser-approval:";
 const ROUTINE_BROWSER_ACTIONS = new Set(["tabs.create", "tabs.close", "tabs.activate", "tabs.navigate", "page.click", "page.fill", "page.act"]);
 const SENSITIVE_BROWSER_ACTIONS = new Set(["network.start", "raw.attach"]);
 let browserAccess = defaultBrowserAccess();
 const pendingBrowserApprovals = new Map();
 const HARNESS_SESSION_CAPABILITIES = new Set([
+  "sessions.create:v1",
   "sessions.list:v1",
   "sessions.load-display-transcript:v1",
   "sessions.resume:v1",
@@ -106,10 +108,105 @@ function resetBrowserAccess() {
   rejectPendingBrowserApprovals("browser_permission_cancelled", "Pending browser actions were cancelled because the permission session ended.");
 }
 
+function approvalNotificationId(requestId) {
+  return `${BROWSER_APPROVAL_NOTIFICATION_PREFIX}${requestId}`;
+}
+
+function settlePromise(promise) {
+  if (promise && typeof promise.catch === "function") promise.catch(() => {});
+}
+
+function refreshApprovalIndicators() {
+  const count = pendingBrowserApprovals.size;
+  const badgeText = count === 0 ? "" : count > 9 ? "9+" : String(count);
+  try {
+    settlePromise(chrome.action?.setBadgeText?.({ text: badgeText }));
+    settlePromise(chrome.action?.setBadgeBackgroundColor?.({ color: "#c62828" }));
+    settlePromise(chrome.action?.setTitle?.({
+      title: count === 0
+        ? "Open Agent Bridge"
+        : `${count} browser approval${count === 1 ? "" : "s"} waiting`,
+    }));
+  } catch {
+    // Older Chrome builds and test harnesses may not expose badge APIs.
+  }
+}
+
+function clearApprovalNotification(requestId) {
+  try {
+    settlePromise(chrome.notifications?.clear?.(approvalNotificationId(requestId)));
+  } catch {
+    // Notifications are best-effort; the approval state remains authoritative.
+  }
+}
+
+function showApprovalNotification(request) {
+  refreshApprovalIndicators();
+  try {
+    const create = chrome.notifications?.create;
+    if (typeof create !== "function") return;
+    const notification = create(approvalNotificationId(request.id), {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title: "Agent Bridge approval needed",
+      message: `${request.summary} — open Agent Bridge to approve or deny.`,
+      priority: 2,
+      requireInteraction: true,
+    });
+    // A very fast approval can race notification creation. If the request has
+    // already settled by the time Chrome creates it, remove the stale card.
+    if (notification && typeof notification.then === "function") {
+      notification.then(() => {
+        if (!pendingBrowserApprovals.has(request.id)) clearApprovalNotification(request.id);
+      }).catch(() => {});
+    }
+  } catch {
+    // The toolbar badge still surfaces the request when OS notifications are
+    // disabled or unavailable.
+  }
+}
+
+async function openApprovalPanel(request) {
+  let windowId = request?.windowId;
+  if (!Number.isInteger(windowId)) {
+    try {
+      const tabs = typeof chrome.tabs?.query === "function"
+        ? await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+        : [];
+      const [activeTab] = tabs;
+      windowId = Number.isInteger(activeTab?.windowId) ? activeTab.windowId : null;
+    } catch {
+      windowId = null;
+    }
+  }
+  if (!Number.isInteger(windowId)) return;
+  try {
+    if (typeof chrome.windows?.update === "function") await chrome.windows.update(windowId, { focused: true });
+  } catch {
+    // Focusing is best-effort; opening the panel may still succeed.
+  }
+  try {
+    if (typeof chrome.sidePanel?.open === "function") await chrome.sidePanel.open({ windowId });
+  } catch {
+    // The badge and notification remain available if this Chrome build cannot
+    // open a side panel from a notification click.
+  }
+}
+
+async function handleApprovalNotificationClick(notificationId) {
+  if (typeof notificationId !== "string" || !notificationId.startsWith(BROWSER_APPROVAL_NOTIFICATION_PREFIX)) return;
+  const requestId = notificationId.slice(BROWSER_APPROVAL_NOTIFICATION_PREFIX.length);
+  const request = pendingBrowserApprovals.get(requestId);
+  clearApprovalNotification(requestId);
+  if (request) await openApprovalPanel(request);
+}
+
 function expireBrowserApproval(id, request) {
   if (pendingBrowserApprovals.get(id) !== request) return;
   pendingBrowserApprovals.delete(id);
   clearTimeout(request.timer);
+  clearApprovalNotification(id);
+  refreshApprovalIndicators();
   request.reject(codedError("browser_permission_timeout", "Browser approval timed out. Request the action again if it is still needed."));
 }
 
@@ -117,8 +214,10 @@ function rejectPendingBrowserApprovals(code, message) {
   for (const [id, request] of pendingBrowserApprovals) {
     pendingBrowserApprovals.delete(id);
     clearTimeout(request.timer);
+    clearApprovalNotification(id);
     request.reject(codedError(code, message));
   }
+  refreshApprovalIndicators();
 }
 
 function clearPanelStatusExpiry() {
@@ -133,13 +232,8 @@ function schedulePanelStatusExpiry(status) {
   panelStatusExpiryTimer = setTimeout(() => {
     panelStatusExpiryTimer = null;
     if (panelStatus?.at !== marker) return;
-    recordPanelEntry(
-      "agent",
-      "Research paused because no update arrived for five minutes. Send “keep going” if you want me to continue the search.",
-      [],
-      panelProgress,
-    );
-    panelProgress = [];
+    // Silence a stale activity indicator without claiming that the harness
+    // stopped. A slow or temporarily quiet turn may still deliver a reply.
     panelStatus = null;
     broadcastPanel();
   }, PANEL_STATUS_STALE_MS);
@@ -240,15 +334,34 @@ function safeDisplayUrl(value) {
 async function actionContext(method, params) {
   const tabId = Number.isInteger(params?.tabId) ? params.tabId : null;
   let origin = null;
-  if (method === "tabs.create" || method === "tabs.navigate") {
+  let windowId = null;
+  if (method === "tabs.create") {
     try { origin = new URL(String(params?.url)).origin; } catch {}
+  } else if (method === "tabs.navigate") {
+    try { origin = new URL(String(params?.url)).origin; } catch {}
+    if (tabId != null) {
+      try {
+        const tab = await chrome.tabs.get(tabId);
+        windowId = Number.isInteger(tab.windowId) ? tab.windowId : null;
+      } catch {}
+    }
   } else if (tabId != null) {
     try {
       const tab = await chrome.tabs.get(tabId);
       origin = new URL(tab.url).origin;
+      windowId = Number.isInteger(tab.windowId) ? tab.windowId : null;
     } catch {}
   }
-  return { tabId, origin };
+  if (windowId == null) {
+    try {
+      const tabs = typeof chrome.tabs?.query === "function"
+        ? await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+        : [];
+      const [activeTab] = tabs;
+      windowId = Number.isInteger(activeTab?.windowId) ? activeTab.windowId : null;
+    } catch {}
+  }
+  return { tabId, origin, windowId };
 }
 
 function routineScopeAllows(context) {
@@ -274,6 +387,7 @@ function requestBrowserApproval(method, params, context, risk, fingerprint) {
     summary: actionLabel(method, params),
     risk,
     tabId: context.tabId,
+    windowId: context.windowId,
     origin: context.origin,
     createdAt: new Date(now).toISOString(),
     expiresAt: new Date(now + BROWSER_APPROVAL_TTL_MS).toISOString(),
@@ -287,6 +401,7 @@ function requestBrowserApproval(method, params, context, risk, fingerprint) {
     broadcastPanel();
   }, BROWSER_APPROVAL_TTL_MS);
   pendingBrowserApprovals.set(request.id, request);
+  showApprovalNotification(request);
   broadcastPanel();
   return wait;
 }
@@ -331,6 +446,8 @@ function resolveBrowserApproval(rawRequestId, decision) {
   if (!request) throw codedError("approval_not_found", "That browser-action request is no longer pending.");
   pendingBrowserApprovals.delete(requestId);
   clearTimeout(request.timer);
+  clearApprovalNotification(request.id);
+  refreshApprovalIndicators();
   if (decision === "approve") request.resolve();
   else request.reject(codedError("browser_permission_denied", "The user denied this browser action in the Agent Bridge side panel."));
   emitBrowserEvent("panel.permission.resolved", { requestId, decision, method: request.method, risk: request.risk });
@@ -457,13 +574,14 @@ function requestPanelSessionList(requestId) {
 
 const conversationMemory = { id: null, started: false, harnessSession: false };
 const REQUIRED_HARNESS_SESSION_CAPABILITIES = [
+  "sessions.create:v1",
   "sessions.list:v1",
   "sessions.load-display-transcript:v1",
   "sessions.resume:v1",
   "sessions.title-from-prompt:v1",
 ];
 const UNSUPPORTED_HARNESS_SESSION_ADAPTER = Object.freeze({
-  contractVersion: 1,
+  contractVersion: 2,
   id: "unsupported-adapter",
   displayName: "Unsupported harness adapter",
   capabilities: [],
@@ -562,17 +680,17 @@ function sanitizeHarnessSessionAdapter(value) {
   // descriptor is different: retain a capability-free sentinel so controls
   // fail closed instead of granting legacy compatibility.
   if (value == null) return null;
-  if (value.contractVersion !== 1 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id || "")) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
+  if (value.contractVersion !== 2 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.id || "")) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
   const displayName = typeof value.displayName === "string" ? value.displayName.trim().slice(0, 80) : "";
   if (!displayName || !Array.isArray(value.capabilities)) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
   const capabilities = [...new Set(value.capabilities.filter((capability) => HARNESS_SESSION_CAPABILITIES.has(capability)))].sort();
   if (!REQUIRED_HARNESS_SESSION_CAPABILITIES.every((capability) => capabilities.includes(capability))) return UNSUPPORTED_HARNESS_SESSION_ADAPTER;
-  return { contractVersion: 1, id: value.id, displayName, capabilities };
+  return { contractVersion: 2, id: value.id, displayName, capabilities };
 }
 
 function supportsHarnessSessionCapability(capability) {
-  // A missing descriptor means an older compatible native host. Once a v1
-  // descriptor arrives, unsupported controls fail closed and disappear.
+  // A missing descriptor means an older compatible native host. Once a
+  // versioned descriptor arrives, unsupported controls fail closed and disappear.
   return panelSessionAdapter == null || panelSessionAdapter.capabilities.includes(capability);
 }
 
@@ -631,6 +749,20 @@ function recordPanelEntry(role, text, links, research) {
     panelTranscript.splice(0, panelTranscript.length - PANEL_MAX_ENTRIES);
   }
   return entry;
+}
+
+async function submitPanelQuestion(rawAnswers) {
+  const answers = Array.isArray(rawAnswers) ? rawAnswers : [];
+  if (!answers.length) throw codedError("invalid_request", "Choose an answer before continuing.");
+  const summary = answers.map((answer) => [...(answer.selected || []), answer.custom].filter(Boolean).join(", ")).filter(Boolean).join(" · ");
+  panelProgress = [];
+  setPanelStatus({ text: "Working…", phase: "working", persist: false });
+  const text = summary || "Answered the Harness questions.";
+  const entry = recordPanelEntry("user", text);
+  const turn = await nextConversationTurn();
+  emitBrowserEvent("panel.message", { role: "user", text, questionAnswer: answers, messageId: entry.id, conversationId: turn.conversationId, resume: turn.resume, harnessSession: turn.harnessSession });
+  broadcastPanel();
+  return { entry, conversationId: turn.conversationId };
 }
 
 async function submitPanelMessage(rawText) {
@@ -708,6 +840,11 @@ function broadcastPanel() {
   } catch {
     // No listeners attached (panel closed); benign.
   }
+}
+
+function clearPanelAgent() {
+  panelAgent = null;
+  broadcastPanel();
 }
 
 function setPanelAgent(name) {
@@ -2142,7 +2279,14 @@ async function dispatch(method, params) {
       return panelState();
     case "panel.send":
       return submitPanelMessage(params.text);
+    case "panel.question.answer":
+      return submitPanelQuestion(params.answers);
     case "panel.identify":
+      // The native host sends null when no harness is attached, which clears the label.
+      if (params.agent == null || params.agent === "") {
+        clearPanelAgent();
+        return { identified: false, agent: null };
+      }
       return { identified: true, agent: setPanelAgent(params.agent) };
     case "panel.status":
       return { status: setPanelStatus(params), progress: panelProgress };
@@ -2161,6 +2305,7 @@ async function dispatch(method, params) {
       if (!session.id) return { started: false };
       panelSessions = [session, ...panelSessions.filter((candidate) => candidate.id !== session.id)].slice(0, 30);
       panelSessionSelection = session.id;
+      await writeStoredConversation(session.id, true, true);
       broadcastPanel();
       return { started: true, sessionId: session.id };
     }
@@ -2205,6 +2350,7 @@ async function dispatch(method, params) {
       const text = panelText(params.text);
       const links = sanitizePanelLinks(params.links);
       const entry = recordPanelEntry("agent", text, links, panelProgress);
+      if (params.question && typeof params.question === "object") entry.question = params.question;
       panelProgress = [];
       panelStatus = null;
       clearPanelStatusExpiry();
@@ -2218,12 +2364,30 @@ async function dispatch(method, params) {
 
 chrome.runtime.onInstalled.addListener(connect);
 chrome.runtime.onStartup.addListener(connect);
-chrome.action.onClicked.addListener(connect);
+// Toolbar click opens the side panel directly (no intermediate popup). The
+// optional-chain guards keep older cached service workers and test harnesses
+// that stub `action.onClicked` without a sidePanel API from throwing.
+chrome.action.onClicked.addListener((tab) => {
+  connect();
+  const windowId = tab?.windowId;
+  if (windowId === undefined) return;
+  try {
+    void Promise.resolve(chrome.sidePanel?.open?.({ windowId })).catch(() => {});
+  } catch {
+    // sidePanel.open rejected the gesture (unsupported build); the panel
+    // remains reachable from Chrome's toolbar menu.
+  }
+});
+chrome.notifications?.onClicked?.addListener((notificationId) => {
+  void handleApprovalNotificationClick(notificationId);
+});
 chrome.runtime.onConnect?.addListener(registerPanelLifecyclePort);
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;
-  const action = message?.type === "auth.get"
-    ? "get"
+  const action = message?.type === "auth.status"
+    ? "status"
+    : message?.type === "auth.get"
+      ? "get"
     : message?.type === "auth.renew"
       ? "renew"
       : null;
@@ -2261,6 +2425,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "panel.permission.pause") {
     sendResponse({ ok: true, result: setBrowserAccessPaused(message.paused) });
     return false;
+  }
+  if (message?.type === "panel.question.answer") {
+    void submitPanelQuestion(message.answers).then(
+      (result) => sendResponse({ ok: true, result }),
+      (error) => sendResponse({ ok: false, error: errorPayload(error) }),
+    );
+    return true;
   }
   if (message?.type === "panel.session.select") {
     void selectHarnessSession(message.sessionId).then(

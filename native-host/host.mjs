@@ -1,19 +1,24 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
+import { appendFileSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import http from "node:http";
+import { dirname, join } from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import {
   loadOrCreateAuthState,
   renewAuthState,
   writePrivateJsonAtomic,
 } from "../lib/auth-token.mjs";
 import { bridgeDirectory, DEFAULT_TIMEOUT_MS, runtimeFile } from "../lib/config.mjs";
-import { resolvePanelGatewayLogFile, resolvePanelWebhookUrl } from "../lib/shopping-model.mjs";
 import { sanitizeConversationId } from "../lib/panel-conversation.mjs";
 import { encodeNativeMessage, NativeMessageDecoder } from "../lib/native-messaging.mjs";
-import { createDeepSeekHarnessSessionAdapter } from "../lib/harness-sessions.mjs";
+import { createClientRegistry } from "../lib/client-registry.mjs";
+import { createDeepSeekHarnessSessionAdapter, formatHarnessQuestion } from "../lib/harness-sessions.mjs";
 import { harnessSessionAdapterInfo } from "../lib/harness-session-contract.mjs";
+
+const BRIDGE_VERSION = "0.9.1";
 
 let authState = await loadOrCreateAuthState();
 const pending = new Map();
@@ -26,10 +31,12 @@ let previousTabs = null;
 let cleanedUp = false;
 let runtimeIdentity = null;
 let harnessSessionAdapter = null;
+let latestPanelTurnKey = null;
+const deliveredHarnessMessages = new Map();
+const pendingHarnessQuestions = new Map();
 
 // The launcher runs the host with stderr unattached, so also persist a
 // bounded log file — otherwise forward/status failures are invisible.
-// (fs helpers come from the hoisted imports in the webhook section below.)
 const HOST_LOG_FILE = join(bridgeDirectory(), "host.log");
 function log(message) {
   const line = `[chrome-agent-bridge] ${message}\n`;
@@ -75,11 +82,23 @@ function publicAuthState() {
   };
 }
 
+function publicAuthMetadata() {
+  return {
+    available: true,
+    createdAt: authState.createdAt,
+    rotatedAt: authState.rotatedAt,
+  };
+}
+
 async function handleAuthRequest(message) {
   if (typeof message.id !== "string") return;
   try {
     if (message.action === "renew") {
       authState = await renewAuthState();
+    } else if (message.action === "status") {
+      authState = await loadOrCreateAuthState();
+      sendNative({ type: "auth.response", id: message.id, ok: true, result: publicAuthMetadata() });
+      return;
     } else if (message.action !== "get") {
       const error = new Error(`Unsupported auth action: ${message.action}`);
       error.code = "auth_action_invalid";
@@ -89,6 +108,49 @@ async function handleAuthRequest(message) {
   } catch (error) {
     sendNative({ type: "auth.response", id: message.id, ok: false, error: serializeError(error) });
   }
+}
+
+// Which harness processes are attached. The side panel shows their names, and
+// a harness that exits is dropped from the label.
+const clientRegistry = createClientRegistry();
+let publishedAgentLabel;
+
+// Identifying always republishes, because the extension can restart and forget
+// the label. The periodic prune republishes only when the set of clients changed.
+async function publishAgentLabel({ force = false } = {}) {
+  const label = clientRegistry.label();
+  if (!force && label === publishedAgentLabel) return;
+  try {
+    await forwardToExtension("panel.identify", { agent: label });
+    publishedAgentLabel = label;
+  } catch {
+    // The extension is not connected yet; the next heartbeat or prune retries.
+    publishedAgentLabel = undefined;
+  }
+}
+
+// The response keeps the shape callers already read ({ name, since }). Its name
+// is the combined label of every attached client.
+function agentResponse() {
+  const label = clientRegistry.label();
+  return label == null ? null : { name: label, since: new Date().toISOString() };
+}
+
+async function identifyClient(params) {
+  clientRegistry.prune();
+  clientRegistry.identify({
+    pid: Number.isInteger(params.clientPid) ? params.clientPid : null,
+    agent: params.agent,
+  });
+  void publishAgentLabel({ force: true });
+  return { identified: true, agent: agentResponse() };
+}
+
+async function detachClient(params) {
+  clientRegistry.prune();
+  if (Number.isInteger(params.clientPid)) clientRegistry.detach(params.clientPid);
+  void publishAgentLabel({ force: true });
+  return { detached: true, agent: agentResponse() };
 }
 
 function forwardToExtension(method, params) {
@@ -226,16 +288,13 @@ function recordEvent(event, data) {
     clearTimeout(waiter.timeout);
     waiter.resolve(result);
   }
-  // Direct panel → harness wiring: user messages typed in the side panel are
-  // forwarded to the active harness so a real agent turn handles them
-  // (replacing the standalone panel-watcher daemon). Fire-and-forget: a
-  // webhook failure must never break the event loop.
+  // The panel is a thin client for the connected harness. Every user message,
+  // including the first one in a new conversation, uses the harness's
+  // canonical session API. Agent Bridge does not rewrite or interpret it.
   if (event === "panel.message" && data?.role === "user") {
+    latestPanelTurnKey = data.messageId || data.conversationId || `${Date.now()}`;
     if (data.harnessSession) void forwardPanelMessageToHarnessSession(data);
-    else void forwardPanelMessageToHermes(data);
-  }
-  if (event === "panel.close" && data?.conversationId && !data.harnessSession) {
-    void endPanelConversation(data.conversationId);
+    else void forwardPanelMessageToHarness(data);
   }
   if (event === "panel.sessions.list") void publishHarnessSessions(data?.requestId);
   if (event === "panel.session.select" && data?.sessionId) void publishHarnessSession(data.sessionId, data?.requestId);
@@ -257,7 +316,10 @@ async function publishHarnessSessions(requestId) {
 async function publishHarnessSession(sessionId, requestId) {
   try {
     const loaded = await harnessSessionAdapter.loadSession(sessionId);
+    deliveredHarnessMessages.set(sessionId, new Set(loaded.transcript.filter((entry) => entry.role === "agent").map((entry) => entry.id)));
     await forwardToExtension("panel.session.loaded", { requestId, ...loaded });
+    const current = (await harnessSessionAdapter.listSessions()).find((session) => session.id === sessionId);
+    if (current?.running) monitorHarnessTurn(sessionId, sessionId);
   } catch (error) {
     log(`harness sessions: load failed (${error?.message ?? error})`);
     await forwardToExtension("panel.session.loaded", { requestId, sessionId, error: "That session could not be loaded." }).catch(() => {});
@@ -290,8 +352,18 @@ async function forwardPanelMessageToHarnessSession(data) {
   try {
     const sessionId = sanitizeConversationId(data.conversationId);
     if (!sessionId) return;
+    const question = pendingHarnessQuestions.get(sessionId);
+    if (question) {
+      await harnessSessionAdapter.answerQuestion(question, typeof data.text === "string" ? data.text : "", data.questionAnswer);
+      pendingHarnessQuestions.delete(sessionId);
+      log(`panel→harness: answered interactive question in ${sessionId}`);
+      monitorHarnessTurn(sessionId, data.messageId || data.conversationId);
+      return;
+    }
     await harnessSessionAdapter.resumeSession(sessionId, typeof data.text === "string" ? data.text : "");
     log(`panel→harness: queued prompt in ${sessionId}`);
+    scheduleHarnessSessionCatalogSync();
+    monitorHarnessTurn(sessionId, data.messageId || data.conversationId);
   } catch (error) {
     log(`panel→harness: prompt failed (${error?.message ?? error})`);
     pushPanelStatus(null, { persist: false });
@@ -299,136 +371,137 @@ async function forwardPanelMessageToHarnessSession(data) {
   }
 }
 
-// --- Hermes webhook forwarder ---------------------------------------------
-import { appendFileSync, createReadStream, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { homedir } from "node:os";
-import { fileURLToPath } from "node:url";
-
-// The extension lives one directory below its harness workspace. This keeps
-// unrelated DeepSeek projects and evaluation sessions out of the picker while
-// remaining movable with the project. Deployments may override the scope.
+// In the bundled workspace layout the repository is a child of the harness
+// workspace and panel-created sessions live in its dedicated `panel` project.
+// Deployments can point this adapter at any other project folder.
+const DEFAULT_HARNESS_SESSION_CWD = join(
+  dirname(dirname(dirname(fileURLToPath(import.meta.url)))),
+  "panel",
+);
 const HARNESS_SESSION_CWD = process.env.AB_HARNESS_SESSION_CWD
-  || dirname(dirname(fileURLToPath(import.meta.url)));
+  || DEFAULT_HARNESS_SESSION_CWD;
 harnessSessionAdapter = createDeepSeekHarnessSessionAdapter({
   env: { ...process.env, AB_HARNESS_SESSION_CWD: HARNESS_SESSION_CWD },
 });
 
-function panelWebhookUrl() {
-  return resolvePanelWebhookUrl(process.env);
-}
-const HERMES_WEBHOOK_SECRET_FILE = join(bridgeDirectory(), "webhook-secret");
-// Per-host-instance nonce. Extension restarts reset the panel message
-// counter to panel_1; without this nonce the gateway's idempotency cache
-// (1h TTL) would silently drop every early-ID message after a restart as
-// a "duplicate delivery".
-const HOST_INSTANCE = crypto.randomBytes(4).toString("hex");
+const sessionCatalogSyncTimers = new Set();
+const activeHarnessTurnMonitors = new Map();
+const HARNESS_TURN_POLL_MS = Math.max(250, Math.min(10_000, Number(process.env.AB_HARNESS_TURN_POLL_MS) || 2_000));
+const HARNESS_TURN_MAX_POLLS = Math.max(2, Math.ceil((20 * 60 * 1000) / HARNESS_TURN_POLL_MS));
 
-function readWebhookSecret() {
-  try {
-    return readFileSync(HERMES_WEBHOOK_SECRET_FILE, "utf8").trim();
-  } catch {
-    return "";
+function scheduleHarnessSessionCatalogSync() {
+  // Session creation/resume is asynchronous after acknowledgement. Refresh a
+  // few times at bounded intervals so the picker observes the committed title,
+  // activity timestamp, and running state without polling forever.
+  // A new accepted turn supersedes the remaining refreshes from the previous
+  // one, so every message gets a prompt first refresh without unbounded timers.
+  for (const timer of sessionCatalogSyncTimers) clearTimeout(timer);
+  sessionCatalogSyncTimers.clear();
+  for (const delay of [250, 1_000, 3_000]) {
+    const timer = setTimeout(() => {
+      sessionCatalogSyncTimers.delete(timer);
+      void publishHarnessSessions();
+    }, delay);
+    timer.unref?.();
+    sessionCatalogSyncTimers.add(timer);
   }
 }
 
-async function postToHermesWebhook(payload, deliveryId) {
-  const secret = readWebhookSecret();
-  if (!secret) {
-    log("panel→hermes: webhook secret missing — skipping forward");
-    return null;
-  }
-  const body = JSON.stringify(payload);
-  const timestamp = String(Math.floor(Date.now() / 1000));
-  const signature = crypto
-    .createHmac("sha256", secret)
-    .update(`${timestamp}.${body}`)
-    .digest("hex");
-  const response = await fetch(panelWebhookUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-webhook-signature-v2": signature,
-      "x-webhook-timestamp": timestamp,
-      "x-request-id": deliveryId,
-    },
-    body,
-    signal: AbortSignal.timeout(5_000),
+function monitorHarnessTurn(sessionId, turnKey) {
+  const previous = activeHarnessTurnMonitors.get(sessionId);
+  if (previous?.timer) clearTimeout(previous.timer);
+  previous?.questionAbort?.abort();
+  const state = { generation: (previous?.generation || 0) + 1, polls: 0, sawRunning: false, timer: null, questionAbort: new AbortController() };
+  activeHarnessTurnMonitors.set(sessionId, state);
+
+  void harnessSessionAdapter.waitForQuestion(sessionId, { signal: state.questionAbort.signal }).then(async (question) => {
+    if (activeHarnessTurnMonitors.get(sessionId) !== state) return;
+    const existing = pendingHarnessQuestions.get(sessionId);
+    if (existing?.rpcId === question.rpcId) return;
+    pendingHarnessQuestions.set(sessionId, question);
+    await forwardToExtension("panel.post", { text: formatHarnessQuestion(question), question, links: [] });
+    if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+    log(`harness→panel: relayed interactive question from ${sessionId}`);
+  }).catch((error) => {
+    if (error?.name !== "AbortError") log(`panel→harness: question stream unavailable (${error?.message ?? error})`);
   });
-  const status = response.status;
-  const text = (await response.text()).slice(0, 200);
-  return { status, text };
-}
 
-async function forwardPanelMessageToHermes(data) {
-  try {
-    const conversationId = sanitizeConversationId(data.conversationId);
-    const deliveryId = data.messageId
-      ? `${HOST_INSTANCE}:${data.messageId}`
-      : `${HOST_INSTANCE}:${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const result = await postToHermesWebhook({
-      event_type: "panel.message",
-      text: typeof data.text === "string" ? data.text : "",
-      messageId: data.messageId ?? null,
-      conversation_id: conversationId,
-      resume: Boolean(data.resume && conversationId),
-      observedAt: new Date().toISOString(),
-    }, deliveryId);
-    if (!result) return;
-    log(`panel→hermes: forwarded (HTTP ${result.status}) ${result.text}`);
-    if (result.status >= 200 && result.status < 300 && result.text.includes('"accepted"')) {
-      if (!data.resume) {
-        let harnessSessionId = null;
-        try { harnessSessionId = sanitizeConversationId(JSON.parse(result.text)?.sessionId); } catch {}
-        if (harnessSessionId) {
-          const fallbackTitle = harnessSessionAdapter.titleFromPrompt(data.text);
-          let title = fallbackTitle;
-          try {
-            title = (await harnessSessionAdapter.renameSession(harnessSessionId, fallbackTitle)).title;
-          } catch (error) {
-            log(`panel→harness: automatic title failed (${error?.message ?? error})`);
-          }
-          await forwardToExtension("panel.session.started", {
-            sessionId: harnessSessionId,
-            title,
-            updatedAt: new Date().toISOString(),
-            running: true,
-          }).catch(() => {});
-        }
+  const poll = async () => {
+    if (activeHarnessTurnMonitors.get(sessionId) !== state) return;
+    state.polls += 1;
+    try {
+      const sessions = await harnessSessionAdapter.listSessions();
+      const session = sessions.find((candidate) => candidate.id === sessionId);
+      if (session?.running) state.sawRunning = true;
+      // Two consecutive observations allow very short turns to settle even if
+      // the adapter never exposes a visible running=true transition.
+      if (session && !session.running && (state.sawRunning || state.polls >= 2)) {
+        activeHarnessTurnMonitors.delete(sessionId);
+        state.questionAbort.abort();
+        pendingHarnessQuestions.delete(sessionId);
+        await relayHarnessResponses(sessionId);
+        if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+        scheduleHarnessSessionCatalogSync();
+        return;
       }
-      startTurnStatusTail(deliveryId, conversationId);
+    } catch (error) {
+      log(`panel→harness: lifecycle poll failed (${error?.message ?? error})`);
     }
-  } catch (error) {
-    log(`panel→hermes: forward failed (${error?.message ?? error})`);
-  }
+    if (state.polls >= HARNESS_TURN_MAX_POLLS) {
+      activeHarnessTurnMonitors.delete(sessionId);
+      state.questionAbort.abort();
+      pendingHarnessQuestions.delete(sessionId);
+      if (latestPanelTurnKey === turnKey) pushPanelStatus(null, { persist: false });
+      return;
+    }
+    state.timer = setTimeout(poll, HARNESS_TURN_POLL_MS);
+    state.timer.unref?.();
+  };
+  void poll();
 }
 
-async function endPanelConversation(conversationId) {
-  const id = sanitizeConversationId(conversationId);
-  if (!id) return;
+async function relayHarnessResponses(sessionId) {
   try {
-    const deliveryId = `${HOST_INSTANCE}:end-${id}-${Date.now()}`;
-    const result = await postToHermesWebhook({
-      event_type: "panel.message",
-      conversation_id: id,
-      end: true,
-      observedAt: new Date().toISOString(),
-    }, deliveryId);
-    if (result) log(`panel→hermes: ended ${id} (HTTP ${result.status}) ${result.text}`);
+    const loaded = await harnessSessionAdapter.loadSession(sessionId);
+    const delivered = deliveredHarnessMessages.get(sessionId) || new Set();
+    const fresh = loaded.transcript.filter((entry) => entry.role === "agent" && !delivered.has(entry.id));
+    for (const entry of fresh) {
+      delivered.add(entry.id);
+      await forwardToExtension("panel.post", { text: entry.text, links: [] });
+    }
+    deliveredHarnessMessages.set(sessionId, delivered);
   } catch (error) {
-    log(`panel→hermes: end failed (${error?.message ?? error})`);
+    log(`panel→harness: response relay failed (${error?.message ?? error})`);
   }
 }
 
-// --- Live "thinking" status in the panel ----------------------------------
-// The agent publishes meaningful progress through browser_panel_status. The
-// gateway log is tailed only to clear that transient status when the turn ends;
-// its generic heartbeats must never overwrite the agent's concrete summary.
-const GATEWAY_LOG_FILE = resolvePanelGatewayLogFile();
-const STATUS_POLL_MS = 3_000;
-const STATUS_MAX_MS = 20 * 60 * 1000; // never leave a status bubble stuck
-const activeStatusTails = new Map(); // deliveryId -> { timer }
+async function forwardPanelMessageToHarness(data) {
+  try {
+    const created = await harnessSessionAdapter.createSession();
+    const harnessSessionId = sanitizeConversationId(created?.sessionId);
+    if (!harnessSessionId) throw new Error("Harness did not create a usable session");
+    const text = typeof data.text === "string" ? data.text : "";
+    await forwardToExtension("panel.session.started", {
+      sessionId: harnessSessionId,
+      title: harnessSessionAdapter.titleFromPrompt(text),
+      updatedAt: new Date().toISOString(),
+      running: true,
+    });
+    await harnessSessionAdapter.resumeSession(harnessSessionId, text);
+    log(`panel→harness: created and queued prompt in ${harnessSessionId}`);
+    scheduleHarnessSessionCatalogSync();
+    monitorHarnessTurn(harnessSessionId, data.messageId || data.conversationId);
+  } catch (error) {
+    log(`panel→harness: forward failed (${error?.message ?? error})`);
+    pushPanelStatus(null, { persist: false });
+    void forwardToExtension("panel.post", { text: "I couldn't start a harness session. Please check the connection and try again.", links: [] }).catch(() => {});
+  }
+}
 
+// --- Panel status push ------------------------------------------------------
+// Progress text in the panel is authored by the connected agent through the
+// browser_panel_status MCP tool; the host only forwards clears (e.g. when a
+// harness resume fails). No harness-specific log or model source lives here.
 function pushPanelStatus(text, options = {}) {
   void forwardToExtension("panel.status", { text, ...options })
     .then(() => log(`panel.status pushed: ${text == null ? "(cleared)" : String(text).slice(0, 80)}`))
@@ -437,123 +510,6 @@ function pushPanelStatus(text, options = {}) {
     });
 }
 
-async function refreshCurrentPanelStatus(deliveryId) {
-  if (!activeStatusTails.has(deliveryId)) return;
-  try {
-    const panel = await forwardToExtension("panel.get", {});
-    const status = panel?.status;
-    if (!status?.text || !activeStatusTails.has(deliveryId)) return;
-    await forwardToExtension("panel.status", {
-      text: status.text,
-      phase: status.phase,
-      evidence: status.evidence,
-      next: status.next,
-      persist: false,
-    });
-    log(`thinking-status: activity refreshed for ${deliveryId}`);
-  } catch (error) {
-    log(`thinking-status: activity refresh failed (${error?.message ?? error})`);
-  }
-}
-
-function startTurnStatusTail(deliveryId, conversationId) {
-  if (activeStatusTails.has(deliveryId)) return;
-  log(`thinking-status: tail started for ${deliveryId} (log ${GATEWAY_LOG_FILE})`);
-  // Hermes identifies webhook turns in gateway log lines by the HTTP delivery
-  // id (x-request-id), even when conversation_id is supplied for session
-  // continuity. Matching the conversation id leaves the terminal line unseen,
-  // so the panel status never clears and the max-turn continuation never posts.
-  const chatMarker = `webhook:panel_message:${deliveryId}`;
-  let offset = 0;
-  try {
-    offset = statSync(GATEWAY_LOG_FILE).size;
-  } catch {
-    /* no gateway log — status updates simply won't appear */
-  }
-  const startedAt = Date.now();
-  const state = { timer: null, initialAgentId: null, budgetExhausted: false };
-  activeStatusTails.set(deliveryId, state);
-  void forwardToExtension("panel.get", {})
-    .then((panel) => {
-      state.initialAgentId = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent")?.id ?? null;
-    })
-    .catch(() => {});
-  pushPanelStatus("Planning the approach…", { phase: "plan", persist: false });
-  const timer = setInterval(() => {
-    if (Date.now() - startedAt > STATUS_MAX_MS) {
-      stopTurnStatusTail(deliveryId);
-      pushPanelStatus(null, { persist: false });
-      return;
-    }
-    let size;
-    try {
-      size = statSync(GATEWAY_LOG_FILE).size;
-    } catch {
-      return;
-    }
-    if (size < offset) offset = 0; // log rotated
-    if (size === offset) return;
-    const readFrom = offset;
-    offset = size;
-    const stream = createReadStream(GATEWAY_LOG_FILE, { start: readFrom, end: size - 1, encoding: "utf8" });
-    let chunk = "";
-    stream.on("data", (d) => { chunk += d; });
-    stream.on("end", () => {
-      for (const line of chunk.split("\n")) {
-        if (!line.includes(chatMarker)) continue;
-        if (line.includes("⏳ Working")) {
-          // A heartbeat proves Hermes is alive. Refresh the expiry without
-          // replacing the useful, agent-authored summary with generic text.
-          void refreshCurrentPanelStatus(deliveryId);
-          continue;
-        }
-        if (line.includes("Iteration budget exhausted")) {
-          state.budgetExhausted = true;
-          continue;
-        }
-        if (line.includes("response ready") || (line.includes("Response for ") && !line.includes("⏳"))) {
-          // Turn finished — the agent's panel.post reply lands on its own;
-          // drop the thinking bubble.
-          stopTurnStatusTail(deliveryId);
-          pushPanelStatus(null, { persist: false });
-          if (state.budgetExhausted) void postContinuationPromptIfNeeded(state.initialAgentId);
-          return;
-        }
-      }
-    });
-    stream.on("error", () => {});
-  }, STATUS_POLL_MS);
-  state.timer = timer;
-}
-
-async function postContinuationPromptIfNeeded(initialAgentId) {
-  try {
-    const panel = await forwardToExtension("panel.get", {});
-    const latestAgent = [...(panel?.transcript ?? [])].reverse().find((entry) => entry?.role === "agent") ?? null;
-    if (latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length >= 4) return;
-    if (/would you like me to (?:keep going|continue)/i.test(String(latestAgent?.text || ""))) return;
-    const hasPartialResults = latestAgent?.id !== initialAgentId && Array.isArray(latestAgent?.links) && latestAgent.links.length > 0;
-    await forwardToExtension("panel.post", {
-      text: hasPartialResults
-        ? "Initial research pass complete. I stopped at the research safety limit, and the verified offers above are a partial result rather than an active search. Some intended market coverage remains. Would you like me to keep going with a deeper search?"
-        : "Initial research pass complete. I stopped at the research safety limit before finding enough verified offers; no search is currently running. Would you like me to keep going with a deeper search?",
-      links: [],
-    });
-    log("panel continuation prompt posted after iteration budget exhaustion");
-  } catch (error) {
-    log(`panel continuation prompt failed (${error?.message ?? error})`);
-  }
-}
-
-function stopTurnStatusTail(deliveryId) {
-  const tail = activeStatusTails.get(deliveryId);
-  if (tail) {
-    clearInterval(tail.timer);
-    activeStatusTails.delete(deliveryId);
-  }
-}
-// ---------------------------------------------------------------------------
-
 function handleExtensionMessage(message) {
   if (message?.type === "auth.request") {
     void handleAuthRequest(message);
@@ -561,7 +517,7 @@ function handleExtensionMessage(message) {
   }
   if (message?.type === "hello") {
     extensionVersion = typeof message.extensionVersion === "string" ? message.extensionVersion : "0.0.0";
-    sendNative({ type: "hello", ok: true, host: "chrome-agent-bridge", version: "0.9.0" });
+    sendNative({ type: "hello", ok: true, host: "chrome-agent-bridge", version: BRIDGE_VERSION });
     return;
   }
   if (message?.type === "event" && typeof message.event === "string") {
@@ -632,7 +588,11 @@ const server = http.createServer(async (request, response) => {
       const result =
         payload.method === "events.poll"
           ? await pollEvents(payload.params ?? {})
-          : await forwardToExtension(payload.method, payload.params ?? {});
+          : payload.method === "panel.identify"
+            ? await identifyClient(payload.params ?? {})
+            : payload.method === "clients.detach"
+              ? await detachClient(payload.params ?? {})
+              : await forwardToExtension(payload.method, payload.params ?? {});
       response.statusCode = 200;
       response.end(JSON.stringify({ ok: true, result }));
     } catch (error) {
@@ -641,6 +601,12 @@ const server = http.createServer(async (request, response) => {
     }
   });
 });
+
+// Checks liveness every few seconds, so a harness that exits without detaching
+// still drops out of the label.
+setInterval(() => {
+  if (clientRegistry.prune()) void publishAgentLabel();
+}, 5_000).unref();
 
 server.listen(0, "127.0.0.1", async () => {
   const address = server.address();
@@ -656,7 +622,7 @@ server.listen(0, "127.0.0.1", async () => {
       startedAt: new Date().toISOString(),
   };
   await writePrivateJsonAtomic(runtimeFile(), runtimeIdentity);
-  sendNative({ type: "ready", ok: true, version: "0.9.0" });
+  sendNative({ type: "ready", ok: true, version: BRIDGE_VERSION });
 });
 
 async function cleanup() {
